@@ -298,6 +298,31 @@ export interface PreferenceSuggestions {
   suggestions: PreferenceSuggestion[];
 }
 
+export interface RunDigestsBody {
+  /** Render and log emails without calling Resend. */
+  dryRun?: boolean;
+}
+
+export interface DigestSendError {
+  alertId: number;
+  userId: string;
+  error: string;
+}
+
+export type DigestSkippedReason =
+  (typeof DigestSkippedReason)[keyof typeof DigestSkippedReason];
+
+export const DigestSkippedReason = {
+  no_email_on_user: "no_email_on_user",
+  email_opted_out: "email_opted_out",
+} as const;
+
+export interface DigestSkipped {
+  alertId: number;
+  userId: string;
+  reason: DigestSkippedReason;
+}
+
 export type DigestRunResultByFrequency = {
   realtime?: number;
   daily?: number;
@@ -305,9 +330,15 @@ export type DigestRunResultByFrequency = {
 };
 
 export interface DigestRunResult {
+  dryRun: boolean;
+  sender?: string | null;
   usersNotified: number;
   alertsSent: number;
+  alertsFailed: number;
+  alertsSkipped: number;
   byFrequency: DigestRunResultByFrequency;
+  errors: DigestSendError[];
+  skipped: DigestSkipped[];
 }
 
 export interface SavedListing {
@@ -410,4 +441,8 @@ export type GetRecentMatchesParams = {
 
 export type ListIngestionLogsParams = {
   limit?: number;
+};
+
+export type RunDigests503 = {
+  error: string;
 };

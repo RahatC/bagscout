@@ -40,6 +40,8 @@ import type {
   ListingPage,
   MatchResult,
   PreferenceSuggestions,
+  RunDigests503,
+  RunDigestsBody,
   SaveListingBody,
   SavedListing,
   Size,
@@ -2448,36 +2450,39 @@ export const useTriggerIngest = <
 };
 
 /**
- * Group pending alerts by user and watchlist alertFrequency, mark them sent, and return per-frequency counts. Stand-in for a real worker.
+ * Send pending alerts via Resend, grouped by user and watchlist alertFrequency. Honours per-user notification_preferences for the email channel; only flips alert.status to "sent" after a successful provider call. Pass dryRun=true to render and log emails without contacting Resend.
  */
 export const getRunDigestsUrl = () => {
   return `/api/admin/digests/run`;
 };
 
 export const runDigests = async (
+  runDigestsBody?: RunDigestsBody,
   options?: RequestInit,
 ): Promise<DigestRunResult> => {
   return customFetch<DigestRunResult>(getRunDigestsUrl(), {
     ...options,
     method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(runDigestsBody),
   });
 };
 
 export const getRunDigestsMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<RunDigests503>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof runDigests>>,
     TError,
-    void,
+    { data: BodyType<RunDigestsBody> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof runDigests>>,
   TError,
-  void,
+  { data: BodyType<RunDigestsBody> },
   TContext
 > => {
   const mutationKey = ["runDigests"];
@@ -2491,9 +2496,11 @@ export const getRunDigestsMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof runDigests>>,
-    void
-  > = () => {
-    return runDigests(requestOptions);
+    { data: BodyType<RunDigestsBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return runDigests(data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -2502,24 +2509,24 @@ export const getRunDigestsMutationOptions = <
 export type RunDigestsMutationResult = NonNullable<
   Awaited<ReturnType<typeof runDigests>>
 >;
-
-export type RunDigestsMutationError = ErrorType<unknown>;
+export type RunDigestsMutationBody = BodyType<RunDigestsBody>;
+export type RunDigestsMutationError = ErrorType<RunDigests503>;
 
 export const useRunDigests = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<RunDigests503>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof runDigests>>,
     TError,
-    void,
+    { data: BodyType<RunDigestsBody> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationResult<
   Awaited<ReturnType<typeof runDigests>>,
   TError,
-  void,
+  { data: BodyType<RunDigestsBody> },
   TContext
 > => {
   return useMutation(getRunDigestsMutationOptions(options));

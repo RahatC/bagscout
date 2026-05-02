@@ -1079,14 +1079,39 @@ export const TriggerIngestResponse = zod.object({
 });
 
 /**
- * Group pending alerts by user and watchlist alertFrequency, mark them sent, and return per-frequency counts. Stand-in for a real worker.
+ * Send pending alerts via Resend, grouped by user and watchlist alertFrequency. Honours per-user notification_preferences for the email channel; only flips alert.status to "sent" after a successful provider call. Pass dryRun=true to render and log emails without contacting Resend.
  */
+export const RunDigestsBody = zod.object({
+  dryRun: zod
+    .boolean()
+    .optional()
+    .describe("Render and log emails without calling Resend."),
+});
+
 export const RunDigestsResponse = zod.object({
+  dryRun: zod.boolean(),
+  sender: zod.string().nullish(),
   usersNotified: zod.number(),
   alertsSent: zod.number(),
+  alertsFailed: zod.number(),
+  alertsSkipped: zod.number(),
   byFrequency: zod.object({
     realtime: zod.number().optional(),
     daily: zod.number().optional(),
     weekly: zod.number().optional(),
   }),
+  errors: zod.array(
+    zod.object({
+      alertId: zod.number(),
+      userId: zod.string(),
+      error: zod.string(),
+    }),
+  ),
+  skipped: zod.array(
+    zod.object({
+      alertId: zod.number(),
+      userId: zod.string(),
+      reason: zod.enum(["no_email_on_user", "email_opted_out"]),
+    }),
+  ),
 });

@@ -512,14 +512,31 @@ paths:
       operationId: runDigests
       tags: [admin]
       description: >-
-        Group pending alerts by user and watchlist alertFrequency, mark them
-        sent, and return per-frequency counts. Stand-in for a real worker.
+        Send pending alerts via Resend, grouped by user and watchlist
+        alertFrequency. Honours per-user notification_preferences for the
+        email channel; only flips alert.status to "sent" after a successful
+        provider call. Pass dryRun=true to render and log emails without
+        contacting Resend.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RunDigestsBody" }
       responses:
         "200":
           description: Digest run summary
           content:
             application/json:
               schema: { $ref: "#/components/schemas/DigestRunResult" }
+        "503":
+          description: Email provider unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [error]
+                properties:
+                  error: { type: string }
 
 components:
   schemas:
@@ -906,18 +923,61 @@ components:
           nullable: true
           items: { type: integer }
 
+    RunDigestsBody:
+      type: object
+      properties:
+        dryRun:
+          type: boolean
+          description: Render and log emails without calling Resend.
+
+    DigestSendError:
+      type: object
+      required: [alertId, userId, error]
+      properties:
+        alertId: { type: integer }
+        userId: { type: string }
+        error: { type: string }
+
+    DigestSkipped:
+      type: object
+      required: [alertId, userId, reason]
+      properties:
+        alertId: { type: integer }
+        userId: { type: string }
+        reason:
+          type: string
+          enum: [no_email_on_user, email_opted_out]
+
     DigestRunResult:
       type: object
-      required: [usersNotified, alertsSent, byFrequency]
+      required:
+        - dryRun
+        - usersNotified
+        - alertsSent
+        - alertsFailed
+        - alertsSkipped
+        - byFrequency
+        - errors
+        - skipped
       properties:
+        dryRun: { type: boolean }
+        sender: { type: string, nullable: true }
         usersNotified: { type: integer }
         alertsSent: { type: integer }
+        alertsFailed: { type: integer }
+        alertsSkipped: { type: integer }
         byFrequency:
           type: object
           properties:
             realtime: { type: integer }
             daily: { type: integer }
             weekly: { type: integer }
+        errors:
+          type: array
+          items: { $ref: "#/components/schemas/DigestSendError" }
+        skipped:
+          type: array
+          items: { $ref: "#/components/schemas/DigestSkipped" }
 
     # Saved listings
     SavedListing:
