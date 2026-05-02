@@ -280,7 +280,14 @@ export default function AdminPage() {
               <TableBody>
                 {logs.map((log) => (
                   <TableRow key={log.id} className="border-border">
-                    <TableCell className="font-medium">{log.sourceName}</TableCell>
+                    <TableCell className="font-medium">
+                      {log.sourceName ??
+                        (log.jobType === "scheduled_digest"
+                          ? "Digest"
+                          : log.jobType === "scheduled_run"
+                            ? "Scheduled run"
+                            : "—")}
+                    </TableCell>
                     <TableCell>{getStatusBadge(log.status)}</TableCell>
                     <TableCell className="text-sm">
                       {log.recordsSeen} / {log.recordsCreated} / {log.recordsUpdated}

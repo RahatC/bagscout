@@ -4,6 +4,7 @@ import { runMigrations } from "@workspace/db";
 import app from "./app";
 import { logger } from "./lib/logger";
 import { autoSeedIfEmpty } from "./lib/ingest";
+import { startScheduler } from "./lib/scheduler";
 
 const rawPort = process.env["PORT"];
 
@@ -57,6 +58,16 @@ async function start(): Promise<void> {
     autoSeedIfEmpty().catch((err) => {
       logger.error({ err }, "Auto-seed failed");
     });
+
+    // Kick off the in-process scheduler. Reads SCHEDULER_ENABLED,
+    // INGEST_INTERVAL_MINUTES, DIGEST_INTERVAL_MINUTES from env. Safe to
+    // disable via SCHEDULER_ENABLED=false (e.g. when relying on a Replit
+    // Scheduled Deployment instead).
+    try {
+      startScheduler();
+    } catch (err) {
+      logger.error({ err }, "Failed to start scheduler");
+    }
   });
 }
 

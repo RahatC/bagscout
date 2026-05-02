@@ -1050,8 +1050,8 @@ export const ListIngestionLogsQueryParams = zod.object({
 
 export const ListIngestionLogsResponseItem = zod.object({
   id: zod.number(),
-  sourceId: zod.number(),
-  sourceName: zod.string(),
+  sourceId: zod.number().nullish(),
+  sourceName: zod.string().nullish(),
   jobType: zod.string(),
   status: zod.string(),
   recordsSeen: zod.number(),

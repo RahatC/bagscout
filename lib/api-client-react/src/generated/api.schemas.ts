@@ -386,8 +386,8 @@ export interface Source {
 
 export interface IngestionLog {
   id: number;
-  sourceId: number;
-  sourceName: string;
+  sourceId?: number | null;
+  sourceName?: string | null;
   jobType: string;
   status: string;
   recordsSeen: number;

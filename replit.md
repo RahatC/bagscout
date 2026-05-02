@@ -127,6 +127,24 @@ Parser tests (`*.test.ts` in `adapters/`) run against these fixtures with no net
 - `autoSeedIfEmpty()` — called from `index.ts` after the server starts. If `listings` is empty, runs every adapter once. No-op once data exists.
 - `POST /api/admin/ingest` accepts `{ sourceSlug }`. The special slug `"all"` runs every adapter and returns rolled-up totals plus `perSource[]`.
 
+### Scheduled ingestion & digests (`artifacts/api-server/src/lib/scheduler.ts`, `lib/digest.ts`)
+
+Both ingestion and digest emails run on a recurring schedule via an in-process scheduler that boots with the API server. The shared digest delivery logic lives in `lib/digest.ts` (`runDigest({ dryRun })`); the admin endpoint `POST /api/admin/digests/run` and the scheduler both call it so behavior is identical regardless of trigger.
+
+- `runScheduledIngest()` calls `runAllIngests({ jobType: "scheduled" })` so each per-source row in `ingestion_logs` is tagged `scheduled` (vs. `manual` for admin-triggered runs), AND opens an aggregate `scheduled_run` row (with `source_id = NULL`) capturing roll-up totals + duration + outcome for the whole cycle.
+- `runScheduledDigest()` calls `runDigest()` and writes a `scheduled_digest` row to `ingestion_logs` (also `source_id = NULL`) where `recordsSeen`/`recordsCreated`/`recordsUpdated` map to alerts pending / sent / skipped. Status is `success` / `partial` / `failed` based on send outcomes.
+- The admin ingestion-log feed (`GET /api/admin/ingestion-logs`) LEFT-JOINs sources so both per-source and aggregate/digest rows show up; the admin UI labels null-source rows as "Scheduled run" or "Digest".
+- Schema change in migration `0001_nullable_ingestion_log_source.sql`: `ingestion_logs.source_id` is now nullable to support these aggregate rows.
+- **Overlap protection** uses Postgres session-level advisory locks (`pg_try_advisory_lock`) with distinct keys per phase, exposed via `withIngestLock` / `withDigestLock` helpers. A tick that can't acquire the lock no-ops with a log line — long-running runs never double-fire, even across processes (e.g. API server + a Replit Scheduled Deployment hitting the same DB). Admin endpoints (`POST /api/admin/ingest`, `POST /api/admin/digests/run`) acquire the same locks and respond with HTTP 409 if a run (scheduled or manual) is already in flight, so manual triggers can't race the scheduler either.
+- **Idempotency on interruption** is automatic: alerts are only flipped from `pending` → `sent` after Resend confirms a message id, so a crashed/cancelled digest leaves the rest pending and the next tick picks them up.
+
+Env-driven configuration (all optional, with safe defaults):
+- `SCHEDULER_ENABLED` — `true|false` (default `true`). Set to `false` if you'd rather drive everything from a Replit Scheduled Deployment.
+- `INGEST_INTERVAL_MINUTES` — default `60`.
+- `DIGEST_INTERVAL_MINUTES` — default `30`.
+
+For production, the recommended pattern is a **Replit Scheduled Deployment** that runs `artifacts/api-server/src/scripts/run-scheduled.ts` (one ingest pass + one digest pass, then exits). It uses the same advisory locks as the in-process scheduler so the two are safe to run together. If you go that route, set `SCHEDULER_ENABLED=false` on the autoscale API server to avoid duplicate work.
+
 ## Matching Engine (`artifacts/api-server/src/lib/matchEngine.ts`)
 
 A pure, dependency-free function `evaluateMatch(preference, listing)` returns:

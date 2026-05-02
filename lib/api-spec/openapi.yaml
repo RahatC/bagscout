@@ -1059,8 +1059,6 @@ components:
       type: object
       required:
         - id
-        - sourceId
-        - sourceName
         - jobType
         - status
         - recordsSeen
@@ -1069,8 +1067,9 @@ components:
         - startedAt
       properties:
         id: { type: integer }
-        sourceId: { type: integer }
-        sourceName: { type: string }
+        # Null for non-source-scoped entries (scheduled_run aggregate, scheduled_digest).
+        sourceId: { type: integer, nullable: true }
+        sourceName: { type: string, nullable: true }
         jobType: { type: string }
         status: { type: string }
         recordsSeen: { type: integer }

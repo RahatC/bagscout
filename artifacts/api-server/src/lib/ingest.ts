@@ -66,9 +66,13 @@ type ListingTransition = {
  *   → match every upserted listing against active preferences (and emit alerts)
  *   → write `ingestion_logs` open + close rows
  */
-export async function runMockIngest(sourceSlug: string): Promise<IngestResult> {
+export async function runMockIngest(
+  sourceSlug: string,
+  opts: { jobType?: "manual" | "scheduled" | "backfill" } = {},
+): Promise<IngestResult> {
   const startTime = Date.now();
   const errors: string[] = [];
+  const jobType = opts.jobType ?? "manual";
 
   const adapter = getAdapter(sourceSlug);
   if (!adapter) {
@@ -105,7 +109,7 @@ export async function runMockIngest(sourceSlug: string): Promise<IngestResult> {
     .insert(ingestionLogsTable)
     .values({
       sourceId: source.id,
-      jobType: "manual",
+      jobType,
       status: "running",
       recordsSeen: 0,
       recordsCreated: 0,
@@ -671,11 +675,13 @@ async function loadPreferenceCriteria(
  * a final safety net for unexpected throws (network stack failures,
  * DB transaction errors that escape the inner handler, etc.).
  */
-export async function runAllIngests(): Promise<IngestResult[]> {
+export async function runAllIngests(
+  opts: { jobType?: "manual" | "scheduled" | "backfill" } = {},
+): Promise<IngestResult[]> {
   const results: IngestResult[] = [];
   for (const adapter of adapters) {
     try {
-      results.push(await runMockIngest(adapter.sourceSlug));
+      results.push(await runMockIngest(adapter.sourceSlug, opts));
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       logger.error(
