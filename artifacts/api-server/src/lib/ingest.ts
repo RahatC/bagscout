@@ -19,51 +19,46 @@ import {
   type MatchReason,
   type Disqualifier,
 } from "@workspace/db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, count } from "drizzle-orm";
 import { logger } from "./logger";
 import { normalizeText, conditionRank } from "./normalize";
+import { adapters, getAdapter } from "../adapters";
+import type { NormalizedListing } from "../adapters";
 
-type MockListing = {
-  externalId: string;
-  title: string;
-  brand: string;
-  model: string;
-  style: string;
-  color: string;
-  size: string;
-  condition: string;
-  price: number;
-  originalPrice?: number;
-  imageUrl: string;
-  description: string;
+export type IngestResult = {
+  sourceSlug: string;
+  listingsFound: number;
+  listingsAdded: number;
+  listingsUpdated: number;
+  listingsRejected: number;
+  durationMs: number;
+  errors: string[];
 };
 
-const MOCK: Record<string, MockListing[]> = {
-  fashionphile: [
-    { externalId: "fp-001", title: "Hermès Birkin 30 Etoupe Togo PHW", brand: "Hermès", model: "Birkin", style: "Top Handle", color: "Beige", size: "Birkin 30", condition: "Excellent", price: 18500, originalPrice: 21000, imageUrl: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800", description: "Hermès Birkin 30 in Etoupe Togo leather with Palladium hardware. Near mint condition." },
-    { externalId: "fp-002", title: "Chanel Medium Classic Flap Black Caviar GHW", brand: "Chanel", model: "Classic Flap", style: "Shoulder Bag", color: "Black", size: "Medium", condition: "Very Good", price: 8200, originalPrice: 9000, imageUrl: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800", description: "Chanel Medium Classic Flap in Black Caviar leather with Gold hardware." },
-    { externalId: "fp-003", title: "Louis Vuitton Neverfull MM Damier Ebene", brand: "Louis Vuitton", model: "Neverfull", style: "Tote", color: "Brown", size: "MM", condition: "Good", price: 1250, imageUrl: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800", description: "Louis Vuitton Neverfull MM in Damier Ebene canvas." },
-  ],
-  rebag: [
-    { externalId: "rb-001", title: "Hermès Kelly 28 Sellier Gold Epsom GHW", brand: "Hermès", model: "Kelly", style: "Top Handle", color: "Gold", size: "Kelly 28", condition: "Excellent", price: 22000, imageUrl: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800", description: "Hermès Kelly 28 Sellier in Gold Epsom leather with Gold hardware." },
-    { externalId: "rb-002", title: "Bottega Veneta Jodie Parakeet Medium", brand: "Bottega Veneta", model: "Jodie", style: "Hobo", color: "Green", size: "Medium", condition: "Very Good", price: 1850, originalPrice: 2200, imageUrl: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800", description: "Bottega Veneta Jodie in Parakeet Intrecciato leather." },
-    { externalId: "rb-003", title: "Gucci Dionysus Small Beige GG Supreme", brand: "Gucci", model: "Dionysus", style: "Shoulder Bag", color: "Beige", size: "Small", condition: "Good", price: 980, originalPrice: 1400, imageUrl: "https://images.unsplash.com/photo-1594938298603-c8148c4b4f7a?w=800", description: "Gucci Dionysus Small Shoulder Bag in Beige GG Supreme canvas." },
-  ],
-  therealreal: [
-    { externalId: "trr-001", title: "Chanel Boy Bag Medium Navy Lambskin", brand: "Chanel", model: "Boy Bag", style: "Shoulder Bag", color: "Navy", size: "Medium", condition: "Excellent", price: 5800, originalPrice: 6500, imageUrl: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800", description: "Chanel Boy Bag in Navy Blue Lambskin leather with Silver hardware." },
-    { externalId: "trr-002", title: "Prada Galleria Medium Saffiano Black", brand: "Prada", model: "Galleria", style: "Top Handle", color: "Black", size: "Medium", condition: "Very Good", price: 1650, imageUrl: "https://images.unsplash.com/photo-1594938298603-c8148c4b4f7a?w=800", description: "Prada Galleria in Black Saffiano leather. Clean interior." },
-    { externalId: "trr-003", title: "Celine Micro Luggage Caramel", brand: "Celine", model: "Luggage", style: "Top Handle", color: "Brown", size: "Mini", condition: "Good", price: 1200, originalPrice: 1600, imageUrl: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800", description: "Celine Micro Luggage in Caramel Smooth Leather." },
-  ],
-  yoogiscloset: [
-    { externalId: "yc-001", title: "Hermès Birkin 35 Black Togo GHW", brand: "Hermès", model: "Birkin", style: "Top Handle", color: "Black", size: "Birkin 35", condition: "Very Good", price: 16800, imageUrl: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800", description: "Hermès Birkin 35 in Black Togo leather with Gold hardware." },
-    { externalId: "yc-002", title: "Louis Vuitton Speedy Bandouliere 30 Monogram", brand: "Louis Vuitton", model: "Speedy", style: "Top Handle", color: "Brown", size: "Medium", condition: "Good", price: 780, originalPrice: 1050, imageUrl: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800", description: "Louis Vuitton Speedy Bandouliere 30 in Monogram canvas with strap." },
-    { externalId: "yc-003", title: "Fendi Baguette Blush Pink Zucca", brand: "Fendi", model: "Baguette", style: "Shoulder Bag", color: "Pink", size: "Small", condition: "Excellent", price: 2200, originalPrice: 2800, imageUrl: "https://images.unsplash.com/photo-1594938298603-c8148c4b4f7a?w=800", description: "Fendi Baguette in Blush Pink Zucca FF jacquard with silver hardware." },
-  ],
-};
-
-export async function runMockIngest(sourceSlug: string) {
+/**
+ * Run a single source adapter end-to-end:
+ *   adapter.fetchListings → adapter.normalizeListing → adapter.validateListing
+ *   → upsert in `listings` (by source_id + source_listing_id, no duplicates)
+ *   → append `listing_snapshots` row
+ *   → match every upserted listing against active preferences
+ *   → write `ingestion_logs` open + close rows
+ */
+export async function runMockIngest(sourceSlug: string): Promise<IngestResult> {
   const startTime = Date.now();
   const errors: string[] = [];
+
+  const adapter = getAdapter(sourceSlug);
+  if (!adapter) {
+    return {
+      sourceSlug,
+      listingsFound: 0,
+      listingsAdded: 0,
+      listingsUpdated: 0,
+      listingsRejected: 0,
+      durationMs: Date.now() - startTime,
+      errors: [`No adapter registered for sourceSlug "${sourceSlug}"`],
+    };
+  }
 
   const [source] = await db
     .select()
@@ -76,8 +71,9 @@ export async function runMockIngest(sourceSlug: string) {
       listingsFound: 0,
       listingsAdded: 0,
       listingsUpdated: 0,
+      listingsRejected: 0,
       durationMs: Date.now() - startTime,
-      errors: [`Source "${sourceSlug}" not found`],
+      errors: [`Source row not found in DB for slug "${sourceSlug}"`],
     };
   }
 
@@ -94,107 +90,162 @@ export async function runMockIngest(sourceSlug: string) {
     })
     .returning();
 
-  const items = MOCK[sourceSlug] ?? [];
+  let raws;
+  try {
+    raws = await adapter.fetchListings();
+  } catch (err) {
+    const msg = `Adapter fetch failed: ${err instanceof Error ? err.message : String(err)}`;
+    errors.push(msg);
+    logger.error({ err, sourceSlug }, "Adapter fetch failed");
+    await db
+      .update(ingestionLogsTable)
+      .set({
+        status: "failed",
+        errorMessage: msg.slice(0, 500),
+        completedAt: new Date(),
+      })
+      .where(eq(ingestionLogsTable.id, log.id));
+    return {
+      sourceSlug,
+      listingsFound: 0,
+      listingsAdded: 0,
+      listingsUpdated: 0,
+      listingsRejected: 0,
+      durationMs: Date.now() - startTime,
+      errors,
+    };
+  }
+
   let added = 0;
   let updated = 0;
+  let rejected = 0;
   const upsertedListingIds: number[] = [];
 
-  for (const item of items) {
+  for (const raw of raws) {
+    let normalized: NormalizedListing;
     try {
-      const discountPercent =
-        item.originalPrice && item.originalPrice > item.price
-          ? ((item.originalPrice - item.price) / item.originalPrice) * 100
-          : null;
+      normalized = adapter.normalizeListing(raw);
+    } catch (err) {
+      rejected++;
+      errors.push(`Normalize failed for ${raw.externalId}: ${err}`);
+      logger.error({ err, externalId: raw.externalId }, "Normalize error");
+      continue;
+    }
 
-      const sourceUrl = `${source.baseUrl}/listing/${item.externalId}`;
+    const validation = adapter.validateListing(normalized);
+    if (!validation.valid) {
+      rejected++;
+      errors.push(`Invalid listing ${raw.externalId}: ${validation.errors.join(", ")}`);
+      continue;
+    }
 
-      const existing = await db
-        .select()
-        .from(listingsTable)
-        .where(
-          and(
-            eq(listingsTable.sourceId, source.id),
-            eq(listingsTable.sourceListingId, item.externalId),
-          ),
-        );
-
-      let listingId: number;
-      if (existing.length > 0) {
-        const [u] = await db
-          .update(listingsTable)
-          .set({
-            price: String(item.price),
-            originalPrice: item.originalPrice ? String(item.originalPrice) : null,
-            discountPercent: discountPercent != null ? String(discountPercent.toFixed(2)) : null,
-            availabilityStatus: "available",
-            lastSeenAt: new Date(),
-          })
-          .where(eq(listingsTable.id, existing[0].id))
-          .returning();
-        listingId = u.id;
-        updated++;
-      } else {
-        const [u] = await db
+    try {
+      // Atomic upsert + snapshot in a single transaction so a snapshot failure
+      // rolls back the listing write and we never end up with a listing that
+      // has no price-history row.
+      const { listingId, isNew } = await db.transaction(async (tx) => {
+        const [row] = await tx
           .insert(listingsTable)
           .values({
             sourceId: source.id,
-            sourceListingId: item.externalId,
-            sourceUrl,
-            title: item.title,
-            brand: item.brand,
-            model: item.model,
-            style: item.style,
-            condition: item.condition,
-            color: item.color,
-            size: item.size,
-            normalizedBrand: normalizeText(item.brand),
-            normalizedModel: normalizeText(item.model),
-            normalizedStyle: normalizeText(item.style),
-            normalizedCondition: normalizeText(item.condition),
-            normalizedColor: normalizeText(item.color),
-            price: String(item.price),
-            originalPrice: item.originalPrice ? String(item.originalPrice) : null,
-            discountPercent: discountPercent != null ? String(discountPercent.toFixed(2)) : null,
-            currency: "USD",
-            imageUrl: item.imageUrl,
-            description: item.description,
-            availabilityStatus: "available",
+            sourceListingId: normalized.sourceListingId,
+            sourceUrl: normalized.sourceUrl,
+            title: normalized.title,
+            brand: normalized.brand,
+            model: normalized.model,
+            style: normalized.style,
+            condition: normalized.condition,
+            color: normalized.color,
+            size: normalized.size,
+            normalizedBrand: normalized.normalizedBrand,
+            normalizedModel: normalized.normalizedModel,
+            normalizedStyle: normalized.normalizedStyle,
+            normalizedCondition: normalized.normalizedCondition,
+            normalizedColor: normalized.normalizedColor,
+            price: String(normalized.price),
+            originalPrice:
+              normalized.originalPrice != null ? String(normalized.originalPrice) : null,
+            discountPercent:
+              normalized.discountPercent != null ? String(normalized.discountPercent) : null,
+            currency: normalized.currency,
+            imageUrl: normalized.imageUrl,
+            description: normalized.description,
+            availabilityStatus: normalized.availabilityStatus,
           })
-          .returning();
-        listingId = u.id;
-        added++;
-      }
+          .onConflictDoUpdate({
+            target: [listingsTable.sourceId, listingsTable.sourceListingId],
+            set: {
+              price: String(normalized.price),
+              originalPrice:
+                normalized.originalPrice != null ? String(normalized.originalPrice) : null,
+              discountPercent:
+                normalized.discountPercent != null ? String(normalized.discountPercent) : null,
+              availabilityStatus: normalized.availabilityStatus,
+              lastSeenAt: new Date(),
+            },
+          })
+          .returning({
+            id: listingsTable.id,
+            createdAt: listingsTable.createdAt,
+            updatedAt: listingsTable.updatedAt,
+          });
 
-      // Append snapshot
-      await db.insert(listingSnapshotsTable).values({
-        listingId,
-        price: String(item.price),
-        availabilityStatus: "available",
+        // Postgres uses the same value for created_at / updated_at on a fresh
+        // insert, but updated_at is bumped on conflict via $onUpdate(). Treat
+        // any row whose timestamps are still equal as "new".
+        const newRow =
+          row.createdAt &&
+          row.updatedAt &&
+          row.createdAt.getTime() === row.updatedAt.getTime();
+
+        await tx.insert(listingSnapshotsTable).values({
+          listingId: row.id,
+          price: String(normalized.price),
+          availabilityStatus: normalized.availabilityStatus,
+        });
+
+        return { listingId: row.id, isNew: !!newRow };
       });
 
+      if (isNew) {
+        added++;
+      } else {
+        updated++;
+      }
       upsertedListingIds.push(listingId);
     } catch (err) {
-      errors.push(`Failed to upsert ${item.externalId}: ${err}`);
-      logger.error({ err, externalId: item.externalId }, "Ingest error");
+      errors.push(`Failed to upsert ${raw.externalId}: ${err}`);
+      logger.error({ err, externalId: raw.externalId }, "Ingest upsert error");
     }
   }
 
   // Update source metadata
+  const [{ value: totalForSource }] = await db
+    .select({ value: count(listingsTable.id) })
+    .from(listingsTable)
+    .where(eq(listingsTable.sourceId, source.id));
+
   await db
     .update(sourcesTable)
     .set({
       lastIngestAt: new Date(),
       status: errors.length === 0 ? "healthy" : "degraded",
-      listingCount: items.length,
+      listingCount: totalForSource,
     })
     .where(eq(sourcesTable.id, source.id));
 
   // Close ingestion log
+  const finalStatus =
+    errors.length === 0
+      ? "success"
+      : added + updated === 0
+        ? "failed"
+        : "partial";
   await db
     .update(ingestionLogsTable)
     .set({
-      status: errors.length === 0 ? "success" : errors.length === items.length ? "failed" : "partial",
-      recordsSeen: items.length,
+      status: finalStatus,
+      recordsSeen: raws.length,
       recordsCreated: added,
       recordsUpdated: updated,
       errorMessage: errors.length > 0 ? errors.join("; ").slice(0, 500) : null,
@@ -213,9 +264,10 @@ export async function runMockIngest(sourceSlug: string) {
 
   return {
     sourceSlug,
-    listingsFound: items.length,
+    listingsFound: raws.length,
     listingsAdded: added,
     listingsUpdated: updated,
+    listingsRejected: rejected,
     durationMs: Date.now() - startTime,
     errors,
   };
@@ -240,7 +292,6 @@ export async function matchListingAgainstAllPreferences(listingId: number) {
     const threshold = pref.onlyExactCriteria ? 0.99 : pref.allowCloseMatches ? 0.65 : 0.85;
     if (result.score < threshold) continue;
 
-    // Upsert match_result
     const [match] = await db
       .insert(matchResultsTable)
       .values({
@@ -262,7 +313,6 @@ export async function matchListingAgainstAllPreferences(listingId: number) {
       })
       .returning();
 
-    // Create alert if not already
     const existingAlert = await db
       .select()
       .from(alertsTable)
@@ -294,7 +344,6 @@ async function scorePreferenceAgainstListing(
   const reasons: MatchReason[] = [];
   const disqualifiers: Disqualifier[] = [];
 
-  // Load preference junction data + min condition
   const [brands, styles, colors, sizes, condMin] = await Promise.all([
     db
       .select({ b: brandsTable })
@@ -333,7 +382,6 @@ async function scorePreferenceAgainstListing(
 
   let score = 0;
 
-  // Brand — must match (any of the selected)
   const brandMatch = brands.find((b) => b.b.normalizedName === listing.normalizedBrand);
   if (brandMatch) {
     score += W_BRAND;
@@ -347,7 +395,6 @@ async function scorePreferenceAgainstListing(
     return { score: 0, reasons, disqualifiers };
   }
 
-  // Model query (free text contains)
   if (pref.exactModelEnabled && pref.modelQuery) {
     const q = normalizeText(pref.modelQuery);
     const haystack = `${listing.normalizedModel ?? ""} ${normalizeText(listing.title)}`;
@@ -362,10 +409,9 @@ async function scorePreferenceAgainstListing(
       });
     }
   } else {
-    score += W_MODEL; // no model filter = neutral pass
+    score += W_MODEL;
   }
 
-  // Style — any match
   if (styles.length > 0) {
     const m = styles.find((s) => s.s.normalizedName === listing.normalizedStyle);
     if (m) {
@@ -382,15 +428,12 @@ async function scorePreferenceAgainstListing(
     score += W_STYLE;
   }
 
-  // Color — exact or family (if allowCloseColorMatch)
   if (colors.length > 0) {
     const exact = colors.find((c) => c.c.normalizedName === listing.normalizedColor);
     if (exact) {
       score += W_COLOR;
       reasons.push({ field: "color", value: exact.c.name, matched: true, weight: W_COLOR });
     } else if (pref.allowCloseColorMatch) {
-      // Look up the listing's color in the reference table to find its family,
-      // then compare against the preferred color families.
       const preferredFamilies = new Set(
         colors.map((c) => c.c.family).filter((f): f is string => Boolean(f)),
       );
@@ -429,7 +472,6 @@ async function scorePreferenceAgainstListing(
     score += W_COLOR;
   }
 
-  // Size — any match (skipped if no size preferences set)
   if (sizes.length > 0) {
     const m = sizes.find((s) => s.s.normalizedName === listing.size?.toLowerCase().trim());
     if (m) {
@@ -446,7 +488,6 @@ async function scorePreferenceAgainstListing(
     score += W_SIZE;
   }
 
-  // Condition — must meet minimum rank (lower rank = better)
   if (condMin[0]) {
     const listingRank = conditionRank(listing.condition);
     if (listingRank <= condMin[0].rank) {
@@ -468,7 +509,6 @@ async function scorePreferenceAgainstListing(
     score += W_CONDITION;
   }
 
-  // Price — within range
   const price = parseFloat(listing.price);
   const min = pref.minPrice ? parseFloat(pref.minPrice) : null;
   const max = pref.maxPrice ? parseFloat(pref.maxPrice) : null;
@@ -491,12 +531,40 @@ async function scorePreferenceAgainstListing(
   return { score, reasons, disqualifiers };
 }
 
-export async function runAllIngests() {
-  const sources = await db
-    .select()
-    .from(sourcesTable)
-    .where(eq(sourcesTable.active, true));
-  for (const source of sources) {
-    await runMockIngest(source.slug);
+/**
+ * Run every registered active adapter once. Used by manual "ingest all"
+ * triggers and the auto-seed startup hook.
+ */
+export async function runAllIngests(): Promise<IngestResult[]> {
+  const results: IngestResult[] = [];
+  for (const adapter of adapters) {
+    results.push(await runMockIngest(adapter.sourceSlug));
+  }
+  return results;
+}
+
+/**
+ * If the listings table is empty, run every adapter once to populate the DB.
+ * Safe to call on every server startup — it's a no-op once data exists.
+ */
+export async function autoSeedIfEmpty(): Promise<void> {
+  const [{ value }] = await db.select({ value: count(listingsTable.id) }).from(listingsTable);
+  if (value > 0) {
+    logger.info({ existingListings: value }, "Listings already present, skipping auto-seed");
+    return;
+  }
+  logger.info("Listings table empty — running all source adapters once");
+  const results = await runAllIngests();
+  for (const r of results) {
+    logger.info(
+      {
+        source: r.sourceSlug,
+        added: r.listingsAdded,
+        updated: r.listingsUpdated,
+        rejected: r.listingsRejected,
+        errors: r.errors.length,
+      },
+      "Auto-seed source complete",
+    );
   }
 }

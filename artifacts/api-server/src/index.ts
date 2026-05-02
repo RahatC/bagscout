@@ -1,5 +1,6 @@
 import app from "./app";
 import { logger } from "./lib/logger";
+import { autoSeedIfEmpty } from "./lib/ingest";
 
 const rawPort = process.env["PORT"];
 
@@ -22,4 +23,10 @@ app.listen(port, (err) => {
   }
 
   logger.info({ port }, "Server listening");
+
+  // Auto-seed listings on first startup (no-op if data already exists).
+  // Runs after the server is accepting requests so admin endpoints stay live.
+  autoSeedIfEmpty().catch((err) => {
+    logger.error({ err }, "Auto-seed failed");
+  });
 });

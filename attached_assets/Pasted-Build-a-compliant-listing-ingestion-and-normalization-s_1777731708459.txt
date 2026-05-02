@@ -1,0 +1,71 @@
+Build a compliant listing ingestion and normalization system.
+
+Important:
+Do not bypass anti-bot systems, CAPTCHAs, WAFs, login walls, robots.txt restrictions, or source terms. For now, implement mock source adapters with realistic sample listings. The system should be designed so production adapters can later use approved APIs, affiliate feeds, sitemaps where allowed, merchant-provided feeds, user-submitted watch URLs, or email/newsletter parsing.
+
+Create a source adapter interface:
+
+SourceAdapter:
+- sourceName
+- sourceId
+- fetchListings()
+- normalizeListing(rawListing)
+- validateListing(normalizedListing)
+
+Each normalized listing must include:
+- source
+- source_url
+- title
+- brand
+- normalized_brand
+- model
+- normalized_model
+- style
+- normalized_style
+- condition
+- normalized_condition
+- color
+- normalized_color
+- size
+- price
+- currency
+- image_url
+- availability_status
+- first_seen_at
+- last_seen_at
+
+Build mock adapters for:
+- FASHIONPHILE
+- Rebag
+- The RealReal
+- Yoogi’s Closet
+
+Seed at least 80 realistic bag listings across these sources.
+
+Examples:
+- Chanel Classic Flap Medium Black Lambskin Shoulder Bag
+- Hermès Birkin 30 Gold Togo Leather Bag
+- Hermès Kelly 28 Black Epsom Sellier Bag
+- Louis Vuitton Speedy Bandouliere 25 Monogram
+- Dior Lady Dior Medium Cannage Bag
+- Fendi Baguette Zucca Shoulder Bag
+- Prada Re-Edition 2005 Nylon Shoulder Bag
+- Celine Triomphe Shoulder Bag
+- Goyard Saint Louis PM Tote
+- Bottega Veneta Jodie Mini Bag
+
+Normalization requirements:
+- Brand names should normalize variants, e.g. “YSL” → “Saint Laurent”
+- Hermès/Hermes should normalize consistently
+- Color variants should map to canonical colors
+- Conditions should map to the app’s condition scale
+- Model names should be extracted from title when possible
+- Style should be inferred from title and metadata
+
+Acceptance criteria:
+- Mock ingestion job can run manually
+- Listings are inserted or updated without duplicates
+- Listings preserve source attribution
+- Normalized fields are populated
+- Ingestion logs are created
+- No external scraping is performed in this implementation

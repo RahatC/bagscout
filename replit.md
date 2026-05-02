@@ -75,6 +75,34 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - `/saved` — Saved listings
 - `/admin` — Source health + manual ingest trigger (admin-only on the backend)
 
+## Listing Ingestion (`artifacts/api-server/src/adapters/`)
+
+The ingestion system follows a formal `SourceAdapter` interface defined in `adapters/types.ts`. Every adapter exposes:
+
+- `sourceName`, `sourceSlug`, `baseUrl`
+- `fetchListings()` — returns raw listings as the source provides them
+- `normalizeListing(raw)` — maps raw → canonical `NormalizedListing` (brand, color, condition, style, model all canonicalized)
+- `validateListing(normalized)` — returns `{ valid, errors[] }`
+
+`adapters/base.ts` provides a `createMockAdapter` factory plus default normalize + validate implementations. The 4 mock adapters (`fashionphile.ts`, `rebag.ts`, `therealreal.ts`, `yoogiscloset.ts`) each ship 20 realistic luxury bag listings (80 total) and are registered in `adapters/index.ts`.
+
+**No scraping, no terms violations.** The mock adapters return hand-curated sample data. Production adapters can later use approved channels: official APIs, affiliate feeds, sitemaps where allowed, merchant-provided feeds, user-submitted watch URLs, or email/newsletter parsing.
+
+### Normalization (`artifacts/api-server/src/lib/normalize.ts`)
+
+- `normalizeBrand` — alias map handles "YSL" → "saint laurent", "Hermes"/"Hermès" → "hermes", "LV" → "louis vuitton", "Bottega"/"BV" → "bottega veneta", "Christian Dior" → "dior", etc.
+- `normalizeColor` — maps "Caramel"/"Cognac"/"Camel" → "tan", "Etoupe"/"Taupe"/"Sand" → "beige", "Ecru"/"Ivory" → "cream", "Bordeaux"/"Oxblood" → "burgundy", "Blush"/"Rose"/"Fuchsia" → "pink", "Etain"/"Anthracite"/"Charcoal" → "gray", "Parakeet"/"Olive"/"Emerald" → "green", "Metallic" → "silver", etc. Falls back to first matching token for compound names.
+- `normalizeCondition` — maps "NWT"/"new"/"unworn" → "new with tags", "Mint"/"Like New" → "pristine", "VGC" → "very good", etc.
+- `inferStyle` — title-keyword heuristic that maps Birkin/Kelly/Lady Dior → "Top Handle", Neverfull/Book Tote → "Tote", Classic Flap/Boy Bag/Baguette → "Shoulder Bag", Wallet on Chain/Constance/Evelyne → "Crossbody", etc.
+- `extractModel` — strips brand prefix, hardware codes, and noisy descriptors ("in", "leather", "lambskin", "PHW", etc.) to extract the model name from the title when not explicitly provided.
+
+### Ingestion engine (`artifacts/api-server/src/lib/ingest.ts`)
+
+- `runMockIngest(slug)` — runs one adapter end-to-end: open `ingestion_logs` row → `fetch → normalize → validate → upsert listing (idempotent on `source_id + source_listing_id`) → append `listing_snapshots` → score against active preferences and persist alerts → close log row. Returns counts of `listingsAdded`, `listingsUpdated`, `listingsRejected`, plus `errors[]`.
+- `runAllIngests()` — runs every registered adapter sequentially.
+- `autoSeedIfEmpty()` — called from `index.ts` after the server starts. If `listings` is empty, runs every adapter once. No-op once data exists.
+- `POST /api/admin/ingest` accepts `{ sourceSlug }`. The special slug `"all"` runs every adapter and returns rolled-up totals plus `perSource[]`.
+
 ## Matching Engine (`artifacts/api-server/src/lib/ingest.ts`)
 
 Each ingest run upserts listings (with `normalized_*` fields), appends a `listing_snapshots` row, then scores every active preference against the new listing. Weighted scoring:

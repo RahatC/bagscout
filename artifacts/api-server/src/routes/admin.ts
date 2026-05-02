@@ -8,7 +8,7 @@ import {
 } from "@workspace/db";
 import { TriggerIngestBody } from "@workspace/api-zod";
 import { requireAuth, requireAdmin } from "../middlewares/requireAuth";
-import { runMockIngest } from "../lib/ingest";
+import { runMockIngest, runAllIngests } from "../lib/ingest";
 import { count } from "drizzle-orm";
 
 const router = Router();
@@ -65,6 +65,30 @@ router.post("/ingest", async (req, res) => {
   const parsed = TriggerIngestBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid body" });
+    return;
+  }
+  // Special slug "all" runs every registered adapter sequentially.
+  if (parsed.data.sourceSlug === "all") {
+    const results = await runAllIngests();
+    const totals = results.reduce(
+      (acc, r) => {
+        acc.listingsFound += r.listingsFound;
+        acc.listingsAdded += r.listingsAdded;
+        acc.listingsUpdated += r.listingsUpdated;
+        acc.durationMs += r.durationMs;
+        acc.errors.push(...r.errors);
+        return acc;
+      },
+      {
+        sourceSlug: "all",
+        listingsFound: 0,
+        listingsAdded: 0,
+        listingsUpdated: 0,
+        durationMs: 0,
+        errors: [] as string[],
+      },
+    );
+    res.json({ ...totals, perSource: results });
     return;
   }
   const result = await runMockIngest(parsed.data.sourceSlug);
