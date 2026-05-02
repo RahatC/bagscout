@@ -1,0 +1,40 @@
+You are a senior product engineer, product designer, and architect building a premium luxury resale alert app.
+
+Build a web app called “BagScout” that helps users find desired luxury bags across trusted resale marketplaces. The app should let users create a bag preference profile during onboarding, continuously match listings against their criteria, and alert them when a desired bag appears within their target price range.
+
+Reference marketplace behavior:
+- Luxury resale sites include FASHIONPHILE, Rebag, The RealReal, and Yoogi’s Closet.
+- Start with bags only.
+- Users care about brand, bag style/type, exact model, condition, color, size, price, and whether matches should be exact or close.
+- Every result must clearly show the source marketplace.
+
+Important compliance rule:
+Do not build anti-bot bypassing, CAPTCHA evasion, hidden API abuse, or aggressive scraping. Build a compliant ingestion architecture with pluggable data-source adapters. For development, use mock seeded listing data. Production adapters should support approved APIs, affiliate/product feeds, sitemaps where permitted, user-submitted watch URLs, merchant emails/newsletters, or manually maintained source configs. If a source blocks automated access or forbids scraping, the app must not bypass it.
+
+Build this as a premium, polished product, not a basic CRUD app.
+
+Recommended stack:
+- Frontend: Next.js, TypeScript, Tailwind, shadcn/ui
+- Backend: Next.js API routes or server actions
+- Database: Postgres with Prisma or Drizzle
+- Auth: Clerk, Supabase Auth, or NextAuth
+- Notifications: email first, then SMS/push later
+- Jobs: cron/queue system for listing checks and alert generation
+- AI layer: use LLM-assisted normalization for ambiguous listing titles, model names, colors, and close-match scoring
+
+Core product areas:
+1. Landing page
+2. Onboarding flow
+3. User dream bag profile
+4. Watchlists
+5. Listing ingestion and normalization
+6. Match engine
+7. Alerts
+8. Saved listings
+9. Premium dashboard
+10. Admin/source monitoring panel
+
+Design standard:
+The app should feel luxury, calm, editorial, and premium. Think Net-a-Porter meets Bloomberg terminal for handbags. Use elegant spacing, high-quality cards, confidence badges, source labels, match explanations, and clear CTAs.
+
+Do not ask me unnecessary questions. Make reasonable assumptions, document them, and build.

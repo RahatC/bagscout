@@ -3,20 +3,34 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: BagScout API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: watchlists
+    description: User bag watchlist management
+  - name: listings
+    description: Luxury bag listings
+  - name: matches
+    description: Listing matches for watchlists
+  - name: alerts
+    description: User alerts
+  - name: saved
+    description: Saved listings
+  - name: dashboard
+    description: Dashboard summary data
+  - name: admin
+    description: Admin and source monitoring
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +38,412 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ─── Watchlists ───────────────────────────────────────────────────────────────
+  /watchlists:
+    get:
+      operationId: listWatchlists
+      tags: [watchlists]
+      summary: List all watchlists for the authenticated user
+      responses:
+        "200":
+          description: List of watchlists
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Watchlist"
+    post:
+      operationId: createWatchlist
+      tags: [watchlists]
+      summary: Create a new watchlist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWatchlistBody"
+      responses:
+        "201":
+          description: Created watchlist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Watchlist"
+
+  /watchlists/{id}:
+    get:
+      operationId: getWatchlist
+      tags: [watchlists]
+      summary: Get a single watchlist by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Watchlist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Watchlist"
+    patch:
+      operationId: updateWatchlist
+      tags: [watchlists]
+      summary: Update a watchlist
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateWatchlistBody"
+      responses:
+        "200":
+          description: Updated watchlist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Watchlist"
+    delete:
+      operationId: deleteWatchlist
+      tags: [watchlists]
+      summary: Delete a watchlist
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── Listings ─────────────────────────────────────────────────────────────────
+  /listings:
+    get:
+      operationId: listListings
+      tags: [listings]
+      summary: Browse all listings with optional filters
+      parameters:
+        - name: brand
+          in: query
+          schema:
+            type: string
+        - name: model
+          in: query
+          schema:
+            type: string
+        - name: condition
+          in: query
+          schema:
+            type: string
+        - name: color
+          in: query
+          schema:
+            type: string
+        - name: minPrice
+          in: query
+          schema:
+            type: number
+        - name: maxPrice
+          in: query
+          schema:
+            type: number
+        - name: source
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: List of listings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListingsPage"
+
+  /listings/{id}:
+    get:
+      operationId: getListing
+      tags: [listings]
+      summary: Get a single listing by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Listing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Listing"
+
+  /listings/featured:
+    get:
+      operationId: getFeaturedListings
+      tags: [listings]
+      summary: Get curated featured listings for the landing page
+      responses:
+        "200":
+          description: Featured listings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Listing"
+
+  # ─── Matches ──────────────────────────────────────────────────────────────────
+  /matches:
+    get:
+      operationId: listMatches
+      tags: [matches]
+      summary: List recent matches across all of the user's watchlists
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 30
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: List of matches
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Match"
+
+  /watchlists/{id}/matches:
+    get:
+      operationId: getWatchlistMatches
+      tags: [matches]
+      summary: Get matches for a specific watchlist
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Matches for watchlist
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Match"
+
+  # ─── Alerts ───────────────────────────────────────────────────────────────────
+  /alerts:
+    get:
+      operationId: listAlerts
+      tags: [alerts]
+      summary: List alerts for the authenticated user
+      parameters:
+        - name: unreadOnly
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: List of alerts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Alert"
+
+  /alerts/{id}/read:
+    post:
+      operationId: markAlertRead
+      tags: [alerts]
+      summary: Mark an alert as read
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Updated alert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Alert"
+
+  /alerts/read-all:
+    post:
+      operationId: markAllAlertsRead
+      tags: [alerts]
+      summary: Mark all alerts as read
+      responses:
+        "204":
+          description: Done
+
+  # ─── Saved Listings ───────────────────────────────────────────────────────────
+  /saved:
+    get:
+      operationId: listSavedListings
+      tags: [saved]
+      summary: Get saved listings for the authenticated user
+      responses:
+        "200":
+          description: Saved listings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SavedListing"
+    post:
+      operationId: saveListing
+      tags: [saved]
+      summary: Save a listing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaveListingBody"
+      responses:
+        "201":
+          description: Saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SavedListing"
+
+  /saved/{listingId}:
+    delete:
+      operationId: unsaveListing
+      tags: [saved]
+      summary: Remove a saved listing
+      parameters:
+        - name: listingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Removed
+
+  # ─── Dashboard (wow) ──────────────────────────────────────────────────────────
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard stats — watchlist count, match count, unread alerts, etc.
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /dashboard/recent-matches:
+    get:
+      operationId: getRecentMatches
+      tags: [dashboard]
+      summary: Get the most recent matches across all watchlists (for activity feed)
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Recent matches
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Match"
+
+  /dashboard/price-drops:
+    get:
+      operationId: getPriceDrops
+      tags: [dashboard]
+      summary: Get listings with recent price drops that match user watchlists
+      responses:
+        "200":
+          description: Price drop listings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Listing"
+
+  # ─── Admin ────────────────────────────────────────────────────────────────────
+  /admin/sources:
+    get:
+      operationId: listSources
+      tags: [admin]
+      summary: List all configured data sources
+      responses:
+        "200":
+          description: Sources
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DataSource"
+
+  /admin/ingest:
+    post:
+      operationId: triggerIngest
+      tags: [admin]
+      summary: Trigger a manual listing ingest for a source
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TriggerIngestBody"
+      responses:
+        "200":
+          description: Ingest result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IngestResult"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +454,423 @@ components:
       required:
         - status
 
+    # ─── Watchlist ───────────────────────────────────────────────────────────────
+    Watchlist:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: string
+        name:
+          type: string
+        brand:
+          type: string
+        model:
+          type: string
+          nullable: true
+        style:
+          type: string
+          nullable: true
+        color:
+          type: string
+          nullable: true
+        size:
+          type: string
+          nullable: true
+        condition:
+          type: string
+          nullable: true
+        minPrice:
+          type: number
+          nullable: true
+        maxPrice:
+          type: number
+          nullable: true
+        matchType:
+          type: string
+          enum: [exact, close]
+        isActive:
+          type: boolean
+        matchCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - name
+        - brand
+        - matchType
+        - isActive
+        - matchCount
+        - createdAt
+        - updatedAt
+
+    CreateWatchlistBody:
+      type: object
+      properties:
+        name:
+          type: string
+        brand:
+          type: string
+        model:
+          type: string
+          nullable: true
+        style:
+          type: string
+          nullable: true
+        color:
+          type: string
+          nullable: true
+        size:
+          type: string
+          nullable: true
+        condition:
+          type: string
+          nullable: true
+        minPrice:
+          type: number
+          nullable: true
+        maxPrice:
+          type: number
+          nullable: true
+        matchType:
+          type: string
+          enum: [exact, close]
+          default: close
+      required:
+        - name
+        - brand
+
+    UpdateWatchlistBody:
+      type: object
+      properties:
+        name:
+          type: string
+        brand:
+          type: string
+        model:
+          type: string
+          nullable: true
+        style:
+          type: string
+          nullable: true
+        color:
+          type: string
+          nullable: true
+        size:
+          type: string
+          nullable: true
+        condition:
+          type: string
+          nullable: true
+        minPrice:
+          type: number
+          nullable: true
+        maxPrice:
+          type: number
+          nullable: true
+        matchType:
+          type: string
+          enum: [exact, close]
+        isActive:
+          type: boolean
+
+    # ─── Listing ─────────────────────────────────────────────────────────────────
+    Listing:
+      type: object
+      properties:
+        id:
+          type: integer
+        sourceId:
+          type: integer
+        sourceName:
+          type: string
+        externalId:
+          type: string
+        brand:
+          type: string
+        model:
+          type: string
+          nullable: true
+        style:
+          type: string
+          nullable: true
+        color:
+          type: string
+          nullable: true
+        size:
+          type: string
+          nullable: true
+        condition:
+          type: string
+        price:
+          type: number
+        originalPrice:
+          type: number
+          nullable: true
+        currency:
+          type: string
+        imageUrl:
+          type: string
+          nullable: true
+        listingUrl:
+          type: string
+        description:
+          type: string
+          nullable: true
+        isAvailable:
+          type: boolean
+        seenAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - sourceId
+        - sourceName
+        - externalId
+        - brand
+        - condition
+        - price
+        - currency
+        - listingUrl
+        - isAvailable
+        - seenAt
+        - createdAt
+
+    ListingsPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Listing"
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+      required:
+        - items
+        - total
+        - limit
+        - offset
+
+    # ─── Match ───────────────────────────────────────────────────────────────────
+    Match:
+      type: object
+      properties:
+        id:
+          type: integer
+        watchlistId:
+          type: integer
+        watchlistName:
+          type: string
+        listing:
+          $ref: "#/components/schemas/Listing"
+        score:
+          type: number
+          description: Match confidence score 0-1
+        matchReasons:
+          type: array
+          items:
+            type: string
+          description: Human-readable reasons why this listing matched
+        isNew:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - watchlistId
+        - watchlistName
+        - listing
+        - score
+        - matchReasons
+        - isNew
+        - createdAt
+
+    # ─── Alert ───────────────────────────────────────────────────────────────────
+    Alert:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: string
+        matchId:
+          type: integer
+          nullable: true
+        watchlistId:
+          type: integer
+          nullable: true
+        watchlistName:
+          type: string
+          nullable: true
+        listing:
+          $ref: "#/components/schemas/Listing"
+          nullable: true
+        type:
+          type: string
+          enum: [new_match, price_drop, back_in_stock]
+        message:
+          type: string
+        isRead:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - type
+        - message
+        - isRead
+        - createdAt
+
+    # ─── Saved Listing ───────────────────────────────────────────────────────────
+    SavedListing:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: string
+        listing:
+          $ref: "#/components/schemas/Listing"
+        notes:
+          type: string
+          nullable: true
+        savedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - listing
+        - savedAt
+
+    SaveListingBody:
+      type: object
+      properties:
+        listingId:
+          type: integer
+        notes:
+          type: string
+          nullable: true
+      required:
+        - listingId
+
+    # ─── Dashboard ───────────────────────────────────────────────────────────────
+    DashboardSummary:
+      type: object
+      properties:
+        watchlistCount:
+          type: integer
+        activeWatchlistCount:
+          type: integer
+        totalMatchCount:
+          type: integer
+        newMatchCount:
+          type: integer
+        unreadAlertCount:
+          type: integer
+        savedCount:
+          type: integer
+        topBrands:
+          type: array
+          items:
+            type: object
+            properties:
+              brand:
+                type: string
+              count:
+                type: integer
+            required: [brand, count]
+      required:
+        - watchlistCount
+        - activeWatchlistCount
+        - totalMatchCount
+        - newMatchCount
+        - unreadAlertCount
+        - savedCount
+        - topBrands
+
+    # ─── Admin ───────────────────────────────────────────────────────────────────
+    DataSource:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        baseUrl:
+          type: string
+        adapterType:
+          type: string
+          enum: [mock, rss, sitemap, api, email]
+        isActive:
+          type: boolean
+        lastIngestAt:
+          type: string
+          format: date-time
+          nullable: true
+        listingCount:
+          type: integer
+        status:
+          type: string
+          enum: [healthy, degraded, error, unknown]
+      required:
+        - id
+        - name
+        - slug
+        - baseUrl
+        - adapterType
+        - isActive
+        - listingCount
+        - status
+
+    TriggerIngestBody:
+      type: object
+      properties:
+        sourceSlug:
+          type: string
+      required:
+        - sourceSlug
+
+    IngestResult:
+      type: object
+      properties:
+        sourceSlug:
+          type: string
+        listingsFound:
+          type: integer
+        listingsAdded:
+          type: integer
+        listingsUpdated:
+          type: integer
+        durationMs:
+          type: integer
+        errors:
+          type: array
+          items:
+            type: string
+      required:
+        - sourceSlug
+        - listingsFound
+        - listingsAdded
+        - listingsUpdated
+        - durationMs
+        - errors
