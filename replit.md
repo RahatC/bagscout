@@ -103,21 +103,56 @@ The ingestion system follows a formal `SourceAdapter` interface defined in `adap
 - `autoSeedIfEmpty()` — called from `index.ts` after the server starts. If `listings` is empty, runs every adapter once. No-op once data exists.
 - `POST /api/admin/ingest` accepts `{ sourceSlug }`. The special slug `"all"` runs every adapter and returns rolled-up totals plus `perSource[]`.
 
-## Matching Engine (`artifacts/api-server/src/lib/ingest.ts`)
+## Matching Engine (`artifacts/api-server/src/lib/matchEngine.ts`)
 
-Each ingest run upserts listings (with `normalized_*` fields), appends a `listing_snapshots` row, then scores every active preference against the new listing. Weighted scoring:
+A pure, dependency-free function `evaluateMatch(preference, listing)` returns:
+
+```ts
+{
+  matchScore: number;          // 0–100
+  matchType: "exact" | "strong" | "close" | "weak" | "rejected";
+  matchReasons: { field, value, detail?, weight, matched }[];
+  disqualifiers: { field, reason }[];
+  alertEligible: boolean;      // false for "weak" and "rejected"
+  explanation: string;         // plain-English summary
+}
+```
+
+Weights (sum to 100):
 
 | Field | Weight | Notes |
 |---|---|---|
-| brand | 0.28 | **Must match** any preferred brand, otherwise score 0 |
-| model | 0.18 | Free-text contains check on title+model when `exactModelEnabled` |
-| style | 0.10 | Any preferred style matches `normalized_style` |
-| color | 0.13 | Exact match, or 50% credit if `allowCloseColorMatch` and listing color's family matches a preferred color's family |
-| size | 0.08 | Any preferred size matches listing size |
-| condition | 0.10 | Listing condition rank ≤ preference floor |
-| price | 0.13 | Within `[minPrice, maxPrice]` |
+| model | 35 | Substring of `model_query` against listing title+model when `exactModelEnabled`; otherwise auto-credit |
+| style | 15 | Any preferred style matches listing's `normalized_style` |
+| condition | 15 | Listing's condition rank ≤ preference's `condition_min_id` rank |
+| color | 15 | Exact match, or 50% credit (7.5) when `allowCloseColorMatch` and color families overlap |
+| size | 10 | Any preferred size matches listing size; auto-credit when no sizes selected |
+| price | 10 | Within `[minPrice, maxPrice]` (with ±10% buffer when `allowCloseMatches`) |
 
-Threshold to materialize a match: `0.99` if `onlyExactCriteria`, `0.65` if `allowCloseMatches`, else `0.85`. Each match also auto-creates an `alert` (alertType `new_match`, status `pending`) if none exists for that listing/user.
+**Brand is a hard gate, not a weighted field.** A listing whose normalized brand is not in the preference's brand list is immediately rejected.
+
+**Hard gates** (always reject regardless of strictness): brand, condition floor, price range. With `allowCloseMatches` enabled, price uses a ±10% buffer before rejecting.
+
+**Strict mode** (`onlyExactCriteria=true`): mismatches on **brand, model, color, size, condition, or price** are rejected outright. Style is intentionally excluded per spec.
+
+**Match-type thresholds** (after gates pass):
+- `exact` ≥ 95 *and* every requested criterion fully matched, no disqualifiers
+- `strong` ≥ 80
+- `close` ≥ 60
+- `weak` ≥ 40 (not alert-eligible)
+- `rejected` < 40 or any hard gate failed
+
+`alertEligible = matchType ∈ {exact, strong, close}`.
+
+**Plain-English explanations** are generated from the matched/unmatched fields, e.g. *"Strong match because this is a Hermès Evelyne PM, in Black, crossbody style, excellent condition, size PM."*
+
+### Ingest integration (`artifacts/api-server/src/lib/ingest.ts`)
+
+`loadPreferenceCriteria(preferenceId)` resolves a preference's brand/style/color/size junctions plus the condition floor and color families. The ingest pipeline then calls `evaluateMatch(...)` for every active preference per upserted listing. Only matches with `alertEligible=true` are persisted to `match_results`, and the engine's `explanation` is used as the alert's user-facing message. The `match_score` column stores the engine's 0–100 score divided by 100 (kept in numeric(4,3)) so existing frontend rendering (`Math.round(score*100)`) is unchanged.
+
+### Tests (`artifacts/api-server/src/lib/matchEngine.test.ts`)
+
+25 vitest cases covering exact / strong / close / weak / rejected paths, wrong brand, price too high, condition too low, close color (family) match, strict-mode rejections, ±10% price buffer, multi-brand preferences, and missing fields. Run with `pnpm --filter @workspace/api-server test`.
 
 ## Key Commands
 
