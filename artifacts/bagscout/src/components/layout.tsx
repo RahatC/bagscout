@@ -21,7 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
 import { useListAlerts } from "@workspace/api-client-react";
 
@@ -128,7 +128,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </span>
           </Link>
         </div>
-        <nav className="flex-1 px-4 py-6">
+        <nav className="flex-1 px-4 py-6" aria-label="Main navigation">
           <NavLinks />
         </nav>
         <div className="p-4 border-t border-border">
@@ -166,15 +166,21 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="lg:hidden fixed top-0 left-0 right-0 z-40 h-16 bg-card border-b border-border flex items-center justify-between px-4">
         <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-none">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-none"
+              aria-label="Open navigation menu"
+            >
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-72 p-0 rounded-none">
+            <SheetTitle className="sr-only">Navigation</SheetTitle>
             <div className="h-20 flex items-center px-6 border-b border-border">
               <span className="font-serif text-2xl font-bold tracking-tight">BagScout</span>
             </div>
-            <nav className="px-4 py-6">
+            <nav className="px-4 py-6" aria-label="Main navigation">
               <NavLinks />
             </nav>
           </SheetContent>

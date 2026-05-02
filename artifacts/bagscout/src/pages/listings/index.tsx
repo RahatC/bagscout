@@ -6,10 +6,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { Label } from "@/components/ui/label";
 import {
   useListListings,
   getListListingsQueryKey,
@@ -58,8 +60,16 @@ export default function ListingsPage() {
 
         <div className="flex w-full md:w-auto gap-2">
           <div className="relative w-full md:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Label htmlFor="listings-search" className="sr-only">
+              Search by brand
+            </Label>
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+              aria-hidden="true"
+            />
             <Input
+              id="listings-search"
+              type="search"
               placeholder="Search by brand..."
               className="pl-9 rounded-none h-12 border-border"
               value={search}
@@ -79,6 +89,9 @@ export default function ListingsPage() {
             <SheetContent className="rounded-none border-l border-border">
               <SheetHeader>
                 <SheetTitle className="font-serif">Filters</SheetTitle>
+                <SheetDescription className="sr-only">
+                  Refine the listings shown on this page.
+                </SheetDescription>
               </SheetHeader>
               <div className="py-6 space-y-6">
                 <div>

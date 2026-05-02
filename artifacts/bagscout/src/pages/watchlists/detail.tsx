@@ -100,7 +100,12 @@ export default function WatchlistDetailPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-4">
           <Link href="/watchlists">
-            <Button variant="ghost" size="icon" className="rounded-none border border-border">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-none border border-border"
+              aria-label="Back to watchlists"
+            >
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
@@ -144,6 +149,7 @@ export default function WatchlistDetailPage() {
             className="rounded-none border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground transition-colors"
             onClick={handleDelete}
             disabled={deletePref.isPending}
+            aria-label="Delete watchlist"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
