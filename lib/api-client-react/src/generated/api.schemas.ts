@@ -47,6 +47,15 @@ export interface Size {
   normalizedName: string;
 }
 
+export type BagPreferenceAlertFrequency =
+  (typeof BagPreferenceAlertFrequency)[keyof typeof BagPreferenceAlertFrequency];
+
+export const BagPreferenceAlertFrequency = {
+  realtime: "realtime",
+  daily: "daily",
+  weekly: "weekly",
+} as const;
+
 export interface BagPreference {
   id: number;
   userId: string;
@@ -60,6 +69,7 @@ export interface BagPreference {
   onlyExactCriteria: boolean;
   allowCloseMatches: boolean;
   active: boolean;
+  alertFrequency: BagPreferenceAlertFrequency;
   brands: Brand[];
   styles: BagStyle[];
   colors: Color[];
@@ -68,6 +78,15 @@ export interface BagPreference {
   createdAt: string;
   updatedAt: string;
 }
+
+export type CreateBagPreferenceBodyAlertFrequency =
+  (typeof CreateBagPreferenceBodyAlertFrequency)[keyof typeof CreateBagPreferenceBodyAlertFrequency];
+
+export const CreateBagPreferenceBodyAlertFrequency = {
+  realtime: "realtime",
+  daily: "daily",
+  weekly: "weekly",
+} as const;
 
 export interface CreateBagPreferenceBody {
   /** @minLength 1 */
@@ -86,7 +105,17 @@ export interface CreateBagPreferenceBody {
   onlyExactCriteria?: boolean;
   allowCloseMatches?: boolean;
   active?: boolean;
+  alertFrequency?: CreateBagPreferenceBodyAlertFrequency;
 }
+
+export type UpdateBagPreferenceBodyAlertFrequency =
+  (typeof UpdateBagPreferenceBodyAlertFrequency)[keyof typeof UpdateBagPreferenceBodyAlertFrequency];
+
+export const UpdateBagPreferenceBodyAlertFrequency = {
+  realtime: "realtime",
+  daily: "daily",
+  weekly: "weekly",
+} as const;
 
 export interface UpdateBagPreferenceBody {
   nickname?: string;
@@ -103,6 +132,7 @@ export interface UpdateBagPreferenceBody {
   onlyExactCriteria?: boolean;
   allowCloseMatches?: boolean;
   active?: boolean;
+  alertFrequency?: UpdateBagPreferenceBodyAlertFrequency;
 }
 
 export interface Listing {
@@ -164,6 +194,8 @@ export interface MatchResult {
   listing: Listing;
   matchScore: number;
   matchType: string;
+  matchExplanation: string;
+  alertEligible: boolean;
   matchReasons: MatchReason[];
   disqualifiers: Disqualifier[];
   createdAt: string;

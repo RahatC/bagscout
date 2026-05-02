@@ -76,6 +76,7 @@ async function expandPreference(prefId: number) {
     onlyExactCriteria: pref.onlyExactCriteria,
     allowCloseMatches: pref.allowCloseMatches,
     active: pref.active,
+    alertFrequency: pref.alertFrequency as "realtime" | "daily" | "weekly",
     brands: brands.map((r) => r.b),
     styles: styles.map((r) => r.s),
     colors: colors.map((r) => r.c),
@@ -162,6 +163,7 @@ router.post("/", requireAuth, async (req, res) => {
       onlyExactCriteria: data.onlyExactCriteria ?? false,
       allowCloseMatches: data.allowCloseMatches ?? true,
       active: data.active ?? true,
+      alertFrequency: data.alertFrequency ?? "realtime",
     })
     .returning();
 
@@ -234,6 +236,7 @@ router.patch("/:id", requireAuth, async (req, res) => {
   if (data.onlyExactCriteria !== undefined) updates.onlyExactCriteria = data.onlyExactCriteria;
   if (data.allowCloseMatches !== undefined) updates.allowCloseMatches = data.allowCloseMatches;
   if (data.active !== undefined) updates.active = data.active;
+  if (data.alertFrequency !== undefined) updates.alertFrequency = data.alertFrequency;
 
   if (Object.keys(updates).length > 0) {
     await db.update(bagPreferencesTable).set(updates).where(eq(bagPreferencesTable.id, id));

@@ -34,6 +34,8 @@ function mapMatch(
     },
     matchScore: parseFloat(m.matchScore),
     matchType: m.matchType,
+    matchExplanation: m.matchExplanation,
+    alertEligible: m.alertEligible,
     matchReasons: m.matchReasons,
     disqualifiers: m.disqualifiers,
     createdAt: m.createdAt,

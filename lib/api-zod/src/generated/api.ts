@@ -75,6 +75,7 @@ export const ListBagPreferencesResponseItem = zod.object({
   onlyExactCriteria: zod.boolean(),
   allowCloseMatches: zod.boolean(),
   active: zod.boolean(),
+  alertFrequency: zod.enum(["realtime", "daily", "weekly"]),
   brands: zod.array(
     zod.object({
       id: zod.number(),
@@ -132,6 +133,7 @@ export const CreateBagPreferenceBody = zod.object({
   onlyExactCriteria: zod.boolean().optional(),
   allowCloseMatches: zod.boolean().optional(),
   active: zod.boolean().optional(),
+  alertFrequency: zod.enum(["realtime", "daily", "weekly"]).optional(),
 });
 
 export const GetBagPreferenceParams = zod.object({
@@ -159,6 +161,7 @@ export const GetBagPreferenceResponse = zod.object({
   onlyExactCriteria: zod.boolean(),
   allowCloseMatches: zod.boolean(),
   active: zod.boolean(),
+  alertFrequency: zod.enum(["realtime", "daily", "weekly"]),
   brands: zod.array(
     zod.object({
       id: zod.number(),
@@ -217,6 +220,7 @@ export const UpdateBagPreferenceBody = zod.object({
   onlyExactCriteria: zod.boolean().optional(),
   allowCloseMatches: zod.boolean().optional(),
   active: zod.boolean().optional(),
+  alertFrequency: zod.enum(["realtime", "daily", "weekly"]).optional(),
 });
 
 export const UpdateBagPreferenceResponse = zod.object({
@@ -240,6 +244,7 @@ export const UpdateBagPreferenceResponse = zod.object({
   onlyExactCriteria: zod.boolean(),
   allowCloseMatches: zod.boolean(),
   active: zod.boolean(),
+  alertFrequency: zod.enum(["realtime", "daily", "weekly"]),
   brands: zod.array(
     zod.object({
       id: zod.number(),
@@ -323,6 +328,8 @@ export const GetPreferenceMatchesResponseItem = zod.object({
   }),
   matchScore: zod.number(),
   matchType: zod.string(),
+  matchExplanation: zod.string(),
+  alertEligible: zod.boolean(),
   matchReasons: zod.array(
     zod.object({
       field: zod.string(),
@@ -507,6 +514,8 @@ export const ListMatchesResponseItem = zod.object({
   }),
   matchScore: zod.number(),
   matchType: zod.string(),
+  matchExplanation: zod.string(),
+  alertEligible: zod.boolean(),
   matchReasons: zod.array(
     zod.object({
       field: zod.string(),
@@ -729,6 +738,8 @@ export const GetRecentMatchesResponseItem = zod.object({
   }),
   matchScore: zod.number(),
   matchType: zod.string(),
+  matchExplanation: zod.string(),
+  alertEligible: zod.boolean(),
   matchReasons: zod.array(
     zod.object({
       field: zod.string(),

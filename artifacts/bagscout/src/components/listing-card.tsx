@@ -1,5 +1,12 @@
 import { motion } from "framer-motion";
-import { ExternalLink, Bookmark, ShieldCheck, Clock } from "lucide-react";
+import {
+  ExternalLink,
+  Bookmark,
+  ShieldCheck,
+  Clock,
+  EyeOff,
+  Sparkles,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -9,18 +16,50 @@ import { formatDistanceToNow } from "date-fns";
 interface ListingCardProps {
   listing: Listing;
   matchScore?: number;
+  matchType?: string;
+  matchExplanation?: string;
   matchReasons?: MatchReason[];
+  preferenceNickname?: string;
   isSaved?: boolean;
   onSaveToggle?: (id: number, currentlySaved: boolean) => void;
+  onHide?: (id: number) => void;
   index?: number;
 }
+
+const MATCH_TYPE_STYLES: Record<
+  string,
+  { label: string; className: string; icon?: boolean }
+> = {
+  exact: {
+    label: "Exact Match",
+    className: "bg-foreground text-background border-foreground",
+    icon: true,
+  },
+  strong: {
+    label: "Strong Match",
+    className: "bg-primary text-primary-foreground border-primary",
+    icon: true,
+  },
+  close: {
+    label: "Close Match",
+    className: "bg-background text-primary border-primary/40",
+  },
+  weak: {
+    label: "Possible Match",
+    className: "bg-background text-muted-foreground border-border",
+  },
+};
 
 export function ListingCard({
   listing,
   matchScore,
+  matchType,
+  matchExplanation,
   matchReasons,
+  preferenceNickname,
   isSaved = false,
   onSaveToggle,
+  onHide,
   index = 0,
 }: ListingCardProps) {
   const getSourceColor = (sourceName: string) => {
@@ -47,6 +86,11 @@ export function ListingCard({
   };
 
   const reasons = matchReasons?.filter((r) => r.matched) ?? [];
+  const matchTypeInfo = matchType ? MATCH_TYPE_STYLES[matchType] : null;
+
+  const firstSeen = new Date(listing.firstSeenAt);
+  const lastSeen = new Date(listing.lastSeenAt);
+  const wasUpdated = lastSeen.getTime() - firstSeen.getTime() > 60_000;
 
   return (
     <motion.div
@@ -68,7 +112,7 @@ export function ListingCard({
             </div>
           )}
 
-          <div className="absolute top-3 left-3 flex flex-col gap-2">
+          <div className="absolute top-3 left-3 flex flex-col gap-2 items-start">
             <Badge
               className={`rounded-none font-semibold ${getSourceColor(listing.sourceName)} border-none shadow-sm`}
             >
@@ -76,85 +120,146 @@ export function ListingCard({
               {listing.sourceName}
             </Badge>
 
-            {matchScore !== undefined && (
+            {matchTypeInfo && (
               <Badge
                 variant="outline"
-                className="rounded-none bg-background/95 backdrop-blur-sm border-primary/20 text-primary font-bold shadow-sm self-start"
+                className={`rounded-none font-bold uppercase tracking-widest text-[10px] shadow-sm ${matchTypeInfo.className}`}
+              >
+                {matchTypeInfo.icon && <Sparkles className="w-3 h-3 mr-1" />}
+                {matchTypeInfo.label}
+                {matchScore !== undefined && (
+                  <span className="ml-1.5 opacity-70">
+                    {Math.round(matchScore * 100)}%
+                  </span>
+                )}
+              </Badge>
+            )}
+
+            {!matchTypeInfo && matchScore !== undefined && (
+              <Badge
+                variant="outline"
+                className="rounded-none bg-background/95 backdrop-blur-sm border-primary/20 text-primary font-bold shadow-sm"
               >
                 {Math.round(matchScore * 100)}% Match
               </Badge>
             )}
           </div>
 
-          {onSaveToggle && (
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                onSaveToggle(listing.id, isSaved);
-              }}
-              className="absolute top-3 right-3 p-2 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background text-foreground transition-colors shadow-sm"
-            >
-              <Bookmark className={`w-4 h-4 ${isSaved ? "fill-primary text-primary" : ""}`} />
-            </button>
-          )}
+          <div className="absolute top-3 right-3 flex flex-col gap-2">
+            {onSaveToggle && (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  onSaveToggle(listing.id, isSaved);
+                }}
+                aria-label={isSaved ? "Remove from saved" : "Save listing"}
+                className="p-2 rounded-none bg-background/90 backdrop-blur-sm hover:bg-background text-foreground transition-colors shadow-sm border border-border"
+              >
+                <Bookmark
+                  className={`w-4 h-4 ${isSaved ? "fill-primary text-primary" : ""}`}
+                />
+              </button>
+            )}
+            {onHide && (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  onHide(listing.id);
+                }}
+                aria-label="Hide listing"
+                className="p-2 rounded-none bg-background/90 backdrop-blur-sm hover:bg-background text-muted-foreground hover:text-foreground transition-colors shadow-sm border border-border"
+              >
+                <EyeOff className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         </div>
 
-        <CardContent className="p-4 flex-1 flex flex-col">
-          <div className="flex justify-between items-start mb-2">
-            <div>
-              <h3 className="font-bold text-sm tracking-widest uppercase text-muted-foreground">
+        <CardContent className="p-5 flex-1 flex flex-col gap-3">
+          <div>
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="font-bold text-[10px] tracking-[0.2em] uppercase text-muted-foreground">
                 {listing.brand}
               </h3>
-              <p className="font-serif text-lg leading-tight mt-1 line-clamp-2">
-                {listing.model} {listing.style ? `- ${listing.style}` : ""}
+              {preferenceNickname && (
+                <span className="text-[10px] uppercase tracking-widest text-primary font-semibold truncate max-w-[120px]">
+                  {preferenceNickname}
+                </span>
+              )}
+            </div>
+            <p className="font-serif text-lg leading-snug mt-1 line-clamp-2">
+              {listing.model ?? listing.title}
+              {listing.style ? ` · ${listing.style}` : ""}
+            </p>
+          </div>
+
+          {(listing.color || listing.size || listing.condition) && (
+            <div className="flex flex-wrap gap-1.5">
+              {listing.color && (
+                <span className="text-[10px] uppercase tracking-wider bg-secondary/70 px-2 py-0.5 text-secondary-foreground border border-border/40">
+                  {listing.color}
+                </span>
+              )}
+              {listing.size && (
+                <span className="text-[10px] uppercase tracking-wider bg-secondary/70 px-2 py-0.5 text-secondary-foreground border border-border/40">
+                  {listing.size}
+                </span>
+              )}
+              {listing.condition && (
+                <span className="text-[10px] uppercase tracking-wider bg-secondary/70 px-2 py-0.5 text-secondary-foreground border border-border/40">
+                  {listing.condition}
+                </span>
+              )}
+            </div>
+          )}
+
+          {matchExplanation && (
+            <div className="border-l-2 border-primary/40 pl-3 py-1 bg-primary/[0.04]">
+              <p className="text-[10px] uppercase tracking-widest text-primary/80 font-bold mb-1">
+                Why this matched
               </p>
+              <p className="text-xs text-foreground/80 leading-relaxed line-clamp-3">
+                {matchExplanation}
+              </p>
+            </div>
+          )}
+
+          {!matchExplanation && reasons.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {reasons.slice(0, 4).map((reason, i) => (
+                <span
+                  key={i}
+                  className="text-[10px] uppercase tracking-wider bg-secondary px-1.5 py-0.5 text-secondary-foreground"
+                >
+                  {reason.field}: {reason.value}
+                </span>
+              ))}
+            </div>
+          )}
+
+          <div className="mt-auto pt-2 flex justify-between items-end">
+            <div>
+              <span className="text-2xl font-serif font-semibold text-foreground">
+                {formatPrice(listing.price, listing.currency)}
+              </span>
+              {listing.originalPrice && listing.originalPrice > listing.price && (
+                <span className="text-sm text-muted-foreground line-through ml-2">
+                  {formatPrice(listing.originalPrice, listing.currency)}
+                </span>
+              )}
             </div>
           </div>
 
-          <div className="mt-auto pt-4 flex flex-col gap-3">
-            {reasons.length > 0 && (
-              <div className="flex flex-wrap gap-1 mb-2">
-                {reasons.slice(0, 3).map((reason, i) => (
-                  <span
-                    key={i}
-                    className="text-[10px] uppercase tracking-wider bg-secondary px-1.5 py-0.5 text-secondary-foreground"
-                  >
-                    {reason.field}: {reason.value}
-                  </span>
-                ))}
-                {reasons.length > 3 && (
-                  <span className="text-[10px] uppercase tracking-wider bg-secondary px-1.5 py-0.5 text-secondary-foreground">
-                    +{reasons.length - 3} more
-                  </span>
-                )}
-              </div>
-            )}
-
-            <div className="flex justify-between items-end">
-              <div>
-                <span className="text-2xl font-serif font-semibold text-foreground">
-                  {formatPrice(listing.price, listing.currency)}
-                </span>
-                {listing.originalPrice && listing.originalPrice > listing.price && (
-                  <span className="text-sm text-muted-foreground line-through ml-2">
-                    {formatPrice(listing.originalPrice, listing.currency)}
-                  </span>
-                )}
-              </div>
-              {listing.condition && (
-                <Badge
-                  variant="outline"
-                  className="rounded-none border-border text-xs uppercase tracking-wider font-normal"
-                >
-                  {listing.condition}
-                </Badge>
-              )}
-            </div>
-
-            <div className="flex items-center text-xs text-muted-foreground">
+          <div className="flex items-center justify-between text-[11px] text-muted-foreground border-t border-border/60 pt-2">
+            <span className="flex items-center">
               <Clock className="w-3 h-3 mr-1" />
-              Listed {formatDistanceToNow(new Date(listing.createdAt), { addSuffix: true })}
-            </div>
+              First seen {formatDistanceToNow(firstSeen, { addSuffix: true })}
+            </span>
+            {wasUpdated && (
+              <span>
+                Updated {formatDistanceToNow(lastSeen, { addSuffix: true })}
+              </span>
+            )}
           </div>
         </CardContent>
 

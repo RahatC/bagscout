@@ -41,11 +41,11 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 **Domain**
 - `users` — id is the Clerk user id (lazy upserted by `requireAuth`); minimal mirror of email + full_name
 - `user_profiles`, `notification_preferences`
-- `bag_preferences` — nickname, modelQuery + exactModelEnabled, conditionMinId, allowCloseColorMatch, minPrice/maxPrice, allowCloseMatches, onlyExactCriteria, active
+- `bag_preferences` — nickname, modelQuery + exactModelEnabled, conditionMinId, allowCloseColorMatch, minPrice/maxPrice, allowCloseMatches, onlyExactCriteria, active, alertFrequency (`realtime` | `daily` | `weekly`, default `realtime`)
 - Junctions: `bag_preference_brands`, `bag_preference_styles`, `bag_preference_colors`, `bag_preference_sizes`
 - `listings` — raw + `normalized_*` fields (brand, model, style, color, condition); `availability_status`; `source_id` FK
 - `listing_snapshots` — append-only price/availability history
-- `match_results` — `(preferenceId, listingId)` unique; `matchScore`, `matchType`, `matchReasons[]`, `disqualifiers[]`
+- `match_results` — `(preferenceId, listingId)` unique; `matchScore`, `matchType` (`exact` | `strong` | `close` | `weak`), `matchExplanation` (plain-English), `alertEligible`, `matchReasons[]`, `disqualifiers[]`
 - `alerts` — `alertType` (new_match | price_drop | back_in_stock), `status` (pending | sent | read | dismissed)
 - `saved_listings`
 - `ingestion_logs`

@@ -31,6 +31,9 @@ export const bagPreferencesTable = pgTable("bag_preferences", {
   // If true, partial matches above the threshold still surface
   allowCloseMatches: boolean("allow_close_matches").notNull().default(true),
   active: boolean("active").notNull().default(true),
+  // How often the user wants to be notified for matches against this watchlist.
+  // One of: "realtime" | "daily" | "weekly".
+  alertFrequency: text("alert_frequency").notNull().default("realtime"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

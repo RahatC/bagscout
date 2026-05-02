@@ -523,6 +523,7 @@ components:
         - onlyExactCriteria
         - allowCloseMatches
         - active
+        - alertFrequency
         - brands
         - styles
         - colors
@@ -543,6 +544,9 @@ components:
         onlyExactCriteria: { type: boolean }
         allowCloseMatches: { type: boolean }
         active: { type: boolean }
+        alertFrequency:
+          type: string
+          enum: [realtime, daily, weekly]
         brands:
           type: array
           items: { $ref: "#/components/schemas/Brand" }
@@ -586,6 +590,9 @@ components:
         onlyExactCriteria: { type: boolean }
         allowCloseMatches: { type: boolean }
         active: { type: boolean }
+        alertFrequency:
+          type: string
+          enum: [realtime, daily, weekly]
 
     UpdateBagPreferenceBody:
       type: object
@@ -612,6 +619,9 @@ components:
         onlyExactCriteria: { type: boolean }
         allowCloseMatches: { type: boolean }
         active: { type: boolean }
+        alertFrequency:
+          type: string
+          enum: [realtime, daily, weekly]
 
     # Listings
     Listing:
@@ -700,6 +710,8 @@ components:
         - listing
         - matchScore
         - matchType
+        - matchExplanation
+        - alertEligible
         - matchReasons
         - disqualifiers
         - createdAt
@@ -711,6 +723,8 @@ components:
         listing: { $ref: "#/components/schemas/Listing" }
         matchScore: { type: number }
         matchType: { type: string }
+        matchExplanation: { type: string }
+        alertEligible: { type: boolean }
         matchReasons:
           type: array
           items: { $ref: "#/components/schemas/MatchReason" }

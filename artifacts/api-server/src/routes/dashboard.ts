@@ -90,7 +90,7 @@ router.get("/recent-matches", requireAuth, async (req, res) => {
     .innerJoin(listingsTable, eq(matchResultsTable.listingId, listingsTable.id))
     .innerJoin(sourcesTable, eq(listingsTable.sourceId, sourcesTable.id))
     .where(eq(matchResultsTable.userId, userId))
-    .orderBy(desc(matchResultsTable.createdAt))
+    .orderBy(desc(matchResultsTable.matchScore), desc(matchResultsTable.createdAt))
     .limit(limit);
 
   res.json(
@@ -108,6 +108,8 @@ router.get("/recent-matches", requireAuth, async (req, res) => {
       },
       matchScore: parseFloat(r.match_results.matchScore),
       matchType: r.match_results.matchType,
+      matchExplanation: r.match_results.matchExplanation,
+      alertEligible: r.match_results.alertEligible,
       matchReasons: r.match_results.matchReasons,
       disqualifiers: r.match_results.disqualifiers,
       createdAt: r.match_results.createdAt,
