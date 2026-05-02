@@ -133,13 +133,23 @@ function HomeRedirect() {
   );
 }
 
-function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
+function ProtectedRoute({
+  component: Component,
+  bare = false,
+}: {
+  component: React.ComponentType;
+  bare?: boolean;
+}) {
   return (
     <>
       <Show when="signed-in">
-        <AppLayout>
+        {bare ? (
           <Component />
-        </AppLayout>
+        ) : (
+          <AppLayout>
+            <Component />
+          </AppLayout>
+        )}
       </Show>
       <Show when="signed-out">
         <Redirect to="/sign-in" />
@@ -182,7 +192,7 @@ function ClerkProviderWithRoutes() {
           <Route path="/sign-in/*?" component={SignInPage} />
           <Route path="/sign-up/*?" component={SignUpPage} />
           
-          <Route path="/onboarding" component={() => <ProtectedRoute component={OnboardingPage} />} />
+          <Route path="/onboarding" component={() => <ProtectedRoute component={OnboardingPage} bare />} />
           <Route path="/dashboard" component={() => <ProtectedRoute component={DashboardPage} />} />
           <Route path="/watchlists" component={() => <ProtectedRoute component={WatchlistsPage} />} />
           <Route path="/watchlists/new" component={() => <ProtectedRoute component={WatchlistsNewPage} />} />

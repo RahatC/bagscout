@@ -67,7 +67,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 ### Frontend Pages (`artifacts/bagscout/src/pages/`)
 - `/` — Landing page (unauthenticated) / dashboard when signed in
 - `/sign-in`, `/sign-up` — Clerk auth pages (fully branded)
-- `/onboarding` — First-time watchlist creation
+- `/onboarding` — First-time guided 11-screen onboarding flow (full-screen, no AppLayout). Welcome → Brands (multi-select + search) → Styles → Exact Model toggle → Min Condition → Colors (with close-match toggle) → Size (generic + custom text) → Price → Match Strictness → Alert Frequency → Confirmation. Saves a bag preference via `POST /api/preferences`, then redirects to `/dashboard`. Custom size text is promoted to `sizeIds` if it matches a known size, otherwise composed onto `modelQuery` so user input is never dropped. Alert frequency choice is persisted to `localStorage` (no API endpoint yet).
 - `/dashboard` — Stats + recent matches + price drops
 - `/watchlists` — List, `/watchlists/new` (3-step multi-select form), `/watchlists/:id`
 - `/listings` — Browse + filters, `/listings/:id`
