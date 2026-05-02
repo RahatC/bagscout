@@ -26,6 +26,19 @@ if (!basePath) {
   );
 }
 
+// Replit-managed Clerk auto-swaps `CLERK_PUBLISHABLE_KEY` between the
+// development `pk_test_…` and production `pk_live_…` values at publish time,
+// but only for non-`VITE_` secrets. Bridge it into Vite's client env so the
+// browser bundle picks up the live key automatically in production. An
+// explicit `VITE_CLERK_PUBLISHABLE_KEY` (e.g. an external Clerk tenant)
+// always wins.
+if (
+  !process.env.VITE_CLERK_PUBLISHABLE_KEY &&
+  process.env.CLERK_PUBLISHABLE_KEY
+) {
+  process.env.VITE_CLERK_PUBLISHABLE_KEY = process.env.CLERK_PUBLISHABLE_KEY;
+}
+
 export default defineConfig({
   base: basePath,
   plugins: [

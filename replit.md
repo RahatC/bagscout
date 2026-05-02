@@ -215,3 +215,7 @@ Weights (sum to 100):
 - **Style**: Editorial, luxury, unhurried — generous spacing, high typographic contrast
 
 See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.
+
+## Deployment
+
+See `docs/deployment.md` for the full env var inventory, Clerk production setup, autoscale configuration, and smoke-test checklist.
