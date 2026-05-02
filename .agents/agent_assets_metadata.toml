@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "nhKwOmtICzyGyRgQoYzKo"
+uri = "file://docs/bagscout-ux-plan.md"
+type = "text"
+title = "BagScout — Product Architecture & UX Plan"
