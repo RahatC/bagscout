@@ -8,6 +8,7 @@ import {
   sourcesTable,
 } from "@workspace/db";
 import { requireAuth } from "../middlewares/requireAuth";
+import { mapListing } from "../lib/mappers";
 import type { Request } from "express";
 
 const router = Router();
@@ -25,13 +26,7 @@ function mapMatch(
     userId: m.userId,
     preferenceId: m.preferenceId,
     preferenceNickname,
-    listing: {
-      ...listing,
-      sourceName: source.name,
-      price: parseFloat(listing.price),
-      originalPrice: listing.originalPrice ? parseFloat(listing.originalPrice) : null,
-      discountPercent: listing.discountPercent ? parseFloat(listing.discountPercent) : null,
-    },
+    listing: mapListing(listing, source),
     matchScore: parseFloat(m.matchScore),
     matchType: m.matchType,
     matchExplanation: m.matchExplanation,

@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { ListingCard } from "@/components/listing-card";
 import { EmptyState } from "@/components/empty-state";
+import { WatchlistSuggestions } from "@/components/watchlist-suggestions";
 import { formatDistanceToNow } from "date-fns";
 
 export default function WatchlistDetailPage() {
@@ -180,6 +181,11 @@ export default function WatchlistDetailPage() {
           </p>
         </div>
       </div>
+
+      <WatchlistSuggestions
+        preferenceId={pref.id}
+        currentSizeIds={pref.sizes.map((s) => s.id)}
+      />
 
       <div>
         <div className="flex items-center justify-between mb-6 border-b border-border pb-4">

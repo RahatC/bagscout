@@ -288,6 +288,29 @@ export const DeleteBagPreferenceParams = zod.object({
   id: zod.coerce.number(),
 });
 
+export const GetPreferenceSuggestionsParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetPreferenceSuggestionsResponse = zod.object({
+  preferenceId: zod.number(),
+  suggestions: zod.array(
+    zod.object({
+      type: zod.enum([
+        "add_close_colors",
+        "add_adjacent_sizes",
+        "raise_max_price",
+        "include_adjacent_models",
+      ]),
+      title: zod.string(),
+      body: zod.string(),
+      suggestedMaxPrice: zod.number().nullish(),
+      suggestedColorIds: zod.array(zod.number()).nullish(),
+      suggestedSizeIds: zod.array(zod.number()).nullish(),
+    }),
+  ),
+});
+
 export const GetPreferenceMatchesParams = zod.object({
   id: zod.coerce.number(),
 });
@@ -322,6 +345,15 @@ export const GetPreferenceMatchesResponseItem = zod.object({
     imageUrl: zod.string().nullish(),
     description: zod.string().nullish(),
     availabilityStatus: zod.string(),
+    dealScore: zod.number().nullish(),
+    marketLow: zod.number().nullish(),
+    marketMedian: zod.number().nullish(),
+    marketHigh: zod.number().nullish(),
+    marketSampleSize: zod.number().nullish(),
+    scarcityTier: zod
+      .enum(["common", "uncommon", "rare", "very_rare"])
+      .nullish(),
+    priceVerdict: zod.enum(["below", "fair", "expensive"]).nullish(),
     firstSeenAt: zod.coerce.date(),
     lastSeenAt: zod.coerce.date(),
     createdAt: zod.coerce.date(),
@@ -393,6 +425,15 @@ export const ListListingsResponse = zod.object({
       imageUrl: zod.string().nullish(),
       description: zod.string().nullish(),
       availabilityStatus: zod.string(),
+      dealScore: zod.number().nullish(),
+      marketLow: zod.number().nullish(),
+      marketMedian: zod.number().nullish(),
+      marketHigh: zod.number().nullish(),
+      marketSampleSize: zod.number().nullish(),
+      scarcityTier: zod
+        .enum(["common", "uncommon", "rare", "very_rare"])
+        .nullish(),
+      priceVerdict: zod.enum(["below", "fair", "expensive"]).nullish(),
       firstSeenAt: zod.coerce.date(),
       lastSeenAt: zod.coerce.date(),
       createdAt: zod.coerce.date(),
@@ -428,6 +469,13 @@ export const GetFeaturedListingsResponseItem = zod.object({
   imageUrl: zod.string().nullish(),
   description: zod.string().nullish(),
   availabilityStatus: zod.string(),
+  dealScore: zod.number().nullish(),
+  marketLow: zod.number().nullish(),
+  marketMedian: zod.number().nullish(),
+  marketHigh: zod.number().nullish(),
+  marketSampleSize: zod.number().nullish(),
+  scarcityTier: zod.enum(["common", "uncommon", "rare", "very_rare"]).nullish(),
+  priceVerdict: zod.enum(["below", "fair", "expensive"]).nullish(),
   firstSeenAt: zod.coerce.date(),
   lastSeenAt: zod.coerce.date(),
   createdAt: zod.coerce.date(),
@@ -465,10 +513,69 @@ export const GetListingResponse = zod.object({
   imageUrl: zod.string().nullish(),
   description: zod.string().nullish(),
   availabilityStatus: zod.string(),
+  dealScore: zod.number().nullish(),
+  marketLow: zod.number().nullish(),
+  marketMedian: zod.number().nullish(),
+  marketHigh: zod.number().nullish(),
+  marketSampleSize: zod.number().nullish(),
+  scarcityTier: zod.enum(["common", "uncommon", "rare", "very_rare"]).nullish(),
+  priceVerdict: zod.enum(["below", "fair", "expensive"]).nullish(),
   firstSeenAt: zod.coerce.date(),
   lastSeenAt: zod.coerce.date(),
   createdAt: zod.coerce.date(),
 });
+
+export const GetSimilarCheaperListingsParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const getSimilarCheaperListingsQueryLimitDefault = 6;
+
+export const GetSimilarCheaperListingsQueryParams = zod.object({
+  limit: zod.coerce
+    .number()
+    .default(getSimilarCheaperListingsQueryLimitDefault),
+});
+
+export const GetSimilarCheaperListingsResponseItem = zod.object({
+  id: zod.number(),
+  sourceId: zod.number(),
+  sourceName: zod.string(),
+  sourceListingId: zod.string(),
+  sourceUrl: zod.string(),
+  title: zod.string(),
+  brand: zod.string(),
+  model: zod.string().nullish(),
+  style: zod.string().nullish(),
+  condition: zod.string().nullish(),
+  color: zod.string().nullish(),
+  size: zod.string().nullish(),
+  normalizedBrand: zod.string(),
+  normalizedModel: zod.string().nullish(),
+  normalizedStyle: zod.string().nullish(),
+  normalizedCondition: zod.string().nullish(),
+  normalizedColor: zod.string().nullish(),
+  price: zod.number(),
+  currency: zod.string(),
+  originalPrice: zod.number().nullish(),
+  discountPercent: zod.number().nullish(),
+  imageUrl: zod.string().nullish(),
+  description: zod.string().nullish(),
+  availabilityStatus: zod.string(),
+  dealScore: zod.number().nullish(),
+  marketLow: zod.number().nullish(),
+  marketMedian: zod.number().nullish(),
+  marketHigh: zod.number().nullish(),
+  marketSampleSize: zod.number().nullish(),
+  scarcityTier: zod.enum(["common", "uncommon", "rare", "very_rare"]).nullish(),
+  priceVerdict: zod.enum(["below", "fair", "expensive"]).nullish(),
+  firstSeenAt: zod.coerce.date(),
+  lastSeenAt: zod.coerce.date(),
+  createdAt: zod.coerce.date(),
+});
+export const GetSimilarCheaperListingsResponse = zod.array(
+  GetSimilarCheaperListingsResponseItem,
+);
 
 export const listMatchesQueryLimitDefault = 30;
 export const listMatchesQueryOffsetDefault = 0;
@@ -508,6 +615,15 @@ export const ListMatchesResponseItem = zod.object({
     imageUrl: zod.string().nullish(),
     description: zod.string().nullish(),
     availabilityStatus: zod.string(),
+    dealScore: zod.number().nullish(),
+    marketLow: zod.number().nullish(),
+    marketMedian: zod.number().nullish(),
+    marketHigh: zod.number().nullish(),
+    marketSampleSize: zod.number().nullish(),
+    scarcityTier: zod
+      .enum(["common", "uncommon", "rare", "very_rare"])
+      .nullish(),
+    priceVerdict: zod.enum(["below", "fair", "expensive"]).nullish(),
     firstSeenAt: zod.coerce.date(),
     lastSeenAt: zod.coerce.date(),
     createdAt: zod.coerce.date(),
@@ -571,15 +687,33 @@ export const ListAlertsResponseItem = zod.object({
       imageUrl: zod.string().nullish(),
       description: zod.string().nullish(),
       availabilityStatus: zod.string(),
+      dealScore: zod.number().nullish(),
+      marketLow: zod.number().nullish(),
+      marketMedian: zod.number().nullish(),
+      marketHigh: zod.number().nullish(),
+      marketSampleSize: zod.number().nullish(),
+      scarcityTier: zod
+        .enum(["common", "uncommon", "rare", "very_rare"])
+        .nullish(),
+      priceVerdict: zod.enum(["below", "fair", "expensive"]).nullish(),
       firstSeenAt: zod.coerce.date(),
       lastSeenAt: zod.coerce.date(),
       createdAt: zod.coerce.date(),
     })
     .nullish(),
   matchResultId: zod.number().nullish(),
-  alertType: zod.string(),
+  alertType: zod.enum([
+    "new_match",
+    "price_drop",
+    "back_in_stock",
+    "better_condition",
+    "exact_model",
+    "under_target_price",
+  ]),
   status: zod.string(),
   message: zod.string().nullish(),
+  whyNow: zod.string().nullish(),
+  priceAtAlert: zod.number().nullish(),
   sentAt: zod.coerce.date().nullish(),
   createdAt: zod.coerce.date(),
 });
@@ -620,16 +754,92 @@ export const MarkAlertReadResponse = zod.object({
       imageUrl: zod.string().nullish(),
       description: zod.string().nullish(),
       availabilityStatus: zod.string(),
+      dealScore: zod.number().nullish(),
+      marketLow: zod.number().nullish(),
+      marketMedian: zod.number().nullish(),
+      marketHigh: zod.number().nullish(),
+      marketSampleSize: zod.number().nullish(),
+      scarcityTier: zod
+        .enum(["common", "uncommon", "rare", "very_rare"])
+        .nullish(),
+      priceVerdict: zod.enum(["below", "fair", "expensive"]).nullish(),
       firstSeenAt: zod.coerce.date(),
       lastSeenAt: zod.coerce.date(),
       createdAt: zod.coerce.date(),
     })
     .nullish(),
   matchResultId: zod.number().nullish(),
-  alertType: zod.string(),
+  alertType: zod.enum([
+    "new_match",
+    "price_drop",
+    "back_in_stock",
+    "better_condition",
+    "exact_model",
+    "under_target_price",
+  ]),
   status: zod.string(),
   message: zod.string().nullish(),
+  whyNow: zod.string().nullish(),
+  priceAtAlert: zod.number().nullish(),
   sentAt: zod.coerce.date().nullish(),
+  createdAt: zod.coerce.date(),
+});
+
+export const GetAlertPreviewParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetAlertPreviewResponse = zod.object({
+  id: zod.number(),
+  alertType: zod.string(),
+  subject: zod.string(),
+  heading: zod.string(),
+  whyMatched: zod.string(),
+  whyNow: zod.string().nullish(),
+  matchScore: zod.number().nullish(),
+  matchType: zod.string().nullish(),
+  preferenceNickname: zod.string().nullish(),
+  listing: zod.object({
+    id: zod.number(),
+    sourceId: zod.number(),
+    sourceName: zod.string(),
+    sourceListingId: zod.string(),
+    sourceUrl: zod.string(),
+    title: zod.string(),
+    brand: zod.string(),
+    model: zod.string().nullish(),
+    style: zod.string().nullish(),
+    condition: zod.string().nullish(),
+    color: zod.string().nullish(),
+    size: zod.string().nullish(),
+    normalizedBrand: zod.string(),
+    normalizedModel: zod.string().nullish(),
+    normalizedStyle: zod.string().nullish(),
+    normalizedCondition: zod.string().nullish(),
+    normalizedColor: zod.string().nullish(),
+    price: zod.number(),
+    currency: zod.string(),
+    originalPrice: zod.number().nullish(),
+    discountPercent: zod.number().nullish(),
+    imageUrl: zod.string().nullish(),
+    description: zod.string().nullish(),
+    availabilityStatus: zod.string(),
+    dealScore: zod.number().nullish(),
+    marketLow: zod.number().nullish(),
+    marketMedian: zod.number().nullish(),
+    marketHigh: zod.number().nullish(),
+    marketSampleSize: zod.number().nullish(),
+    scarcityTier: zod
+      .enum(["common", "uncommon", "rare", "very_rare"])
+      .nullish(),
+    priceVerdict: zod.enum(["below", "fair", "expensive"]).nullish(),
+    firstSeenAt: zod.coerce.date(),
+    lastSeenAt: zod.coerce.date(),
+    createdAt: zod.coerce.date(),
+  }),
+  listingUrl: zod.string().optional(),
+  viewUrl: zod.string().optional(),
+  saveUrl: zod.string().optional(),
   createdAt: zod.coerce.date(),
 });
 
@@ -661,6 +871,15 @@ export const ListSavedListingsResponseItem = zod.object({
     imageUrl: zod.string().nullish(),
     description: zod.string().nullish(),
     availabilityStatus: zod.string(),
+    dealScore: zod.number().nullish(),
+    marketLow: zod.number().nullish(),
+    marketMedian: zod.number().nullish(),
+    marketHigh: zod.number().nullish(),
+    marketSampleSize: zod.number().nullish(),
+    scarcityTier: zod
+      .enum(["common", "uncommon", "rare", "very_rare"])
+      .nullish(),
+    priceVerdict: zod.enum(["below", "fair", "expensive"]).nullish(),
     firstSeenAt: zod.coerce.date(),
     lastSeenAt: zod.coerce.date(),
     createdAt: zod.coerce.date(),
@@ -732,6 +951,15 @@ export const GetRecentMatchesResponseItem = zod.object({
     imageUrl: zod.string().nullish(),
     description: zod.string().nullish(),
     availabilityStatus: zod.string(),
+    dealScore: zod.number().nullish(),
+    marketLow: zod.number().nullish(),
+    marketMedian: zod.number().nullish(),
+    marketHigh: zod.number().nullish(),
+    marketSampleSize: zod.number().nullish(),
+    scarcityTier: zod
+      .enum(["common", "uncommon", "rare", "very_rare"])
+      .nullish(),
+    priceVerdict: zod.enum(["below", "fair", "expensive"]).nullish(),
     firstSeenAt: zod.coerce.date(),
     lastSeenAt: zod.coerce.date(),
     createdAt: zod.coerce.date(),
@@ -785,6 +1013,13 @@ export const GetPriceDropsResponseItem = zod.object({
   imageUrl: zod.string().nullish(),
   description: zod.string().nullish(),
   availabilityStatus: zod.string(),
+  dealScore: zod.number().nullish(),
+  marketLow: zod.number().nullish(),
+  marketMedian: zod.number().nullish(),
+  marketHigh: zod.number().nullish(),
+  marketSampleSize: zod.number().nullish(),
+  scarcityTier: zod.enum(["common", "uncommon", "rare", "very_rare"]).nullish(),
+  priceVerdict: zod.enum(["below", "fair", "expensive"]).nullish(),
   firstSeenAt: zod.coerce.date(),
   lastSeenAt: zod.coerce.date(),
   createdAt: zod.coerce.date(),
@@ -841,4 +1076,17 @@ export const TriggerIngestResponse = zod.object({
   listingsUpdated: zod.number(),
   durationMs: zod.number(),
   errors: zod.array(zod.string()).optional(),
+});
+
+/**
+ * Group pending alerts by user and watchlist alertFrequency, mark them sent, and return per-frequency counts. Stand-in for a real worker.
+ */
+export const RunDigestsResponse = zod.object({
+  usersNotified: zod.number(),
+  alertsSent: zod.number(),
+  byFrequency: zod.object({
+    realtime: zod.number().optional(),
+    daily: zod.number().optional(),
+    weekly: zod.number().optional(),
+  }),
 });

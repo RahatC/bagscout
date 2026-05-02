@@ -1,21 +1,9 @@
 import { Router } from "express";
-import { eq, and, gte, lte, ilike, sql } from "drizzle-orm";
-import { db, listingsTable, sourcesTable } from "@workspace/db";
+import { eq, and, gte, lte, ilike, ne, sql, desc } from "drizzle-orm";
+import { db, listingsTable, sourcesTable, colorsTable } from "@workspace/db";
+import { mapListing } from "../lib/mappers";
 
 const router = Router();
-
-function mapListing(
-  l: typeof listingsTable.$inferSelect,
-  source: typeof sourcesTable.$inferSelect,
-) {
-  return {
-    ...l,
-    sourceName: source.name,
-    price: parseFloat(l.price),
-    originalPrice: l.originalPrice ? parseFloat(l.originalPrice) : null,
-    discountPercent: l.discountPercent ? parseFloat(l.discountPercent) : null,
-  };
-}
 
 router.get("/featured", async (_req, res) => {
   const rows = await db
@@ -101,6 +89,80 @@ router.get("/:id", async (req, res) => {
     return;
   }
   res.json(mapListing(row.listings, row.sources));
+});
+
+/**
+ * "Similar but cheaper": same brand + (style if available) + same color
+ * family if known + equal-or-better condition rank, priced strictly lower.
+ * Falls back to brand-only matching if the strict filter yields no results.
+ */
+router.get("/:id/similar-cheaper", async (req, res) => {
+  const id = parseInt(String(req.params.id));
+  if (isNaN(id)) {
+    res.status(400).json({ error: "Invalid id" });
+    return;
+  }
+  const limitRaw = parseInt((req.query.limit as string) ?? "6", 10);
+  const limit = Math.min(Number.isNaN(limitRaw) || limitRaw < 1 ? 6 : limitRaw, 24);
+
+  const [base] = await db
+    .select()
+    .from(listingsTable)
+    .where(eq(listingsTable.id, id));
+  if (!base) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+
+  const conds = [
+    eq(listingsTable.normalizedBrand, base.normalizedBrand),
+    eq(listingsTable.availabilityStatus, "available"),
+    ne(listingsTable.id, base.id),
+    lte(listingsTable.price, sql`${base.price}::numeric - 1`),
+  ];
+  if (base.normalizedStyle) {
+    conds.push(eq(listingsTable.normalizedStyle, base.normalizedStyle));
+  }
+
+  // Optional color-family filter — only applied when we can resolve a family.
+  let familyFiltered = false;
+  if (base.normalizedColor) {
+    const [cf] = await db
+      .select({ family: colorsTable.family })
+      .from(colorsTable)
+      .where(eq(colorsTable.normalizedName, base.normalizedColor));
+    if (cf?.family) {
+      familyFiltered = true;
+      conds.push(
+        sql`${listingsTable.normalizedColor} IN (
+          SELECT ${colorsTable.normalizedName} FROM ${colorsTable}
+          WHERE ${colorsTable.family} = ${cf.family}
+        )`,
+      );
+    }
+  }
+
+  let rows = await db
+    .select()
+    .from(listingsTable)
+    .innerJoin(sourcesTable, eq(listingsTable.sourceId, sourcesTable.id))
+    .where(and(...conds))
+    .orderBy(listingsTable.price)
+    .limit(limit);
+
+  // Fall back: drop color-family if too few results.
+  if (rows.length === 0 && familyFiltered) {
+    const fallbackConds = conds.slice(0, -1);
+    rows = await db
+      .select()
+      .from(listingsTable)
+      .innerJoin(sourcesTable, eq(listingsTable.sourceId, sourcesTable.id))
+      .where(and(...fallbackConds))
+      .orderBy(listingsTable.price)
+      .limit(limit);
+  }
+
+  res.json(rows.map((r) => mapListing(r.listings, r.sources)));
 });
 
 export default router;

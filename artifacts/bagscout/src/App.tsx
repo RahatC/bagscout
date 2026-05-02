@@ -17,6 +17,7 @@ import WatchlistDetailPage from "@/pages/watchlists/detail";
 import ListingsPage from "@/pages/listings/index";
 import ListingDetailPage from "@/pages/listings/detail";
 import AlertsPage from "@/pages/alerts";
+import AlertPreviewPage from "@/pages/alerts/preview";
 import SavedPage from "@/pages/saved";
 import AdminPage from "@/pages/admin";
 import OnboardingPage from "@/pages/onboarding";
@@ -200,6 +201,7 @@ function ClerkProviderWithRoutes() {
           <Route path="/listings" component={() => <ProtectedRoute component={ListingsPage} />} />
           <Route path="/listings/:id" component={() => <ProtectedRoute component={ListingDetailPage} />} />
           <Route path="/alerts" component={() => <ProtectedRoute component={AlertsPage} />} />
+          <Route path="/alerts/:id/preview" component={() => <ProtectedRoute component={AlertPreviewPage} />} />
           <Route path="/saved" component={() => <ProtectedRoute component={SavedPage} />} />
           <Route path="/admin" component={() => <ProtectedRoute component={AdminPage} />} />
 

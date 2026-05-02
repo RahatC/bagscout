@@ -1,5 +1,5 @@
 import { useRoute, Link } from "wouter";
-import { ArrowLeft, Bookmark, ExternalLink, ShieldCheck, Clock } from "lucide-react";
+import { ArrowLeft, Bookmark, ExternalLink, ShieldCheck, Clock, Flame, Gem } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,6 +14,8 @@ import {
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
+import { MarketRange } from "@/components/market-range";
+import { SimilarCheaper } from "@/components/similar-cheaper";
 
 export default function ListingDetailPage() {
   const [, params] = useRoute("/listings/:id");
@@ -146,7 +148,7 @@ export default function ListingDetailPage() {
               {listing.model} {listing.style ? `- ${listing.style}` : ""}
             </h1>
 
-            <div className="flex items-end gap-4 mb-6">
+            <div className="flex items-end gap-4 mb-4">
               <span className="text-3xl font-serif font-semibold text-foreground">
                 {formatPrice(listing.price, listing.currency)}
               </span>
@@ -154,6 +156,48 @@ export default function ListingDetailPage() {
                 <span className="text-lg text-muted-foreground line-through pb-1">
                   {formatPrice(listing.originalPrice, listing.currency)}
                 </span>
+              )}
+            </div>
+
+            <div className="flex flex-wrap gap-2 mb-6">
+              {listing.dealScore != null && listing.dealScore >= 70 && (
+                <Badge className="rounded-none border-none bg-emerald-700 text-white font-bold uppercase tracking-widest text-[10px]">
+                  <Flame className="w-3 h-3 mr-1" />
+                  Deal Score {Math.round(listing.dealScore)}
+                </Badge>
+              )}
+              {(listing.scarcityTier === "rare" || listing.scarcityTier === "very_rare") && (
+                <Badge
+                  variant="outline"
+                  className="rounded-none uppercase tracking-widest text-[10px] font-bold border-primary/40 text-primary"
+                >
+                  <Gem className="w-3 h-3 mr-1" />
+                  {listing.scarcityTier === "very_rare" ? "Very rare" : "Rare"}
+                </Badge>
+              )}
+              {listing.priceVerdict === "below" && (
+                <Badge
+                  variant="outline"
+                  className="rounded-none uppercase tracking-widest text-[10px] font-bold border-emerald-700 bg-emerald-50 text-emerald-900"
+                >
+                  Below market
+                </Badge>
+              )}
+              {listing.priceVerdict === "fair" && (
+                <Badge
+                  variant="outline"
+                  className="rounded-none uppercase tracking-widest text-[10px] font-bold border-border"
+                >
+                  Fair price
+                </Badge>
+              )}
+              {listing.priceVerdict === "expensive" && (
+                <Badge
+                  variant="outline"
+                  className="rounded-none uppercase tracking-widest text-[10px] font-bold border-rose-300 bg-rose-50 text-rose-900"
+                >
+                  Above market
+                </Badge>
               )}
             </div>
 
@@ -224,6 +268,22 @@ export default function ListingDetailPage() {
           </div>
         </div>
       </div>
+
+      <MarketRange
+        price={listing.price}
+        currency={listing.currency}
+        marketLow={listing.marketLow}
+        marketMedian={listing.marketMedian}
+        marketHigh={listing.marketHigh}
+        marketSampleSize={listing.marketSampleSize}
+        priceVerdict={listing.priceVerdict}
+      />
+
+      <SimilarCheaper
+        listingId={listing.id}
+        basePrice={listing.price}
+        currency={listing.currency}
+      />
     </div>
   );
 }

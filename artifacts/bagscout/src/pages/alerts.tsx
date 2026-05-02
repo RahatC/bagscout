@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { Bell, Check, CheckCircle2, ShieldCheck, Clock } from "lucide-react";
+import { Bell, Check, CheckCircle2, ShieldCheck, Clock, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -135,7 +135,7 @@ export default function AlertsPage() {
                         <div className="flex justify-between items-start mb-1">
                           <div className="flex items-center gap-2">
                             <span className="text-[10px] uppercase tracking-widest font-bold text-primary">
-                              {alert.alertType.replace("_", " ")}
+                              {alert.alertType.replaceAll("_", " ")}
                             </span>
                             {unread && <span className="w-2 h-2 rounded-full bg-primary" />}
                           </div>
@@ -145,17 +145,36 @@ export default function AlertsPage() {
                         </div>
 
                         {alert.message && (
-                          <p className="text-sm font-medium mb-3">{alert.message}</p>
+                          <p className="text-sm font-medium mb-2">{alert.message}</p>
                         )}
 
-                        {alert.preferenceId && (
-                          <Link
-                            href={`/watchlists/${alert.preferenceId}`}
-                            className="text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors flex items-center"
-                          >
-                            Watchlist: {alert.preferenceNickname ?? "View"}
-                          </Link>
+                        {alert.whyNow && (
+                          <div className="border-l-2 border-primary/40 pl-3 py-1 mb-3 bg-primary/[0.04]">
+                            <p className="text-[10px] uppercase tracking-widest text-primary/80 font-bold mb-0.5">
+                              Why now
+                            </p>
+                            <p className="text-xs text-foreground/80 leading-relaxed">
+                              {alert.whyNow}
+                            </p>
+                          </div>
                         )}
+
+                        <div className="flex items-center gap-4 flex-wrap">
+                          {alert.preferenceId && (
+                            <Link
+                              href={`/watchlists/${alert.preferenceId}`}
+                              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors flex items-center"
+                            >
+                              Watchlist: {alert.preferenceNickname ?? "View"}
+                            </Link>
+                          )}
+                          <Link
+                            href={`/alerts/${alert.id}/preview`}
+                            className="text-xs font-semibold uppercase tracking-wider text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+                          >
+                            <Eye className="w-3 h-3" /> Preview email
+                          </Link>
+                        </div>
                       </div>
                     </div>
 

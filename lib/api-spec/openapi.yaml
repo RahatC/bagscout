@@ -177,6 +177,22 @@ paths:
         "204":
           description: Deleted
 
+  /preferences/{id}/suggestions:
+    get:
+      operationId: getPreferenceSuggestions
+      tags: [preferences]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Targeted suggestions to widen a narrow watchlist
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PreferenceSuggestions" }
+
   /preferences/{id}/matches:
     get:
       operationId: getPreferenceMatches
@@ -261,6 +277,27 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Listing" }
 
+  /listings/{id}/similar-cheaper:
+    get:
+      operationId: getSimilarCheaperListings
+      tags: [listings]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 6 }
+      responses:
+        "200":
+          description: Similar listings priced lower than this one
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Listing" }
+
   # ─── Matches (cross-preference) ──────────────────────────────────────────────
   /matches:
     get:
@@ -323,6 +360,22 @@ paths:
       responses:
         "204":
           description: All marked read
+
+  /alerts/{id}/preview:
+    get:
+      operationId: getAlertPreview
+      tags: [alerts]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Email-ready preview of an alert
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AlertPreview" }
 
   # ─── Saved ───────────────────────────────────────────────────────────────────
   /saved:
@@ -453,6 +506,20 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/IngestResult" }
+
+  /admin/digests/run:
+    post:
+      operationId: runDigests
+      tags: [admin]
+      description: >-
+        Group pending alerts by user and watchlist alertFrequency, mark them
+        sent, and return per-frequency counts. Stand-in for a real worker.
+      responses:
+        "200":
+          description: Digest run summary
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DigestRunResult" }
 
 components:
   schemas:
@@ -666,6 +733,20 @@ components:
         imageUrl: { type: string, nullable: true }
         description: { type: string, nullable: true }
         availabilityStatus: { type: string }
+        # Computed intelligence fields (refreshed every ingest cycle)
+        dealScore: { type: number, nullable: true }
+        marketLow: { type: number, nullable: true }
+        marketMedian: { type: number, nullable: true }
+        marketHigh: { type: number, nullable: true }
+        marketSampleSize: { type: integer, nullable: true }
+        scarcityTier:
+          type: string
+          nullable: true
+          enum: [common, uncommon, rare, very_rare]
+        priceVerdict:
+          type: string
+          nullable: true
+          enum: [below, fair, expensive]
         firstSeenAt: { type: string, format: date-time }
         lastSeenAt: { type: string, format: date-time }
         createdAt: { type: string, format: date-time }
@@ -750,11 +831,93 @@ components:
         preferenceNickname: { type: string, nullable: true }
         listing: { $ref: "#/components/schemas/Listing", nullable: true }
         matchResultId: { type: integer, nullable: true }
-        alertType: { type: string }
+        alertType:
+          type: string
+          enum:
+            - new_match
+            - price_drop
+            - back_in_stock
+            - better_condition
+            - exact_model
+            - under_target_price
         status: { type: string }
         message: { type: string, nullable: true }
+        whyNow: { type: string, nullable: true }
+        priceAtAlert: { type: number, nullable: true }
         sentAt: { type: string, format: date-time, nullable: true }
         createdAt: { type: string, format: date-time }
+
+    AlertPreview:
+      type: object
+      required:
+        - id
+        - subject
+        - heading
+        - whyMatched
+        - listing
+        - alertType
+        - createdAt
+      properties:
+        id: { type: integer }
+        alertType: { type: string }
+        subject: { type: string }
+        heading: { type: string }
+        whyMatched: { type: string }
+        whyNow: { type: string, nullable: true }
+        matchScore: { type: number, nullable: true }
+        matchType: { type: string, nullable: true }
+        preferenceNickname: { type: string, nullable: true }
+        listing: { $ref: "#/components/schemas/Listing" }
+        listingUrl: { type: string }
+        viewUrl: { type: string }
+        saveUrl: { type: string }
+        createdAt: { type: string, format: date-time }
+
+    PreferenceSuggestions:
+      type: object
+      required: [preferenceId, suggestions]
+      properties:
+        preferenceId: { type: integer }
+        suggestions:
+          type: array
+          items: { $ref: "#/components/schemas/PreferenceSuggestion" }
+
+    PreferenceSuggestion:
+      type: object
+      required: [type, title, body]
+      properties:
+        type:
+          type: string
+          enum:
+            - add_close_colors
+            - add_adjacent_sizes
+            - raise_max_price
+            - include_adjacent_models
+        title: { type: string }
+        body: { type: string }
+        # Optional structured payload (e.g. suggested numeric value, ids).
+        suggestedMaxPrice: { type: number, nullable: true }
+        suggestedColorIds:
+          type: array
+          nullable: true
+          items: { type: integer }
+        suggestedSizeIds:
+          type: array
+          nullable: true
+          items: { type: integer }
+
+    DigestRunResult:
+      type: object
+      required: [usersNotified, alertsSent, byFrequency]
+      properties:
+        usersNotified: { type: integer }
+        alertsSent: { type: integer }
+        byFrequency:
+          type: object
+          properties:
+            realtime: { type: integer }
+            daily: { type: integer }
+            weekly: { type: integer }
 
     # Saved listings
     SavedListing:

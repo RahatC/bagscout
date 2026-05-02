@@ -10,6 +10,8 @@ import {
 import { sourcesTable } from "./sources";
 
 // availability_status: available | sold | reserved | unknown
+// scarcity_tier: common | uncommon | rare | very_rare
+// price_verdict: below | fair | expensive (vs market range)
 export const listingsTable = pgTable(
   "listings",
   {
@@ -40,6 +42,14 @@ export const listingsTable = pgTable(
     imageUrl: text("image_url"),
     description: text("description"),
     availabilityStatus: text("availability_status").notNull().default("available"),
+    // Computed intelligence fields, refreshed on every snapshot.
+    dealScore: numeric("deal_score", { precision: 4, scale: 1 }),
+    marketLow: numeric("market_low", { precision: 10, scale: 2 }),
+    marketMedian: numeric("market_median", { precision: 10, scale: 2 }),
+    marketHigh: numeric("market_high", { precision: 10, scale: 2 }),
+    marketSampleSize: integer("market_sample_size"),
+    scarcityTier: text("scarcity_tier"),
+    priceVerdict: text("price_verdict"),
     firstSeenAt: timestamp("first_seen_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

@@ -135,6 +135,27 @@ export interface UpdateBagPreferenceBody {
   alertFrequency?: UpdateBagPreferenceBodyAlertFrequency;
 }
 
+export type ListingScarcityTier =
+  | (typeof ListingScarcityTier)[keyof typeof ListingScarcityTier]
+  | null;
+
+export const ListingScarcityTier = {
+  common: "common",
+  uncommon: "uncommon",
+  rare: "rare",
+  very_rare: "very_rare",
+} as const;
+
+export type ListingPriceVerdict =
+  | (typeof ListingPriceVerdict)[keyof typeof ListingPriceVerdict]
+  | null;
+
+export const ListingPriceVerdict = {
+  below: "below",
+  fair: "fair",
+  expensive: "expensive",
+} as const;
+
 export interface Listing {
   id: number;
   sourceId: number;
@@ -160,6 +181,13 @@ export interface Listing {
   imageUrl?: string | null;
   description?: string | null;
   availabilityStatus: string;
+  dealScore?: number | null;
+  marketLow?: number | null;
+  marketMedian?: number | null;
+  marketHigh?: number | null;
+  marketSampleSize?: number | null;
+  scarcityTier?: ListingScarcityTier;
+  priceVerdict?: ListingPriceVerdict;
   firstSeenAt: string;
   lastSeenAt: string;
   createdAt: string;
@@ -201,6 +229,18 @@ export interface MatchResult {
   createdAt: string;
 }
 
+export type AlertAlertType =
+  (typeof AlertAlertType)[keyof typeof AlertAlertType];
+
+export const AlertAlertType = {
+  new_match: "new_match",
+  price_drop: "price_drop",
+  back_in_stock: "back_in_stock",
+  better_condition: "better_condition",
+  exact_model: "exact_model",
+  under_target_price: "under_target_price",
+} as const;
+
 export interface Alert {
   id: number;
   userId: string;
@@ -208,11 +248,66 @@ export interface Alert {
   preferenceNickname?: string | null;
   listing?: Listing | null;
   matchResultId?: number | null;
-  alertType: string;
+  alertType: AlertAlertType;
   status: string;
   message?: string | null;
+  whyNow?: string | null;
+  priceAtAlert?: number | null;
   sentAt?: string | null;
   createdAt: string;
+}
+
+export interface AlertPreview {
+  id: number;
+  alertType: string;
+  subject: string;
+  heading: string;
+  whyMatched: string;
+  whyNow?: string | null;
+  matchScore?: number | null;
+  matchType?: string | null;
+  preferenceNickname?: string | null;
+  listing: Listing;
+  listingUrl?: string;
+  viewUrl?: string;
+  saveUrl?: string;
+  createdAt: string;
+}
+
+export type PreferenceSuggestionType =
+  (typeof PreferenceSuggestionType)[keyof typeof PreferenceSuggestionType];
+
+export const PreferenceSuggestionType = {
+  add_close_colors: "add_close_colors",
+  add_adjacent_sizes: "add_adjacent_sizes",
+  raise_max_price: "raise_max_price",
+  include_adjacent_models: "include_adjacent_models",
+} as const;
+
+export interface PreferenceSuggestion {
+  type: PreferenceSuggestionType;
+  title: string;
+  body: string;
+  suggestedMaxPrice?: number | null;
+  suggestedColorIds?: number[] | null;
+  suggestedSizeIds?: number[] | null;
+}
+
+export interface PreferenceSuggestions {
+  preferenceId: number;
+  suggestions: PreferenceSuggestion[];
+}
+
+export type DigestRunResultByFrequency = {
+  realtime?: number;
+  daily?: number;
+  weekly?: number;
+};
+
+export interface DigestRunResult {
+  usersNotified: number;
+  alertsSent: number;
+  byFrequency: DigestRunResultByFrequency;
 }
 
 export interface SavedListing {
@@ -294,6 +389,10 @@ export type ListListingsParams = {
   source?: string;
   limit?: number;
   offset?: number;
+};
+
+export type GetSimilarCheaperListingsParams = {
+  limit?: number;
 };
 
 export type ListMatchesParams = {

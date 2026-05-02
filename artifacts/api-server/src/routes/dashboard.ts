@@ -12,6 +12,7 @@ import {
   sourcesTable,
 } from "@workspace/db";
 import { requireAuth } from "../middlewares/requireAuth";
+import { mapListing } from "../lib/mappers";
 import type { Request } from "express";
 
 const router = Router();
@@ -99,13 +100,7 @@ router.get("/recent-matches", requireAuth, async (req, res) => {
       userId: r.match_results.userId,
       preferenceId: r.match_results.preferenceId,
       preferenceNickname: r.bag_preferences.nickname,
-      listing: {
-        ...r.listings,
-        sourceName: r.sources.name,
-        price: parseFloat(r.listings.price),
-        originalPrice: r.listings.originalPrice ? parseFloat(r.listings.originalPrice) : null,
-        discountPercent: r.listings.discountPercent ? parseFloat(r.listings.discountPercent) : null,
-      },
+      listing: mapListing(r.listings, r.sources),
       matchScore: parseFloat(r.match_results.matchScore),
       matchType: r.match_results.matchType,
       matchExplanation: r.match_results.matchExplanation,
@@ -131,15 +126,7 @@ router.get("/price-drops", requireAuth, async (_req, res) => {
     .orderBy(desc(listingsTable.lastSeenAt))
     .limit(12);
 
-  res.json(
-    rows.map((r) => ({
-      ...r.listings,
-      sourceName: r.sources.name,
-      price: parseFloat(r.listings.price),
-      originalPrice: r.listings.originalPrice ? parseFloat(r.listings.originalPrice) : null,
-      discountPercent: r.listings.discountPercent ? parseFloat(r.listings.discountPercent) : null,
-    })),
-  );
+  res.json(rows.map((r) => mapListing(r.listings, r.sources)));
 });
 
 export default router;

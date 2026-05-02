@@ -1,10 +1,12 @@
 import { Router } from "express";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and, inArray, sql } from "drizzle-orm";
 import {
   db,
   sourcesTable,
   listingsTable,
   ingestionLogsTable,
+  alertsTable,
+  bagPreferencesTable,
 } from "@workspace/db";
 import { TriggerIngestBody } from "@workspace/api-zod";
 import { requireAuth, requireAdmin } from "../middlewares/requireAuth";
@@ -93,6 +95,60 @@ router.post("/ingest", async (req, res) => {
   }
   const result = await runMockIngest(parsed.data.sourceSlug);
   res.json(result);
+});
+
+// POST /api/admin/digests/run
+// Group all "pending" alerts by user + watchlist alertFrequency, mark them
+// "sent" with timestamps, and return per-frequency counts. This stands in for
+// a real email worker so the rest of the system can be exercised without
+// hooking up SMTP.
+router.post("/digests/run", async (_req, res) => {
+  const pending = await db
+    .select({
+      alertId: alertsTable.id,
+      userId: alertsTable.userId,
+      frequency: bagPreferencesTable.alertFrequency,
+    })
+    .from(alertsTable)
+    .innerJoin(
+      bagPreferencesTable,
+      eq(alertsTable.preferenceId, bagPreferencesTable.id),
+    )
+    .where(eq(alertsTable.status, "pending"));
+
+  const byFrequency: Record<"realtime" | "daily" | "weekly", number> = {
+    realtime: 0,
+    daily: 0,
+    weekly: 0,
+  };
+  const userIds = new Set<string>();
+  const ids: number[] = [];
+  for (const row of pending) {
+    const f =
+      row.frequency === "realtime" || row.frequency === "daily" || row.frequency === "weekly"
+        ? row.frequency
+        : "realtime";
+    byFrequency[f] += 1;
+    userIds.add(row.userId);
+    ids.push(row.alertId);
+  }
+
+  if (ids.length > 0) {
+    await db
+      .update(alertsTable)
+      .set({
+        status: "sent",
+        sentAt: sql`now()`,
+        digestSentAt: sql`now()`,
+      })
+      .where(and(eq(alertsTable.status, "pending"), inArray(alertsTable.id, ids)));
+  }
+
+  res.json({
+    usersNotified: userIds.size,
+    alertsSent: ids.length,
+    byFrequency,
+  });
 });
 
 export default router;

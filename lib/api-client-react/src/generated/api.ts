@@ -18,6 +18,7 @@ import type {
 
 import type {
   Alert,
+  AlertPreview,
   BagPreference,
   BagStyle,
   Brand,
@@ -25,7 +26,9 @@ import type {
   Condition,
   CreateBagPreferenceBody,
   DashboardSummary,
+  DigestRunResult,
   GetRecentMatchesParams,
+  GetSimilarCheaperListingsParams,
   HealthStatus,
   IngestResult,
   IngestionLog,
@@ -36,6 +39,7 @@ import type {
   Listing,
   ListingPage,
   MatchResult,
+  PreferenceSuggestions,
   SaveListingBody,
   SavedListing,
   Size,
@@ -834,6 +838,91 @@ export const useDeleteBagPreference = <
   return useMutation(getDeleteBagPreferenceMutationOptions(options));
 };
 
+export const getGetPreferenceSuggestionsUrl = (id: number) => {
+  return `/api/preferences/${id}/suggestions`;
+};
+
+export const getPreferenceSuggestions = async (
+  id: number,
+  options?: RequestInit,
+): Promise<PreferenceSuggestions> => {
+  return customFetch<PreferenceSuggestions>(
+    getGetPreferenceSuggestionsUrl(id),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetPreferenceSuggestionsQueryKey = (id: number) => {
+  return [`/api/preferences/${id}/suggestions`] as const;
+};
+
+export const getGetPreferenceSuggestionsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPreferenceSuggestions>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getPreferenceSuggestions>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetPreferenceSuggestionsQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getPreferenceSuggestions>>
+  > = ({ signal }) =>
+    getPreferenceSuggestions(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPreferenceSuggestions>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetPreferenceSuggestionsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPreferenceSuggestions>>
+>;
+export type GetPreferenceSuggestionsQueryError = ErrorType<unknown>;
+
+export function useGetPreferenceSuggestions<
+  TData = Awaited<ReturnType<typeof getPreferenceSuggestions>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getPreferenceSuggestions>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetPreferenceSuggestionsQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
 export const getGetPreferenceMatchesUrl = (id: number) => {
   return `/api/preferences/${id}/matches`;
 };
@@ -1142,6 +1231,116 @@ export function useGetListing<
   },
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getGetListingQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export const getGetSimilarCheaperListingsUrl = (
+  id: number,
+  params?: GetSimilarCheaperListingsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/listings/${id}/similar-cheaper?${stringifiedParams}`
+    : `/api/listings/${id}/similar-cheaper`;
+};
+
+export const getSimilarCheaperListings = async (
+  id: number,
+  params?: GetSimilarCheaperListingsParams,
+  options?: RequestInit,
+): Promise<Listing[]> => {
+  return customFetch<Listing[]>(getGetSimilarCheaperListingsUrl(id, params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetSimilarCheaperListingsQueryKey = (
+  id: number,
+  params?: GetSimilarCheaperListingsParams,
+) => {
+  return [
+    `/api/listings/${id}/similar-cheaper`,
+    ...(params ? [params] : []),
+  ] as const;
+};
+
+export const getGetSimilarCheaperListingsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getSimilarCheaperListings>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  params?: GetSimilarCheaperListingsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getSimilarCheaperListings>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetSimilarCheaperListingsQueryKey(id, params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getSimilarCheaperListings>>
+  > = ({ signal }) =>
+    getSimilarCheaperListings(id, params, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getSimilarCheaperListings>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetSimilarCheaperListingsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getSimilarCheaperListings>>
+>;
+export type GetSimilarCheaperListingsQueryError = ErrorType<unknown>;
+
+export function useGetSimilarCheaperListings<
+  TData = Awaited<ReturnType<typeof getSimilarCheaperListings>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  params?: GetSimilarCheaperListingsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getSimilarCheaperListings>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetSimilarCheaperListingsQueryOptions(
+    id,
+    params,
+    options,
+  );
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;
@@ -1476,6 +1675,86 @@ export const useMarkAllAlertsRead = <
 > => {
   return useMutation(getMarkAllAlertsReadMutationOptions(options));
 };
+
+export const getGetAlertPreviewUrl = (id: number) => {
+  return `/api/alerts/${id}/preview`;
+};
+
+export const getAlertPreview = async (
+  id: number,
+  options?: RequestInit,
+): Promise<AlertPreview> => {
+  return customFetch<AlertPreview>(getGetAlertPreviewUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetAlertPreviewQueryKey = (id: number) => {
+  return [`/api/alerts/${id}/preview`] as const;
+};
+
+export const getGetAlertPreviewQueryOptions = <
+  TData = Awaited<ReturnType<typeof getAlertPreview>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getAlertPreview>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetAlertPreviewQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getAlertPreview>>> = ({
+    signal,
+  }) => getAlertPreview(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getAlertPreview>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetAlertPreviewQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getAlertPreview>>
+>;
+export type GetAlertPreviewQueryError = ErrorType<unknown>;
+
+export function useGetAlertPreview<
+  TData = Awaited<ReturnType<typeof getAlertPreview>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getAlertPreview>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetAlertPreviewQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 export const getListSavedListingsUrl = () => {
   return `/api/saved`;
@@ -2166,4 +2445,82 @@ export const useTriggerIngest = <
   TContext
 > => {
   return useMutation(getTriggerIngestMutationOptions(options));
+};
+
+/**
+ * Group pending alerts by user and watchlist alertFrequency, mark them sent, and return per-frequency counts. Stand-in for a real worker.
+ */
+export const getRunDigestsUrl = () => {
+  return `/api/admin/digests/run`;
+};
+
+export const runDigests = async (
+  options?: RequestInit,
+): Promise<DigestRunResult> => {
+  return customFetch<DigestRunResult>(getRunDigestsUrl(), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getRunDigestsMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof runDigests>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof runDigests>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = ["runDigests"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof runDigests>>,
+    void
+  > = () => {
+    return runDigests(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RunDigestsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof runDigests>>
+>;
+
+export type RunDigestsMutationError = ErrorType<unknown>;
+
+export const useRunDigests = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof runDigests>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof runDigests>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(getRunDigestsMutationOptions(options));
 };

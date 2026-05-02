@@ -6,6 +6,9 @@ import {
   Clock,
   EyeOff,
   Sparkles,
+  TrendingDown,
+  Flame,
+  Gem,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -92,6 +95,75 @@ export function ListingCard({
   const lastSeen = new Date(listing.lastSeenAt);
   const wasUpdated = lastSeen.getTime() - firstSeen.getTime() > 60_000;
 
+  // Intelligence badges (only shown when the back-end has computed values).
+  const dealBadge =
+    listing.dealScore != null && listing.dealScore >= 70 ? (
+      <Badge className="rounded-none border-none bg-emerald-700 text-white font-bold uppercase tracking-widest text-[10px] shadow-sm">
+        <Flame className="w-3 h-3 mr-1" />
+        Deal {Math.round(listing.dealScore)}
+      </Badge>
+    ) : null;
+
+  const SCARCITY_LABELS: Record<string, { label: string; className: string }> = {
+    very_rare: {
+      label: "Very rare",
+      className: "bg-foreground text-background border-foreground",
+    },
+    rare: {
+      label: "Rare",
+      className: "bg-primary text-primary-foreground border-primary",
+    },
+    uncommon: {
+      label: "Uncommon",
+      className: "bg-background text-primary border-primary/40",
+    },
+    common: {
+      label: "Common",
+      className: "bg-background/95 text-muted-foreground border-border",
+    },
+  };
+  const scarcityInfo = listing.scarcityTier
+    ? SCARCITY_LABELS[listing.scarcityTier]
+    : null;
+  const scarcityBadge =
+    scarcityInfo &&
+    (listing.scarcityTier === "rare" || listing.scarcityTier === "very_rare") ? (
+      <Badge
+        variant="outline"
+        className={`rounded-none uppercase tracking-widest text-[10px] font-bold shadow-sm ${scarcityInfo.className}`}
+      >
+        <Gem className="w-3 h-3 mr-1" />
+        {scarcityInfo.label}
+      </Badge>
+    ) : null;
+
+  const VERDICT_LABELS: Record<string, { label: string; className: string }> = {
+    below: {
+      label: "Below market",
+      className: "bg-emerald-50 text-emerald-900 border-emerald-700",
+    },
+    fair: {
+      label: "Fair price",
+      className: "bg-background/95 text-foreground border-border",
+    },
+    expensive: {
+      label: "Above market",
+      className: "bg-rose-50 text-rose-900 border-rose-300",
+    },
+  };
+  const verdictInfo = listing.priceVerdict
+    ? VERDICT_LABELS[listing.priceVerdict]
+    : null;
+  const verdictBadge = verdictInfo ? (
+    <Badge
+      variant="outline"
+      className={`rounded-none uppercase tracking-widest text-[10px] font-bold shadow-sm ${verdictInfo.className}`}
+    >
+      {listing.priceVerdict === "below" && <TrendingDown className="w-3 h-3 mr-1" />}
+      {verdictInfo.label}
+    </Badge>
+  ) : null;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -143,7 +215,16 @@ export function ListingCard({
                 {Math.round(matchScore * 100)}% Match
               </Badge>
             )}
+
+            {dealBadge}
           </div>
+
+          {(scarcityBadge || verdictBadge) && (
+            <div className="absolute bottom-3 left-3 flex flex-wrap gap-2 items-end max-w-[80%]">
+              {scarcityBadge}
+              {verdictBadge}
+            </div>
+          )}
 
           <div className="absolute top-3 right-3 flex flex-col gap-2">
             {onSaveToggle && (
