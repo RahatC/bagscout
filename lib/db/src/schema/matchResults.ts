@@ -5,6 +5,7 @@ import {
   text,
   numeric,
   jsonb,
+  boolean,
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
@@ -29,7 +30,12 @@ export const matchResultsTable = pgTable(
       .notNull()
       .references(() => listingsTable.id, { onDelete: "cascade" }),
     matchScore: numeric("match_score", { precision: 4, scale: 3 }).notNull(),
+    // exact | strong | close | weak | rejected
     matchType: text("match_type").notNull().default("close"),
+    // Plain-English reason produced by the match engine (e.g.
+    // "Matched because this is a Chanel Classic Flap, in black, …")
+    matchExplanation: text("match_explanation").notNull().default(""),
+    alertEligible: boolean("alert_eligible").notNull().default(false),
     matchReasons: jsonb("match_reasons").$type<MatchReason[]>().notNull().default([]),
     disqualifiers: jsonb("disqualifiers").$type<Disqualifier[]>().notNull().default([]),
     createdAt: timestamp("created_at", { withTimezone: true })

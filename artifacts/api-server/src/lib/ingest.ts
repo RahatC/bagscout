@@ -24,6 +24,11 @@ import { logger } from "./logger";
 import { normalizeText, conditionRank } from "./normalize";
 import { adapters, getAdapter } from "../adapters";
 import type { NormalizedListing } from "../adapters";
+import {
+  evaluateMatch,
+  type PreferenceCriteria,
+  type ListingFacts,
+} from "./matchEngine";
 
 export type IngestResult = {
   sourceSlug: string;
@@ -274,7 +279,8 @@ export async function runMockIngest(sourceSlug: string): Promise<IngestResult> {
 }
 
 /**
- * Score one listing against all active preferences and persist any matches above threshold.
+ * Score one listing against all active preferences and persist any matches
+ * the engine deems eligible (matchType ∈ exact, strong, close).
  */
 export async function matchListingAgainstAllPreferences(listingId: number) {
   const [listing] = await db.select().from(listingsTable).where(eq(listingsTable.id, listingId));
@@ -284,13 +290,44 @@ export async function matchListingAgainstAllPreferences(listingId: number) {
     .select()
     .from(bagPreferencesTable)
     .where(eq(bagPreferencesTable.active, true));
+  if (prefs.length === 0) return;
+
+  // Resolve listing facts once: condition rank + color family.
+  const listingColorFamily = listing.normalizedColor
+    ? (
+        await db
+          .select({ family: colorsTable.family })
+          .from(colorsTable)
+          .where(eq(colorsTable.normalizedName, listing.normalizedColor))
+      )[0]?.family ?? null
+    : null;
+
+  const facts: ListingFacts = {
+    brand: listing.brand,
+    model: listing.model,
+    style: listing.style,
+    condition: listing.condition,
+    color: listing.color,
+    size: listing.size,
+    title: listing.title,
+    price: parseFloat(listing.price),
+    currency: listing.currency,
+    normalizedBrand: listing.normalizedBrand,
+    normalizedModel: listing.normalizedModel,
+    normalizedStyle: listing.normalizedStyle,
+    normalizedCondition: listing.normalizedCondition,
+    normalizedColor: listing.normalizedColor,
+    normalizedSize: listing.size ? normalizeText(listing.size) : null,
+    conditionRank: listing.condition ? conditionRank(listing.condition) : null,
+    colorFamily: listingColorFamily,
+  };
 
   for (const pref of prefs) {
-    const result = await scorePreferenceAgainstListing(pref, listing);
-    if (!result) continue;
+    const criteria = await loadPreferenceCriteria(pref);
+    const result = evaluateMatch(criteria, facts);
 
-    const threshold = pref.onlyExactCriteria ? 0.99 : pref.allowCloseMatches ? 0.65 : 0.85;
-    if (result.score < threshold) continue;
+    // Don't persist weak / rejected matches — they're noise.
+    if (!result.alertEligible) continue;
 
     const [match] = await db
       .insert(matchResultsTable)
@@ -298,16 +335,23 @@ export async function matchListingAgainstAllPreferences(listingId: number) {
         userId: pref.userId,
         preferenceId: pref.id,
         listingId: listing.id,
-        matchScore: result.score.toFixed(3),
-        matchType: result.score >= 0.85 ? "exact" : "close",
-        matchReasons: result.reasons,
+        // Engine emits 0–100; column stores 0–1 fractional so existing UI
+        // (which renders `Math.round(score * 100)`) keeps working.
+        matchScore: (result.matchScore / 100).toFixed(3),
+        matchType: result.matchType,
+        matchExplanation: result.explanation,
+        alertEligible: result.alertEligible,
+        matchReasons: result.matchReasons,
         disqualifiers: result.disqualifiers,
       })
       .onConflictDoUpdate({
         target: [matchResultsTable.preferenceId, matchResultsTable.listingId],
         set: {
-          matchScore: result.score.toFixed(3),
-          matchReasons: result.reasons,
+          matchScore: (result.matchScore / 100).toFixed(3),
+          matchType: result.matchType,
+          matchExplanation: result.explanation,
+          alertEligible: result.alertEligible,
+          matchReasons: result.matchReasons,
           disqualifiers: result.disqualifiers,
         },
       })
@@ -331,19 +375,19 @@ export async function matchListingAgainstAllPreferences(listingId: number) {
         matchResultId: match.id,
         alertType: "new_match",
         status: "pending",
-        message: `${listing.brand} ${listing.model ?? ""} matched "${pref.nickname}"`,
+        message: result.explanation,
       });
     }
   }
 }
 
-async function scorePreferenceAgainstListing(
+/**
+ * Load every reference row a preference points at and shape it into the
+ * pure-function input the match engine expects.
+ */
+async function loadPreferenceCriteria(
   pref: typeof bagPreferencesTable.$inferSelect,
-  listing: typeof listingsTable.$inferSelect,
-): Promise<{ score: number; reasons: MatchReason[]; disqualifiers: Disqualifier[] } | null> {
-  const reasons: MatchReason[] = [];
-  const disqualifiers: Disqualifier[] = [];
-
+): Promise<PreferenceCriteria> {
   const [brands, styles, colors, sizes, condMin] = await Promise.all([
     db
       .select({ b: brandsTable })
@@ -370,165 +414,25 @@ async function scorePreferenceAgainstListing(
       : Promise.resolve([]),
   ]);
 
-  if (brands.length === 0) return null;
-
-  const W_BRAND = 0.28;
-  const W_MODEL = 0.18;
-  const W_STYLE = 0.1;
-  const W_COLOR = 0.13;
-  const W_SIZE = 0.08;
-  const W_CONDITION = 0.1;
-  const W_PRICE = 0.13;
-
-  let score = 0;
-
-  const brandMatch = brands.find((b) => b.b.normalizedName === listing.normalizedBrand);
-  if (brandMatch) {
-    score += W_BRAND;
-    reasons.push({ field: "brand", value: brandMatch.b.name, matched: true, weight: W_BRAND });
-  } else {
-    disqualifiers.push({
-      field: "brand",
-      value: listing.brand,
-      reason: "Brand not in preference list",
-    });
-    return { score: 0, reasons, disqualifiers };
-  }
-
-  if (pref.exactModelEnabled && pref.modelQuery) {
-    const q = normalizeText(pref.modelQuery);
-    const haystack = `${listing.normalizedModel ?? ""} ${normalizeText(listing.title)}`;
-    if (haystack.includes(q)) {
-      score += W_MODEL;
-      reasons.push({ field: "model", value: pref.modelQuery, matched: true, weight: W_MODEL });
-    } else {
-      disqualifiers.push({
-        field: "model",
-        value: listing.model ?? "(none)",
-        reason: `Does not contain "${pref.modelQuery}"`,
-      });
-    }
-  } else {
-    score += W_MODEL;
-  }
-
-  if (styles.length > 0) {
-    const m = styles.find((s) => s.s.normalizedName === listing.normalizedStyle);
-    if (m) {
-      score += W_STYLE;
-      reasons.push({ field: "style", value: m.s.name, matched: true, weight: W_STYLE });
-    } else {
-      disqualifiers.push({
-        field: "style",
-        value: listing.style ?? "(none)",
-        reason: "Style not in preference list",
-      });
-    }
-  } else {
-    score += W_STYLE;
-  }
-
-  if (colors.length > 0) {
-    const exact = colors.find((c) => c.c.normalizedName === listing.normalizedColor);
-    if (exact) {
-      score += W_COLOR;
-      reasons.push({ field: "color", value: exact.c.name, matched: true, weight: W_COLOR });
-    } else if (pref.allowCloseColorMatch) {
-      const preferredFamilies = new Set(
-        colors.map((c) => c.c.family).filter((f): f is string => Boolean(f)),
-      );
-      let listingFamily: string | null = null;
-      if (listing.normalizedColor) {
-        const [listingColor] = await db
-          .select()
-          .from(colorsTable)
-          .where(eq(colorsTable.normalizedName, listing.normalizedColor));
-        listingFamily = listingColor?.family ?? null;
-      }
-      if (listingFamily && preferredFamilies.has(listingFamily)) {
-        score += W_COLOR * 0.5;
-        reasons.push({
-          field: "color",
-          value: listing.color ?? "(close family)",
-          matched: true,
-          weight: W_COLOR * 0.5,
-          detail: `Close color family match (${listingFamily})`,
-        });
-      } else {
-        disqualifiers.push({
-          field: "color",
-          value: listing.color ?? "(none)",
-          reason: "Color family not in preference",
-        });
-      }
-    } else {
-      disqualifiers.push({
-        field: "color",
-        value: listing.color ?? "(none)",
-        reason: "Color not in preference (close match disabled)",
-      });
-    }
-  } else {
-    score += W_COLOR;
-  }
-
-  if (sizes.length > 0) {
-    const m = sizes.find((s) => s.s.normalizedName === listing.size?.toLowerCase().trim());
-    if (m) {
-      score += W_SIZE;
-      reasons.push({ field: "size", value: m.s.name, matched: true, weight: W_SIZE });
-    } else {
-      disqualifiers.push({
-        field: "size",
-        value: listing.size ?? "(none)",
-        reason: "Size not in preference list",
-      });
-    }
-  } else {
-    score += W_SIZE;
-  }
-
-  if (condMin[0]) {
-    const listingRank = conditionRank(listing.condition);
-    if (listingRank <= condMin[0].rank) {
-      score += W_CONDITION;
-      reasons.push({
-        field: "condition",
-        value: listing.condition ?? "",
-        matched: true,
-        weight: W_CONDITION,
-      });
-    } else {
-      disqualifiers.push({
-        field: "condition",
-        value: listing.condition ?? "(unknown)",
-        reason: `Below minimum (${condMin[0].name})`,
-      });
-    }
-  } else {
-    score += W_CONDITION;
-  }
-
-  const price = parseFloat(listing.price);
-  const min = pref.minPrice ? parseFloat(pref.minPrice) : null;
-  const max = pref.maxPrice ? parseFloat(pref.maxPrice) : null;
-  if ((min == null || price >= min) && (max == null || price <= max)) {
-    score += W_PRICE;
-    reasons.push({
-      field: "price",
-      value: `$${price.toLocaleString()}`,
-      matched: true,
-      weight: W_PRICE,
-    });
-  } else {
-    disqualifiers.push({
-      field: "price",
-      value: `$${price.toLocaleString()}`,
-      reason: `Outside ${min ?? "0"} – ${max ?? "∞"} range`,
-    });
-  }
-
-  return { score, reasons, disqualifiers };
+  return {
+    nickname: pref.nickname,
+    onlyExactCriteria: pref.onlyExactCriteria,
+    exactModelEnabled: pref.exactModelEnabled,
+    allowCloseMatches: pref.allowCloseMatches,
+    allowCloseColorMatch: pref.allowCloseColorMatch,
+    modelQuery: pref.modelQuery,
+    minPrice: pref.minPrice ? parseFloat(pref.minPrice) : null,
+    maxPrice: pref.maxPrice ? parseFloat(pref.maxPrice) : null,
+    conditionMinRank: condMin[0]?.rank ?? null,
+    conditionMinName: condMin[0]?.name ?? null,
+    brands: brands.map((b) => b.b.normalizedName),
+    styles: styles.map((s) => s.s.normalizedName),
+    colors: colors.map((c) => c.c.normalizedName),
+    sizes: sizes.map((s) => s.s.normalizedName),
+    colorFamilies: Array.from(
+      new Set(colors.map((c) => c.c.family).filter((f): f is string => Boolean(f))),
+    ),
+  };
 }
 
 /**
