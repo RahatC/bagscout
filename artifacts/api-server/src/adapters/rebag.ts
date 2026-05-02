@@ -1,14 +1,116 @@
-import { createMockAdapter } from "./base";
-import type { RawListing } from "./types";
+import { logger } from "../lib/logger";
+import {
+  createMockAdapter,
+  defaultNormalize,
+  defaultValidate,
+  shouldUseMockAdapters,
+} from "./base";
+import { RateLimiter } from "./http";
+import { fetchShopifyCollectionPage } from "./shopify";
+import type { RawListing, SourceAdapter } from "./types";
 
-const IMG_TOP_HANDLE = "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800";
-const IMG_SHOULDER = "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800";
-const IMG_TOTE = "https://images.unsplash.com/photo-1594938298603-c8148c4b4f7a?w=800";
-const IMG_CROSSBODY = "https://images.unsplash.com/photo-1622560480605-d83c853bc5c3?w=800";
+const SOURCE_NAME = "Rebag";
+const SOURCE_SLUG = "rebag";
+// Rebag's primary site is rebag.com but the actual storefront with product
+// data is shop.rebag.com (Shopify). We crawl that one and store user-facing
+// product links there.
+const SHOP_URL = "https://shop.rebag.com";
+// External base URL stored on the source row for display purposes.
+const BASE_URL = "https://www.rebag.com";
 
-const listings: RawListing[] = [
+const limiter = new RateLimiter(1500);
+
+const COLLECTIONS = ["all", "new-arrivals"];
+const MAX_PAGES_PER_COLLECTION = 4;
+const PAGE_LIMIT = 50;
+
+async function fetchListings(): Promise<RawListing[]> {
+  const seen = new Set<string>();
+  const all: RawListing[] = [];
+  for (const handle of COLLECTIONS) {
+    let page = 1;
+    while (page <= MAX_PAGES_PER_COLLECTION) {
+      await limiter.acquire();
+      let pageListings: RawListing[] = [];
+      try {
+        pageListings = await fetchShopifyCollectionPage({
+          baseUrl: SHOP_URL,
+          collectionHandle: handle,
+          page,
+          limit: PAGE_LIMIT,
+          source: SOURCE_SLUG,
+        });
+      } catch (err) {
+        logger.warn(
+          { err, source: SOURCE_SLUG, collection: handle, page },
+          "rebag: collection page fetch failed, skipping rest of collection",
+        );
+        break;
+      }
+      if (pageListings.length === 0) break;
+      for (const listing of pageListings) {
+        if (seen.has(listing.externalId)) continue;
+        seen.add(listing.externalId);
+        all.push(listing);
+      }
+      page++;
+    }
+  }
+  // Filter out non-bag categories (small leather goods, accessories, shoes).
+  const bagOnly = all.filter((listing) => looksLikeBag(listing.title));
+  logger.info(
+    { source: SOURCE_SLUG, fetched: all.length, kept: bagOnly.length },
+    "rebag: fetch complete",
+  );
+  return bagOnly;
+}
+
+/**
+ * Light heuristic to drop accessories/wallets/shoes that come back from the
+ * "all" collection. Adapter-level filter so the matcher and dashboard only
+ * see actual handbag listings.
+ */
+function looksLikeBag(title: string): boolean {
+  const lower = title.toLowerCase();
+  const drop = [
+    "wallet",
+    "card holder",
+    "card case",
+    "key pouch",
+    "belt",
+    "watch",
+    "sunglass",
+    "scarf",
+    "shoe",
+    "sneaker",
+    "pump",
+    "boot",
+    "loafer",
+    "sandal",
+    "ring",
+    "bracelet",
+    "earring",
+    "necklace",
+  ];
+  for (const term of drop) {
+    if (lower.includes(term)) return false;
+  }
+  return true;
+}
+
+const liveAdapter: SourceAdapter = {
+  sourceName: SOURCE_NAME,
+  sourceSlug: SOURCE_SLUG,
+  baseUrl: BASE_URL,
+  fetchListings,
+  normalizeListing: (raw) =>
+    defaultNormalize(raw, { source: SOURCE_NAME, baseUrl: BASE_URL }),
+  validateListing: defaultValidate,
+};
+
+const mockListings: RawListing[] = [
   {
-    externalId: "rb-001",
+    externalId: "rb-mock-001",
     title: "Hermès Kelly 28 Sellier Gold Epsom GHW",
     brand: "Hermès",
     model: "Kelly",
@@ -17,11 +119,11 @@ const listings: RawListing[] = [
     size: "Kelly 28",
     condition: "Excellent",
     price: 22000,
-    imageUrl: IMG_TOP_HANDLE,
-    description: "Hermès Kelly 28 Sellier in Gold Epsom leather with Gold hardware.",
+    imageUrl: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800",
+    description: "Mock listing.",
   },
   {
-    externalId: "rb-002",
+    externalId: "rb-mock-002",
     title: "Bottega Veneta Jodie Parakeet Medium",
     brand: "Bottega Veneta",
     model: "Jodie",
@@ -31,253 +133,17 @@ const listings: RawListing[] = [
     condition: "Very Good",
     price: 1850,
     originalPrice: 2200,
-    imageUrl: IMG_SHOULDER,
-    description: "Bottega Veneta Jodie in Parakeet Intrecciato leather.",
-  },
-  {
-    externalId: "rb-003",
-    title: "Gucci Dionysus Small Beige GG Supreme",
-    brand: "Gucci",
-    model: "Dionysus",
-    style: "Shoulder Bag",
-    color: "Beige",
-    size: "Small",
-    condition: "Good",
-    price: 980,
-    originalPrice: 1400,
-    imageUrl: IMG_SHOULDER,
-    description: "Gucci Dionysus Small Shoulder Bag in Beige GG Supreme canvas.",
-  },
-  {
-    externalId: "rb-004",
-    title: "Hermès Birkin 25 Black Togo PHW",
-    brand: "Hermès",
-    model: "Birkin",
-    style: "Top Handle",
-    color: "Black",
-    size: "Birkin 25",
-    condition: "Pristine",
-    price: 32000,
-    imageUrl: IMG_TOP_HANDLE,
-    description: "Hermès Birkin 25 in Black Togo leather with Palladium hardware. Like new.",
-  },
-  {
-    externalId: "rb-005",
-    title: "Chanel 19 Large Lambskin Pink GHW",
-    brand: "Chanel",
-    model: "Chanel 19",
-    style: "Shoulder Bag",
-    color: "Pink",
-    size: "Large",
-    condition: "Excellent",
-    price: 7500,
-    imageUrl: IMG_SHOULDER,
-    description: "Chanel 19 Large in Pink Lambskin with mixed-tone hardware.",
-  },
-  {
-    externalId: "rb-006",
-    title: "Louis Vuitton Capucines BB Taurillon Red",
-    brand: "Louis Vuitton",
-    model: "Capucines BB",
-    style: "Top Handle",
-    color: "Red",
-    size: "BB",
-    condition: "Excellent",
-    price: 5200,
-    originalPrice: 6500,
-    imageUrl: IMG_TOP_HANDLE,
-    description: "Louis Vuitton Capucines BB in Red Taurillon leather.",
-  },
-  {
-    externalId: "rb-007",
-    title: "Dior Book Tote Medium Oblique Navy",
-    brand: "Christian Dior",
-    model: "Book Tote",
-    style: "Tote",
-    color: "Navy",
-    size: "Medium",
-    condition: "Pristine",
-    price: 3200,
-    imageUrl: IMG_TOTE,
-    description: "Dior Book Tote Medium in Navy Oblique embroidered canvas.",
-  },
-  {
-    externalId: "rb-008",
-    title: "Saint Laurent Sac de Jour Nano Black",
-    brand: "Saint Laurent",
-    model: "Sac de Jour",
-    style: "Top Handle",
-    color: "Black",
-    size: "Nano",
-    condition: "Very Good",
-    price: 1350,
-    imageUrl: IMG_TOP_HANDLE,
-    description: "Saint Laurent Sac de Jour Nano in Black Grained Leather.",
-  },
-  {
-    externalId: "rb-009",
-    title: "Celine Belt Bag Nano Burgundy",
-    brand: "Celine",
-    model: "Belt Bag",
-    style: "Top Handle",
-    color: "Burgundy",
-    size: "Nano",
-    condition: "Excellent",
-    price: 2600,
-    imageUrl: IMG_TOP_HANDLE,
-    description: "Celine Belt Bag Nano in Burgundy Smooth Calfskin.",
-  },
-  {
-    externalId: "rb-010",
-    title: "Prada Cleo Brushed Black",
-    brand: "Prada",
-    model: "Cleo",
-    style: "Shoulder Bag",
-    color: "Black",
-    size: "Small",
-    condition: "Pristine",
-    price: 1800,
-    originalPrice: 2200,
-    imageUrl: IMG_SHOULDER,
-    description: "Prada Cleo in Black Brushed Leather.",
-  },
-  {
-    externalId: "rb-011",
-    title: "Loewe Puzzle Small Tan Calfskin",
-    brand: "Loewe",
-    model: "Puzzle",
-    style: "Shoulder Bag",
-    color: "Tan",
-    size: "Small",
-    condition: "Excellent",
-    price: 2400,
-    imageUrl: IMG_SHOULDER,
-    description: "Loewe Puzzle Small in Tan Soft Calfskin.",
-  },
-  {
-    externalId: "rb-012",
-    title: "Fendi Peekaboo ISeeU Mini White",
-    brand: "Fendi",
-    model: "Peekaboo ISeeU",
-    style: "Top Handle",
-    color: "White",
-    size: "Mini",
-    condition: "Pristine",
-    price: 4800,
-    imageUrl: IMG_TOP_HANDLE,
-    description: "Fendi Peekaboo ISeeU Mini in White Smooth Leather.",
-  },
-  {
-    externalId: "rb-013",
-    title: "Miu Miu Wander Matelassé Beige",
-    brand: "Miu Miu",
-    model: "Wander",
-    style: "Shoulder Bag",
-    color: "Beige",
-    size: "Small",
-    condition: "Excellent",
-    price: 1950,
-    imageUrl: IMG_SHOULDER,
-    description: "Miu Miu Wander in Beige Matelassé Nappa Leather.",
-  },
-  {
-    externalId: "rb-014",
-    title: "Hermès Garden Party 30 Cream Toile",
-    brand: "Hermes",
-    model: "Garden Party 30",
-    style: "Tote",
-    color: "Ecru",
-    size: "30",
-    condition: "Very Good",
-    price: 2200,
-    imageUrl: IMG_TOTE,
-    description: "Hermès Garden Party 30 in Ecru Toile and Negonda leather.",
-  },
-  {
-    externalId: "rb-015",
-    title: "Chanel Wallet on Chain Caviar Black",
-    brand: "Chanel",
-    model: "Wallet on Chain",
-    style: "Crossbody",
-    color: "Black",
-    size: "Mini",
-    condition: "Excellent",
-    price: 3200,
-    imageUrl: IMG_CROSSBODY,
-    description: "Chanel Wallet on Chain in Black Caviar leather.",
-  },
-  {
-    externalId: "rb-016",
-    title: "Louis Vuitton Alma BB Vernis Pink",
-    brand: "Louis Vuitton",
-    model: "Alma BB",
-    style: "Top Handle",
-    color: "Rose",
-    size: "BB",
-    condition: "Very Good",
-    price: 1400,
-    imageUrl: IMG_TOP_HANDLE,
-    description: "Louis Vuitton Alma BB in Rose Ballerine Vernis leather.",
-  },
-  {
-    externalId: "rb-017",
-    title: "Gucci Bamboo 1947 Mini Beige",
-    brand: "Gucci",
-    model: "Bamboo 1947",
-    style: "Top Handle",
-    color: "Beige",
-    size: "Mini",
-    condition: "Pristine",
-    price: 2100,
-    imageUrl: IMG_TOP_HANDLE,
-    description: "Gucci Bamboo 1947 Mini in Beige Smooth Leather.",
-  },
-  {
-    externalId: "rb-018",
-    title: "Bottega Veneta Cassette Mini Black",
-    brand: "BV",
-    model: "Cassette",
-    style: "Crossbody",
-    color: "Black",
-    size: "Mini",
-    condition: "Excellent",
-    price: 1750,
-    imageUrl: IMG_CROSSBODY,
-    description: "Bottega Veneta Cassette Mini in Black Padded Intrecciato leather.",
-  },
-  {
-    externalId: "rb-019",
-    title: "Saint Laurent Niki Medium Beige",
-    brand: "YSL",
-    model: "Niki",
-    style: "Shoulder Bag",
-    color: "Beige",
-    size: "Medium",
-    condition: "Very Good",
-    price: 1650,
-    imageUrl: IMG_SHOULDER,
-    description: "Saint Laurent Niki Medium in Beige Vintage Leather.",
-  },
-  {
-    externalId: "rb-020",
-    title: "Hermès Evelyne TPM Etain Clemence",
-    brand: "Hermès",
-    model: "Evelyne TPM",
-    style: "Crossbody",
-    color: "Etain",
-    size: "TPM",
-    condition: "Excellent",
-    price: 3400,
-    imageUrl: IMG_CROSSBODY,
-    description: "Hermès Evelyne TPM in Etain Clémence leather with Palladium hardware.",
+    imageUrl: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800",
+    description: "Mock listing.",
   },
 ];
 
-const adapter = createMockAdapter({
-  sourceName: "Rebag",
-  sourceSlug: "rebag",
-  baseUrl: "https://www.rebag.com",
-  listings,
+const mockAdapter = createMockAdapter({
+  sourceName: SOURCE_NAME,
+  sourceSlug: SOURCE_SLUG,
+  baseUrl: BASE_URL,
+  listings: mockListings,
 });
 
+const adapter = shouldUseMockAdapters() ? mockAdapter : liveAdapter;
 export default adapter;

@@ -1,284 +1,275 @@
-import { createMockAdapter } from "./base";
-import type { RawListing } from "./types";
+import * as cheerio from "cheerio";
+import { logger } from "../lib/logger";
+import {
+  createMockAdapter,
+  defaultNormalize,
+  defaultValidate,
+  shouldUseMockAdapters,
+} from "./base";
+import { httpFetch, HttpFetchError, RateLimiter } from "./http";
+import { decodeEntities, extractColor, extractCondition, extractSize, parsePrice } from "./parse";
+import type { RawListing, SourceAdapter } from "./types";
 
-const IMG_TOP_HANDLE = "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800";
-const IMG_SHOULDER = "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800";
-const IMG_TOTE = "https://images.unsplash.com/photo-1594938298603-c8148c4b4f7a?w=800";
-const IMG_CROSSBODY = "https://images.unsplash.com/photo-1622560480605-d83c853bc5c3?w=800";
+const SOURCE_NAME = "The RealReal";
+const SOURCE_SLUG = "therealreal";
+const BASE_URL = "https://www.therealreal.com";
 
-const listings: RawListing[] = [
+const limiter = new RateLimiter(3000);
+
+// TRR's product listing pages live under /shop/women/handbags/<designer>.
+// They are aggressively protected by PerimeterX which serves a 403 captcha
+// page to non-browser clients (including ours). The adapter still attempts
+// a fetch on each cycle so we record the degraded state in
+// `ingestion_logs` and surface it on the source row, but no listings are
+// extracted when the captcha page is returned.
+const LISTING_PATHS = [
+  "/shop/women/handbags/chanel",
+  "/shop/women/handbags/hermes",
+  "/shop/women/handbags/louis-vuitton",
+  "/shop/women/handbags/gucci",
+  "/shop/women/handbags/celine",
+];
+
+const PRODUCT_HREF_RE = /\/products\/([a-z0-9][a-z0-9-]+)\b/i;
+
+/**
+ * Detect TRR's PerimeterX captcha page so we can fail loudly rather than
+ * scribbling junk into the ingestion log.
+ */
+function isCaptchaPage(html: string): boolean {
+  return /px-captcha|PerimeterX|Access to this page has been denied/i.test(
+    html.slice(0, 4000),
+  );
+}
+
+/**
+ * Parse one TRR listing page. JSON-LD `ItemList` blocks are the most
+ * reliable surface but TRR also sprinkles `data-product-id` attributes on
+ * each card; we use both so the parser keeps working as their markup
+ * evolves. Pulled into a pure function so we can unit-test against a
+ * fixture without ever calling the live site.
+ */
+export function parseTrrListingHtml(html: string): RawListing[] {
+  if (isCaptchaPage(html)) return [];
+
+  const out: RawListing[] = [];
+  const seen = new Set<string>();
+
+  // Path 1: JSON-LD ItemList blocks.
+  const $ = cheerio.load(html);
+  $('script[type="application/ld+json"]').each((_, el) => {
+    let json: unknown;
+    try {
+      json = JSON.parse($(el).contents().text());
+    } catch {
+      return;
+    }
+    const items = collectProductItems(json);
+    for (const item of items) {
+      const raw = mapJsonLdProduct(item);
+      if (raw && !seen.has(raw.externalId)) {
+        seen.add(raw.externalId);
+        out.push(raw);
+      }
+    }
+  });
+
+  // Path 2: card-level fallback if JSON-LD missing.
+  if (out.length === 0) {
+    $("a[href*='/products/']").each((_, el) => {
+      const $a = $(el);
+      const href = $a.attr("href") ?? "";
+      const m = PRODUCT_HREF_RE.exec(href);
+      if (!m) return;
+      const externalId = m[1];
+      if (seen.has(externalId)) return;
+
+      const title = decodeEntities(
+        ($a.attr("title") ?? $a.find(".product-title, [class*='title']").first().text() ?? "").trim(),
+      );
+      const priceText = $a.find("[class*='price']").first().text().trim();
+      const price = parsePrice(priceText);
+      const img = $a.find("img").first();
+      const imageUrl = (img.attr("src") ?? img.attr("data-src") ?? "").trim();
+      const brand = decodeEntities(
+        $a.find("[class*='designer'], [class*='brand']").first().text().trim(),
+      );
+      if (!title || !price || !imageUrl || !brand) return;
+
+      seen.add(externalId);
+      out.push({
+        externalId,
+        title,
+        brand,
+        model: null,
+        style: null,
+        color: extractColor(title, "Multi"),
+        size: extractSize(title, "Medium"),
+        condition: extractCondition(title, "Very Good"),
+        price,
+        currency: "USD",
+        imageUrl,
+        sourceUrl: href.startsWith("http") ? href : `${BASE_URL}${href}`,
+      });
+    });
+  }
+
+  return out;
+}
+
+interface JsonLdProduct {
+  "@type"?: string | string[];
+  name?: string;
+  brand?: string | { name?: string };
+  image?: string | string[];
+  url?: string;
+  productID?: string;
+  sku?: string;
+  offers?: {
+    price?: string | number;
+    priceCurrency?: string;
+    availability?: string;
+  };
+  itemCondition?: string;
+  color?: string;
+}
+
+function collectProductItems(node: unknown): JsonLdProduct[] {
+  if (!node) return [];
+  if (Array.isArray(node)) return node.flatMap(collectProductItems);
+  if (typeof node !== "object") return [];
+  const obj = node as Record<string, unknown>;
+  const t = obj["@type"];
+  if (t === "Product" || (Array.isArray(t) && t.includes("Product"))) {
+    return [obj as JsonLdProduct];
+  }
+  // ItemList → look at itemListElement.
+  if (obj["itemListElement"]) return collectProductItems(obj["itemListElement"]);
+  if (obj["item"]) return collectProductItems(obj["item"]);
+  return [];
+}
+
+function mapJsonLdProduct(item: JsonLdProduct): RawListing | null {
+  const externalId = item.productID ?? item.sku ?? null;
+  const title = item.name ?? null;
+  const url = item.url ?? null;
+  const brand =
+    typeof item.brand === "string" ? item.brand : item.brand?.name ?? null;
+  const image = Array.isArray(item.image) ? item.image[0] : item.image ?? null;
+  const price =
+    item.offers?.price != null ? parsePrice(String(item.offers.price)) : null;
+
+  if (!externalId || !title || !brand || !image || !price) return null;
+
+  return {
+    externalId: String(externalId),
+    title,
+    brand,
+    model: null,
+    style: null,
+    color: item.color ?? extractColor(title, "Multi"),
+    size: extractSize(title, "Medium"),
+    condition: extractCondition(item.itemCondition ?? title, "Very Good"),
+    price,
+    currency: item.offers?.priceCurrency ?? "USD",
+    imageUrl: image,
+    sourceUrl: url ?? undefined,
+  };
+}
+
+async function fetchListings(): Promise<RawListing[]> {
+  const seen = new Set<string>();
+  const all: RawListing[] = [];
+  let blockedPages = 0;
+  let attemptedPages = 0;
+
+  for (const path of LISTING_PATHS) {
+    await limiter.acquire();
+    attemptedPages++;
+    let html: string | null = null;
+    try {
+      html = await httpFetch<string>(`${BASE_URL}${path}`, "html", {
+        asBrowser: true,
+        timeoutMs: 20_000,
+        retries: 2,
+        backoffMs: 1500,
+        context: { source: SOURCE_SLUG, path },
+      });
+    } catch (err) {
+      const status = err instanceof HttpFetchError ? err.status : null;
+      if (status === 403) blockedPages++;
+      logger.warn(
+        { err, source: SOURCE_SLUG, path, status },
+        "therealreal: listing page fetch failed",
+      );
+      continue;
+    }
+    if (!html) continue;
+    if (isCaptchaPage(html)) {
+      blockedPages++;
+      logger.warn(
+        { source: SOURCE_SLUG, path },
+        "therealreal: PerimeterX captcha page returned, skipping",
+      );
+      continue;
+    }
+    const listings = parseTrrListingHtml(html);
+    for (const l of listings) {
+      if (seen.has(l.externalId)) continue;
+      seen.add(l.externalId);
+      all.push(l);
+    }
+  }
+
+  if (blockedPages === attemptedPages && attemptedPages > 0) {
+    // Surface a recognisable error message that the ingest layer will
+    // persist into `ingestion_logs.errorMessage` and the source row's
+    // status (via runMockIngest's "errors" path) so the admin page shows
+    // the source as degraded rather than silently empty.
+    throw new Error(
+      `TheRealReal: all ${attemptedPages} listing pages were blocked by PerimeterX (anti-bot challenge). 0 listings ingested.`,
+    );
+  }
+
+  logger.info(
+    { source: SOURCE_SLUG, count: all.length, blockedPages, attemptedPages },
+    "therealreal: fetch complete",
+  );
+  return all;
+}
+
+const liveAdapter: SourceAdapter = {
+  sourceName: SOURCE_NAME,
+  sourceSlug: SOURCE_SLUG,
+  baseUrl: BASE_URL,
+  fetchListings,
+  normalizeListing: (raw) =>
+    defaultNormalize(raw, { source: SOURCE_NAME, baseUrl: BASE_URL }),
+  validateListing: defaultValidate,
+};
+
+const mockListings: RawListing[] = [
   {
-    externalId: "trr-001",
-    title: "Chanel Boy Bag Medium Navy Lambskin",
-    brand: "Chanel",
-    model: "Boy Bag",
-    style: "Shoulder Bag",
-    color: "Navy",
-    size: "Medium",
-    condition: "Excellent",
-    price: 5800,
-    originalPrice: 6500,
-    imageUrl: IMG_SHOULDER,
-    description: "Chanel Boy Bag in Navy Blue Lambskin leather with Silver hardware.",
-  },
-  {
-    externalId: "trr-002",
-    title: "Prada Galleria Medium Saffiano Black",
-    brand: "Prada",
-    model: "Galleria",
-    style: "Top Handle",
-    color: "Black",
-    size: "Medium",
-    condition: "Very Good",
-    price: 1650,
-    imageUrl: IMG_TOP_HANDLE,
-    description: "Prada Galleria in Black Saffiano leather. Clean interior.",
-  },
-  {
-    externalId: "trr-003",
-    title: "Celine Micro Luggage Caramel",
+    externalId: "trr-mock-001",
+    title: "Celine Mini Belt Bag Tan Calfskin",
     brand: "Celine",
-    model: "Luggage",
+    model: "Belt Bag",
     style: "Top Handle",
-    color: "Caramel",
-    size: "Micro",
-    condition: "Good",
-    price: 1200,
-    originalPrice: 1600,
-    imageUrl: IMG_TOP_HANDLE,
-    description: "Celine Micro Luggage in Caramel Smooth Leather.",
-  },
-  {
-    externalId: "trr-004",
-    title: "Hermès Birkin 35 Bordeaux Togo",
-    brand: "Hermès",
-    model: "Birkin",
-    style: "Top Handle",
-    color: "Bordeaux",
-    size: "Birkin 35",
-    condition: "Very Good",
-    price: 14500,
-    imageUrl: IMG_TOP_HANDLE,
-    description: "Hermès Birkin 35 in Bordeaux Togo leather with Gold hardware.",
-  },
-  {
-    externalId: "trr-005",
-    title: "Chanel Reissue 226 Aged Calfskin Black",
-    brand: "Chanel",
-    model: "Reissue 226",
-    style: "Shoulder Bag",
-    color: "Black",
-    size: "226",
-    condition: "Excellent",
-    price: 6400,
-    imageUrl: IMG_SHOULDER,
-    description: "Chanel Reissue 2.55 226 in Black Aged Calfskin.",
-  },
-  {
-    externalId: "trr-006",
-    title: "Louis Vuitton Twist MM Epi Red",
-    brand: "Louis Vuitton",
-    model: "Twist MM",
-    style: "Shoulder Bag",
-    color: "Red",
-    size: "MM",
-    condition: "Pristine",
-    price: 4200,
-    originalPrice: 4900,
-    imageUrl: IMG_SHOULDER,
-    description: "Louis Vuitton Twist MM in Red Epi leather.",
-  },
-  {
-    externalId: "trr-007",
-    title: "Dior 30 Montaigne Calfskin Beige",
-    brand: "Dior",
-    model: "30 Montaigne",
-    style: "Shoulder Bag",
-    color: "Beige",
-    size: "Medium",
-    condition: "Excellent",
-    price: 3400,
-    imageUrl: IMG_SHOULDER,
-    description: "Dior 30 Montaigne in Beige Box Calfskin.",
-  },
-  {
-    externalId: "trr-008",
-    title: "Gucci Jackie 1961 Mini Black",
-    brand: "Gucci",
-    model: "Jackie 1961",
-    style: "Hobo",
-    color: "Black",
-    size: "Mini",
-    condition: "Pristine",
-    price: 2400,
-    imageUrl: IMG_SHOULDER,
-    description: "Gucci Jackie 1961 Mini Hobo in Black Smooth Leather.",
-  },
-  {
-    externalId: "trr-009",
-    title: "YSL Sunset Medium Black Croc-Embossed",
-    brand: "YSL",
-    model: "Sunset",
-    style: "Shoulder Bag",
-    color: "Black",
-    size: "Medium",
-    condition: "Very Good",
-    price: 1750,
-    imageUrl: IMG_SHOULDER,
-    description: "Saint Laurent Sunset Medium in Black Croc-Embossed leather.",
-  },
-  {
-    externalId: "trr-010",
-    title: "Bottega Veneta The Pouch Small Pink",
-    brand: "Bottega",
-    model: "The Pouch",
-    style: "Clutch",
-    color: "Blush",
-    size: "Small",
-    condition: "Excellent",
-    price: 1400,
-    imageUrl: IMG_SHOULDER,
-    description: "Bottega Veneta The Pouch Small in Blush Pink Nappa.",
-  },
-  {
-    externalId: "trr-011",
-    title: "Prada Symbole Saffiano Black",
-    brand: "Prada",
-    model: "Symbole",
-    style: "Crossbody",
-    color: "Black",
-    size: "Small",
-    condition: "Pristine",
-    price: 2800,
-    imageUrl: IMG_CROSSBODY,
-    description: "Prada Symbole in Black Saffiano leather with triangle logo.",
-  },
-  {
-    externalId: "trr-012",
-    title: "Loewe Hammock Medium Tan",
-    brand: "Loewe",
-    model: "Hammock",
-    style: "Shoulder Bag",
     color: "Tan",
-    size: "Medium",
-    condition: "Excellent",
-    price: 2600,
-    imageUrl: IMG_SHOULDER,
-    description: "Loewe Hammock Medium in Tan Classic Calfskin.",
-  },
-  {
-    externalId: "trr-013",
-    title: "Fendi Peekaboo Mini Brown Selleria",
-    brand: "Fendi",
-    model: "Peekaboo",
-    style: "Top Handle",
-    color: "Brown",
-    size: "Mini",
-    condition: "Very Good",
-    price: 3200,
-    imageUrl: IMG_TOP_HANDLE,
-    description: "Fendi Peekaboo Mini in Brown Selleria leather.",
-  },
-  {
-    externalId: "trr-014",
-    title: "Hermès Evelyne PM Black Clemence",
-    brand: "Hermès",
-    model: "Evelyne PM",
-    style: "Crossbody",
-    color: "Black",
-    size: "PM",
-    condition: "Excellent",
-    price: 3800,
-    imageUrl: IMG_CROSSBODY,
-    description: "Hermès Evelyne PM in Black Clémence leather.",
-  },
-  {
-    externalId: "trr-015",
-    title: "Chanel Vintage Diana Black Lambskin",
-    brand: "Chanel",
-    model: "Diana",
-    style: "Shoulder Bag",
-    color: "Black",
-    size: "Medium",
-    condition: "Good",
-    price: 4200,
-    originalPrice: 4800,
-    imageUrl: IMG_SHOULDER,
-    description: "Chanel Vintage Diana in Black Lambskin with Gold hardware.",
-  },
-  {
-    externalId: "trr-016",
-    title: "Louis Vuitton Petit Noé Epi Black",
-    brand: "Louis Vuitton",
-    model: "Petit Noé",
-    style: "Bucket Bag",
-    color: "Black",
-    size: "Small",
-    condition: "Very Good",
-    price: 1150,
-    imageUrl: IMG_SHOULDER,
-    description: "Louis Vuitton Petit Noé in Black Epi leather.",
-  },
-  {
-    externalId: "trr-017",
-    title: "Dior Mini Lady Dior Lambskin Pink",
-    brand: "Christian Dior",
-    model: "Lady Dior",
-    style: "Crossbody",
-    color: "Rose",
-    size: "Mini",
-    condition: "Pristine",
-    price: 4800,
-    imageUrl: IMG_CROSSBODY,
-    description: "Dior Mini Lady Dior in Rose Lambskin Cannage.",
-  },
-  {
-    externalId: "trr-018",
-    title: "Goyard Anjou Mini Black Tan",
-    brand: "Goyard",
-    model: "Anjou Mini",
-    style: "Tote",
-    color: "Black",
     size: "Mini",
     condition: "Excellent",
-    price: 1950,
-    imageUrl: IMG_TOTE,
-    description: "Goyard Anjou Mini reversible tote in Black/Tan Goyardine canvas.",
-  },
-  {
-    externalId: "trr-019",
-    title: "Miu Miu Coffer Bag Brown Leather",
-    brand: "Miu Miu",
-    model: "Coffer",
-    style: "Top Handle",
-    color: "Brown",
-    size: "Medium",
-    condition: "Good",
-    price: 850,
-    originalPrice: 1100,
-    imageUrl: IMG_TOP_HANDLE,
-    description: "Miu Miu Coffer Bag in Brown Ruched Leather.",
-  },
-  {
-    externalId: "trr-020",
-    title: "Saint Laurent Kate Tassel Medium Black",
-    brand: "Saint Laurent",
-    model: "Kate",
-    style: "Shoulder Bag",
-    color: "Black",
-    size: "Medium",
-    condition: "Pristine",
-    price: 1950,
-    imageUrl: IMG_SHOULDER,
-    description: "Saint Laurent Kate Medium with Tassel in Black Grained Leather.",
+    price: 2200,
+    imageUrl: "https://images.unsplash.com/photo-1591561954557-26941169b49e?w=800",
+    description: "Mock listing.",
   },
 ];
 
-const adapter = createMockAdapter({
-  sourceName: "The RealReal",
-  sourceSlug: "therealreal",
-  baseUrl: "https://www.therealreal.com",
-  listings,
+const mockAdapter = createMockAdapter({
+  sourceName: SOURCE_NAME,
+  sourceSlug: SOURCE_SLUG,
+  baseUrl: BASE_URL,
+  listings: mockListings,
 });
 
+const adapter = shouldUseMockAdapters() ? mockAdapter : liveAdapter;
 export default adapter;

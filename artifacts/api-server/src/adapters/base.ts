@@ -17,6 +17,10 @@ import type {
  * Default normalize routine — converts a RawListing to a NormalizedListing
  * by canonicalizing brand / color / condition / style / model and computing
  * derived fields (discount %, source URL).
+ *
+ * Adapters may pre-fill `raw.sourceUrl` (preferred for live scrapers, since
+ * the actual product URL is the only reliable canonical link). When absent
+ * we synthesise a placeholder from the source baseUrl + externalId.
  */
 export function defaultNormalize(
   raw: RawListing,
@@ -38,10 +42,14 @@ export function defaultNormalize(
       ? Number((((originalPrice - raw.price) / originalPrice) * 100).toFixed(2))
       : null;
 
+  const sourceUrl =
+    raw.sourceUrl?.trim() ||
+    `${meta.baseUrl.replace(/\/$/, "")}/listing/${encodeURIComponent(raw.externalId)}`;
+
   return {
     source: meta.source,
     sourceListingId: raw.externalId,
-    sourceUrl: `${meta.baseUrl.replace(/\/$/, "")}/listing/${encodeURIComponent(raw.externalId)}`,
+    sourceUrl,
     title: raw.title,
     brand: raw.brand,
     normalizedBrand,
@@ -84,8 +92,8 @@ export function defaultValidate(n: NormalizedListing): ValidationResult {
 
 /**
  * Convenience factory — builds a SourceAdapter from a static listing array.
- * Mock/seed adapters use this; production adapters can implement
- * SourceAdapter directly.
+ * Used by tests, local dev (`INGEST_USE_MOCK_ADAPTERS=true`), and as the
+ * fallback path when a live adapter chooses to fail open.
  */
 export function createMockAdapter(opts: {
   sourceName: string;
@@ -102,4 +110,14 @@ export function createMockAdapter(opts: {
       defaultNormalize(raw, { source: opts.sourceName, baseUrl: opts.baseUrl }),
     validateListing: defaultValidate,
   };
+}
+
+/**
+ * Returns true when the runtime should use the static mock adapters
+ * (e.g. tests, offline dev). Set `INGEST_USE_MOCK_ADAPTERS=true` in the env.
+ */
+export function shouldUseMockAdapters(): boolean {
+  const v = process.env["INGEST_USE_MOCK_ADAPTERS"];
+  if (!v) return false;
+  return v === "1" || v.toLowerCase() === "true";
 }

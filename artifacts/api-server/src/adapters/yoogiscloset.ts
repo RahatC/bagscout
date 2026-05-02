@@ -1,281 +1,189 @@
-import { createMockAdapter } from "./base";
-import type { RawListing } from "./types";
+import * as cheerio from "cheerio";
+import { logger } from "../lib/logger";
+import {
+  createMockAdapter,
+  defaultNormalize,
+  defaultValidate,
+  shouldUseMockAdapters,
+} from "./base";
+import { httpFetch, RateLimiter } from "./http";
+import { decodeEntities, extractCondition, extractSize, parsePrice } from "./parse";
+import type { RawListing, SourceAdapter } from "./types";
 
-const IMG_TOP_HANDLE = "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800";
-const IMG_SHOULDER = "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800";
-const IMG_TOTE = "https://images.unsplash.com/photo-1594938298603-c8148c4b4f7a?w=800";
-const IMG_CROSSBODY = "https://images.unsplash.com/photo-1622560480605-d83c853bc5c3?w=800";
+const SOURCE_NAME = "Yoogi's Closet";
+const SOURCE_SLUG = "yoogiscloset";
+const BASE_URL = "https://www.yoogiscloset.com";
 
-const listings: RawListing[] = [
+const limiter = new RateLimiter(2000);
+
+// Brand-bucketed handbag listing pages. Each is a server-rendered HTML page
+// (Nuxt SSR) that includes a microdata-marked grid of product cards. Limited
+// to the high-signal designer brands the matcher cares about.
+const BRAND_LISTING_PATHS = [
+  "/handbags/chanel",
+  "/handbags/louis-vuitton",
+  "/handbags/hermes",
+  "/handbags/gucci",
+  "/handbags/celine",
+  "/handbags/dior",
+  "/handbags/saint-laurent",
+  "/handbags/prada",
+  "/handbags/bottega-veneta",
+  "/handbags/fendi",
+  "/handbags/loewe",
+  "/handbags/goyard",
+];
+
+// Yoogi's listings carry a numeric leading id like
+// `/475190-chanel-...-bag.html`. Capture id + slug.
+const PRODUCT_HREF_RE = /^\/(\d{4,})-([a-z0-9-]+)\.html$/i;
+
+/**
+ * Parse one HTML listing page (e.g. `/handbags/chanel`) into RawListings.
+ * Pulled into its own pure function so the parser test suite can run on a
+ * captured fixture without making any network calls.
+ */
+export function parseYoogisListingHtml(html: string, brandHint?: string): RawListing[] {
+  const $ = cheerio.load(html);
+  const out: RawListing[] = [];
+
+  $('div[itemtype="https://schema.org/Product"]').each((_, el) => {
+    const $card = $(el);
+
+    const $link = $card.find("a[href]").first();
+    const href = $link.attr("href") ?? "";
+    const m = PRODUCT_HREF_RE.exec(href);
+    if (!m) return;
+    const externalId = m[1];
+
+    const linkTitle = decodeEntities(($link.attr("title") ?? "").trim());
+    const namePart = decodeEntities($card.find('[itemprop="name"]').first().text().trim());
+    const brandFromCard = decodeEntities(
+      $card.find('[itemprop="brand"]').first().text().trim(),
+    );
+    const brand = brandFromCard || brandHint || "";
+
+    // Title strategy: brand + name (e.g. "Chanel Beige Chevron Quilted ... Boy Bag").
+    const title = (brand ? `${brand} ${namePart || linkTitle}` : namePart || linkTitle)
+      .replace(/\s+/g, " ")
+      .trim();
+    if (!title) return;
+
+    // Current price lives in <span itemprop="price" content="3420">.
+    const priceMeta = $card.find('[itemprop="price"]').first().attr("content");
+    const priceText = $card.find('[itemprop="price"]').first().text().trim();
+    const price = parsePrice(priceMeta ?? priceText);
+    if (!price) return;
+
+    // "WAS" original price — find a strikethrough span.
+    const originalText = $card.find(".line-through").first().text().trim();
+    const originalPrice = parsePrice(originalText) ?? undefined;
+    const usableOriginalPrice =
+      originalPrice && originalPrice > price ? originalPrice : undefined;
+
+    // Image URL — primary src is in `data-src` (lazy load).
+    const $img = $card.find("img").first();
+    const imageUrl = ($img.attr("data-src") ?? $img.attr("src") ?? "").trim();
+    if (!imageUrl) return;
+
+    const conditionText = $card.find('[itemprop="itemCondition"]').first().text().trim();
+    const condition = extractCondition(conditionText, "Very Good");
+
+    const colorFromTitle = (() => {
+      // YC titles start with "<Brand> <Color words> <Material> <Style>".
+      // Heuristic: the first 1-2 words after brand are usually the color.
+      const t = (namePart || linkTitle).toLowerCase();
+      const match = t.match(/^\s*([a-z]+(?:\s+[a-z]+)?)/);
+      return match ? match[1] : "";
+    })();
+
+    out.push({
+      externalId,
+      title,
+      brand,
+      model: null,
+      style: null,
+      color: colorFromTitle,
+      size: extractSize(title, "Medium"),
+      condition,
+      price,
+      originalPrice: usableOriginalPrice,
+      currency: "USD",
+      imageUrl,
+      sourceUrl: `${BASE_URL}${href}`,
+    });
+  });
+
+  return out;
+}
+
+async function fetchListings(): Promise<RawListing[]> {
+  const seen = new Set<string>();
+  const all: RawListing[] = [];
+  for (const path of BRAND_LISTING_PATHS) {
+    await limiter.acquire();
+    let html: string | null = null;
+    try {
+      html = await httpFetch<string>(`${BASE_URL}${path}`, "html", {
+        asBrowser: true,
+        timeoutMs: 20_000,
+        retries: 3,
+        backoffMs: 1000,
+        context: { source: SOURCE_SLUG, path },
+      });
+    } catch (err) {
+      logger.warn(
+        { err, source: SOURCE_SLUG, path },
+        "yoogiscloset: listing page fetch failed, skipping",
+      );
+      continue;
+    }
+    if (!html) continue;
+
+    const brandHint = path.split("/").pop()?.replace(/-/g, " ");
+    const listings = parseYoogisListingHtml(html, brandHint);
+    for (const l of listings) {
+      if (seen.has(l.externalId)) continue;
+      seen.add(l.externalId);
+      all.push(l);
+    }
+  }
+  logger.info({ source: SOURCE_SLUG, count: all.length }, "yoogiscloset: fetch complete");
+  return all;
+}
+
+const liveAdapter: SourceAdapter = {
+  sourceName: SOURCE_NAME,
+  sourceSlug: SOURCE_SLUG,
+  baseUrl: BASE_URL,
+  fetchListings,
+  normalizeListing: (raw) =>
+    defaultNormalize(raw, { source: SOURCE_NAME, baseUrl: BASE_URL }),
+  validateListing: defaultValidate,
+};
+
+const mockListings: RawListing[] = [
   {
-    externalId: "yc-001",
-    title: "Hermès Birkin 35 Black Togo GHW",
-    brand: "Hermès",
-    model: "Birkin",
-    style: "Top Handle",
-    color: "Black",
-    size: "Birkin 35",
-    condition: "Very Good",
-    price: 16800,
-    imageUrl: IMG_TOP_HANDLE,
-    description: "Hermès Birkin 35 in Black Togo leather with Gold hardware.",
-  },
-  {
-    externalId: "yc-002",
-    title: "Louis Vuitton Speedy Bandouliere 30 Monogram",
+    externalId: "yc-mock-001",
+    title: "Louis Vuitton Speedy Bandouliere 25 Damier Ebene",
     brand: "Louis Vuitton",
-    model: "Speedy Bandouliere",
+    model: "Speedy",
     style: "Top Handle",
     color: "Brown",
-    size: "Speedy 30",
-    condition: "Good",
-    price: 780,
-    originalPrice: 1050,
-    imageUrl: IMG_TOP_HANDLE,
-    description: "Louis Vuitton Speedy Bandouliere 30 in Monogram canvas with strap.",
-  },
-  {
-    externalId: "yc-003",
-    title: "Fendi Baguette Blush Pink Zucca",
-    brand: "Fendi",
-    model: "Baguette",
-    style: "Shoulder Bag",
-    color: "Blush",
-    size: "Small",
-    condition: "Excellent",
-    price: 2200,
-    originalPrice: 2800,
-    imageUrl: IMG_SHOULDER,
-    description: "Fendi Baguette in Blush Pink Zucca FF jacquard with silver hardware.",
-  },
-  {
-    externalId: "yc-004",
-    title: "Chanel Classic Flap Jumbo Black Caviar SHW",
-    brand: "Chanel",
-    model: "Classic Flap",
-    style: "Shoulder Bag",
-    color: "Black",
-    size: "Jumbo",
+    size: "Speedy 25",
     condition: "Very Good",
-    price: 9800,
-    imageUrl: IMG_SHOULDER,
-    description: "Chanel Classic Flap Jumbo in Black Caviar with Silver hardware.",
-  },
-  {
-    externalId: "yc-005",
-    title: "Hermes Lindy 26 Etoupe Clemence",
-    brand: "Hermes",
-    model: "Lindy 26",
-    style: "Hobo",
-    color: "Etoupe",
-    size: "26",
-    condition: "Pristine",
-    price: 11500,
-    imageUrl: IMG_SHOULDER,
-    description: "Hermès Lindy 26 in Etoupe Clémence with Palladium hardware.",
-  },
-  {
-    externalId: "yc-006",
-    title: "Louis Vuitton Keepall 50 Monogram",
-    brand: "Louis Vuitton",
-    model: "Keepall 50",
-    style: "Travel/Luggage",
-    color: "Brown",
-    size: "50",
-    condition: "Good",
-    price: 1650,
-    imageUrl: IMG_TOP_HANDLE,
-    description: "Louis Vuitton Keepall 50 in Monogram canvas.",
-  },
-  {
-    externalId: "yc-007",
-    title: "Dior Diorama Medium Silver Lambskin",
-    brand: "Dior",
-    model: "Diorama",
-    style: "Shoulder Bag",
-    color: "Metallic",
-    size: "Medium",
-    condition: "Very Good",
-    price: 1950,
-    imageUrl: IMG_SHOULDER,
-    description: "Dior Diorama Medium in Silver Metallic Lambskin Cannage.",
-  },
-  {
-    externalId: "yc-008",
-    title: "Gucci Sylvie Mini Brown Leather",
-    brand: "Gucci",
-    model: "Sylvie",
-    style: "Crossbody",
-    color: "Brown",
-    size: "Mini",
-    condition: "Excellent",
-    price: 1250,
-    imageUrl: IMG_CROSSBODY,
-    description: "Gucci Sylvie Mini in Brown Smooth Leather with web stripe.",
-  },
-  {
-    externalId: "yc-009",
-    title: "Saint Laurent Envelope Small Cream",
-    brand: "Saint Laurent",
-    model: "Envelope",
-    style: "Clutch",
-    color: "Ivory",
-    size: "Small",
-    condition: "Pristine",
     price: 1750,
-    imageUrl: IMG_SHOULDER,
-    description: "Saint Laurent Envelope Small in Ivory Matelassé Lambskin.",
-  },
-  {
-    externalId: "yc-010",
-    title: "Celine Box Bag Medium Black",
-    brand: "Celine",
-    model: "Box Bag",
-    style: "Shoulder Bag",
-    color: "Black",
-    size: "Medium",
-    condition: "Very Good",
-    price: 3400,
-    imageUrl: IMG_SHOULDER,
-    description: "Celine Box Bag Medium in Black Smooth Calfskin.",
-  },
-  {
-    externalId: "yc-011",
-    title: "Prada Saffiano Lux Tote Medium Beige",
-    brand: "Prada",
-    model: "Saffiano Lux Tote",
-    style: "Tote",
-    color: "Beige",
-    size: "Medium",
-    condition: "Excellent",
-    price: 1450,
-    imageUrl: IMG_TOTE,
-    description: "Prada Saffiano Lux Tote Medium in Beige.",
-  },
-  {
-    externalId: "yc-012",
-    title: "Bottega Veneta Padded Cassette Olive",
-    brand: "Bottega Veneta",
-    model: "Padded Cassette",
-    style: "Crossbody",
-    color: "Olive",
-    size: "Medium",
-    condition: "Pristine",
-    price: 2100,
-    imageUrl: IMG_CROSSBODY,
-    description: "Bottega Veneta Padded Cassette in Olive Intrecciato leather.",
-  },
-  {
-    externalId: "yc-013",
-    title: "Loewe Goya Small Anagram Tan",
-    brand: "Loewe",
-    model: "Goya",
-    style: "Top Handle",
-    color: "Tan",
-    size: "Small",
-    condition: "Excellent",
-    price: 2800,
-    imageUrl: IMG_TOP_HANDLE,
-    description: "Loewe Goya Small in Tan Anagram Soft Calfskin.",
-  },
-  {
-    externalId: "yc-014",
-    title: "Hermès Bolide 27 Gold Epsom GHW",
-    brand: "Hermès",
-    model: "Bolide 27",
-    style: "Top Handle",
-    color: "Gold",
-    size: "27",
-    condition: "Pristine",
-    price: 7800,
-    imageUrl: IMG_TOP_HANDLE,
-    description: "Hermès Bolide 27 in Gold Epsom with Gold hardware.",
-  },
-  {
-    externalId: "yc-015",
-    title: "Chanel Coco Handle Small Pink Caviar",
-    brand: "Chanel",
-    model: "Coco Handle",
-    style: "Top Handle",
-    color: "Pink",
-    size: "Small",
-    condition: "Excellent",
-    price: 5200,
-    imageUrl: IMG_TOP_HANDLE,
-    description: "Chanel Coco Handle Small in Pink Caviar leather with python flap.",
-  },
-  {
-    externalId: "yc-016",
-    title: "Louis Vuitton Bucket Bag GM Monogram",
-    brand: "LV",
-    model: "Bucket Bag",
-    style: "Bucket Bag",
-    color: "Brown",
-    size: "GM",
-    condition: "Fair",
-    price: 580,
-    imageUrl: IMG_SHOULDER,
-    description: "Louis Vuitton Bucket Bag GM in Monogram canvas. Visible wear.",
-  },
-  {
-    externalId: "yc-017",
-    title: "Dior Bobby Medium Black Box Calfskin",
-    brand: "Christian Dior",
-    model: "Bobby",
-    style: "Shoulder Bag",
-    color: "Black",
-    size: "Medium",
-    condition: "Pristine",
-    price: 3200,
-    imageUrl: IMG_SHOULDER,
-    description: "Dior Bobby Medium in Black Box Calfskin.",
-  },
-  {
-    externalId: "yc-018",
-    title: "Gucci GG Marmont Mini Belt Bag Black",
-    brand: "Gucci",
-    model: "GG Marmont Belt Bag",
-    style: "Belt Bag",
-    color: "Black",
-    size: "Mini",
-    condition: "Excellent",
-    price: 1150,
-    imageUrl: IMG_CROSSBODY,
-    description: "Gucci GG Marmont Belt Bag in Black Matelassé leather.",
-  },
-  {
-    externalId: "yc-019",
-    title: "Miu Miu Matelassé Crystal Pearl",
-    brand: "Miu Miu",
-    model: "Matelassé Crystal",
-    style: "Crossbody",
-    color: "White",
-    size: "Mini",
-    condition: "Pristine",
-    price: 2400,
-    imageUrl: IMG_CROSSBODY,
-    description: "Miu Miu Matelassé Crystal embellished mini bag in Pearl White.",
-  },
-  {
-    externalId: "yc-020",
-    title: "Hermès Constance To Go Black Mini",
-    brand: "Hermès",
-    model: "Constance To Go",
-    style: "Crossbody",
-    color: "Black",
-    size: "Mini",
-    condition: "Excellent",
-    price: 5800,
-    imageUrl: IMG_CROSSBODY,
-    description: "Hermès Constance To Go in Black Epsom with Palladium hardware.",
+    imageUrl: "https://images.unsplash.com/photo-1606522754091-a3bbf9ad4cb3?w=800",
+    description: "Mock listing.",
   },
 ];
 
-const adapter = createMockAdapter({
-  sourceName: "Yoogi's Closet",
-  sourceSlug: "yoogiscloset",
-  baseUrl: "https://www.yoogiscloset.com",
-  listings,
+const mockAdapter = createMockAdapter({
+  sourceName: SOURCE_NAME,
+  sourceSlug: SOURCE_SLUG,
+  baseUrl: BASE_URL,
+  listings: mockListings,
 });
 
+const adapter = shouldUseMockAdapters() ? mockAdapter : liveAdapter;
 export default adapter;

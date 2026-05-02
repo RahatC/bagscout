@@ -664,11 +664,34 @@ async function loadPreferenceCriteria(
 /**
  * Run every registered active adapter once. Used by manual "ingest all"
  * triggers and the auto-seed startup hook.
+ *
+ * Each adapter is wrapped in its own try/catch so one source throwing
+ * never aborts the rest of the run. `runMockIngest` already records its
+ * own internal errors into `ingestion_logs`; the outer try/catch here is
+ * a final safety net for unexpected throws (network stack failures,
+ * DB transaction errors that escape the inner handler, etc.).
  */
 export async function runAllIngests(): Promise<IngestResult[]> {
   const results: IngestResult[] = [];
   for (const adapter of adapters) {
-    results.push(await runMockIngest(adapter.sourceSlug));
+    try {
+      results.push(await runMockIngest(adapter.sourceSlug));
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      logger.error(
+        { err, sourceSlug: adapter.sourceSlug },
+        "runAllIngests: adapter run threw, continuing with next source",
+      );
+      results.push({
+        sourceSlug: adapter.sourceSlug,
+        listingsFound: 0,
+        listingsAdded: 0,
+        listingsUpdated: 0,
+        listingsRejected: 0,
+        durationMs: 0,
+        errors: [`Adapter run threw: ${msg}`],
+      });
+    }
   }
   return results;
 }

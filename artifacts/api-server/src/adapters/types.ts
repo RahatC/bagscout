@@ -1,11 +1,16 @@
 /**
  * SourceAdapter — contract every listing source must implement.
  *
- * Production adapters can later use approved channels (official APIs,
- * affiliate feeds, sitemaps where allowed, merchant-provided feeds,
- * user-submitted watch URLs, or email/newsletter parsing). The current
- * implementations are mocks with realistic sample listings — no scraping,
- * no anti-bot bypass, no terms violations.
+ * Live adapters fetch listings directly from the marketplace's public
+ * surfaces (Shopify storefront APIs, server-rendered HTML, sitemaps). They
+ * identify themselves with a clearly-named bot user-agent, respect the
+ * source's `robots.txt`, rate-limit their requests, and never bypass
+ * anti-bot challenges. When a source can't be reached the adapter returns
+ * an empty list and the ingestion run logs the failure but continues with
+ * the other sources.
+ *
+ * Mock adapters (`createMockAdapter` in `base.ts`) are kept for tests and
+ * local development under `INGEST_USE_MOCK_ADAPTERS=true`.
  */
 
 export interface RawListing {
@@ -22,6 +27,12 @@ export interface RawListing {
   currency?: string;
   imageUrl: string;
   description?: string;
+  /**
+   * Optional canonical URL captured during scraping. When set, the
+   * normalize step uses it directly instead of synthesising one from
+   * `baseUrl + externalId`.
+   */
+  sourceUrl?: string;
 }
 
 export interface NormalizedListing {
@@ -59,7 +70,7 @@ export interface SourceAdapter {
   sourceName: string;
   /** Slug matching the `sources.slug` reference row (e.g. "fashionphile"). */
   sourceSlug: string;
-  /** Public site URL used to compose `source_url` for each listing. */
+  /** Public site URL used to compose `source_url` when adapters don't supply one. */
   baseUrl: string;
   /** Returns the raw listings as the adapter sees them at the source. */
   fetchListings(): Promise<RawListing[]>;

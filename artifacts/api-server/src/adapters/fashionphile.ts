@@ -1,14 +1,82 @@
-import { createMockAdapter } from "./base";
-import type { RawListing } from "./types";
+import { logger } from "../lib/logger";
+import {
+  createMockAdapter,
+  defaultNormalize,
+  defaultValidate,
+  shouldUseMockAdapters,
+} from "./base";
+import { RateLimiter } from "./http";
+import { fetchShopifyCollectionPage } from "./shopify";
+import type { RawListing, SourceAdapter } from "./types";
 
-const IMG_TOP_HANDLE = "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800";
-const IMG_SHOULDER = "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800";
-const IMG_TOTE = "https://images.unsplash.com/photo-1594938298603-c8148c4b4f7a?w=800";
-const IMG_CROSSBODY = "https://images.unsplash.com/photo-1622560480605-d83c853bc5c3?w=800";
+const SOURCE_NAME = "FASHIONPHILE";
+const SOURCE_SLUG = "fashionphile";
+const BASE_URL = "https://www.fashionphile.com";
 
-const listings: RawListing[] = [
+// Per-source politeness: ~1 request every 1.5s.
+const limiter = new RateLimiter(1500);
+
+// Bag-only collections we crawl. Each is a real, public collection handle
+// on the Fashionphile Shopify storefront. Limited to handbags + small
+// leather goods that map onto our `bag_styles` reference.
+const COLLECTIONS = ["handbags", "shop-best-sellers", "shop-new-arrivals"];
+
+const MAX_PAGES_PER_COLLECTION = 4; // 4 × 50 = up to 200 listings per collection
+const PAGE_LIMIT = 50;
+
+async function fetchListings(): Promise<RawListing[]> {
+  const seen = new Set<string>();
+  const all: RawListing[] = [];
+  for (const handle of COLLECTIONS) {
+    let page = 1;
+    while (page <= MAX_PAGES_PER_COLLECTION) {
+      await limiter.acquire();
+      let pageListings: RawListing[] = [];
+      try {
+        pageListings = await fetchShopifyCollectionPage({
+          baseUrl: BASE_URL,
+          collectionHandle: handle,
+          page,
+          limit: PAGE_LIMIT,
+          source: SOURCE_SLUG,
+        });
+      } catch (err) {
+        // One bad page should not abort the entire run — log and stop the
+        // collection, then move on to the next.
+        logger.warn(
+          { err, source: SOURCE_SLUG, collection: handle, page },
+          "fashionphile: collection page fetch failed, skipping rest of collection",
+        );
+        break;
+      }
+      if (pageListings.length === 0) break;
+      for (const listing of pageListings) {
+        if (seen.has(listing.externalId)) continue;
+        seen.add(listing.externalId);
+        all.push(listing);
+      }
+      page++;
+    }
+  }
+  logger.info({ source: SOURCE_SLUG, count: all.length }, "fashionphile: fetch complete");
+  return all;
+}
+
+const liveAdapter: SourceAdapter = {
+  sourceName: SOURCE_NAME,
+  sourceSlug: SOURCE_SLUG,
+  baseUrl: BASE_URL,
+  fetchListings,
+  normalizeListing: (raw) =>
+    defaultNormalize(raw, { source: SOURCE_NAME, baseUrl: BASE_URL }),
+  validateListing: defaultValidate,
+};
+
+// Tiny mock seed set kept for offline dev / tests when
+// INGEST_USE_MOCK_ADAPTERS=true is set.
+const mockListings: RawListing[] = [
   {
-    externalId: "fp-001",
+    externalId: "fp-mock-001",
     title: "Hermès Birkin 30 Etoupe Togo PHW",
     brand: "Hermès",
     model: "Birkin",
@@ -18,11 +86,11 @@ const listings: RawListing[] = [
     condition: "Excellent",
     price: 18500,
     originalPrice: 21000,
-    imageUrl: IMG_TOP_HANDLE,
-    description: "Hermès Birkin 30 in Etoupe Togo leather with Palladium hardware. Near mint.",
+    imageUrl: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800",
+    description: "Mock listing — enable INGEST_USE_MOCK_ADAPTERS to use these.",
   },
   {
-    externalId: "fp-002",
+    externalId: "fp-mock-002",
     title: "Chanel Medium Classic Flap Black Caviar GHW",
     brand: "Chanel",
     model: "Classic Flap",
@@ -32,256 +100,17 @@ const listings: RawListing[] = [
     condition: "Very Good",
     price: 8200,
     originalPrice: 9000,
-    imageUrl: IMG_SHOULDER,
-    description: "Chanel Medium Classic Flap in Black Caviar leather with Gold hardware.",
-  },
-  {
-    externalId: "fp-003",
-    title: "Louis Vuitton Neverfull MM Damier Ebene",
-    brand: "Louis Vuitton",
-    model: "Neverfull",
-    style: "Tote",
-    color: "Ebene",
-    size: "MM",
-    condition: "Good",
-    price: 1250,
-    imageUrl: IMG_TOTE,
-    description: "Louis Vuitton Neverfull MM in Damier Ebene canvas.",
-  },
-  {
-    externalId: "fp-004",
-    title: "Hermès Kelly 25 Sellier Black Epsom GHW",
-    brand: "Hermes",
-    model: "Kelly",
-    style: "Top Handle",
-    color: "Black",
-    size: "Kelly 25",
-    condition: "Excellent",
-    price: 25000,
-    imageUrl: IMG_TOP_HANDLE,
-    description: "Hermès Kelly 25 Sellier in Black Epsom leather with Gold hardware.",
-  },
-  {
-    externalId: "fp-005",
-    title: "Chanel Mini Square Pink Lambskin",
-    brand: "Chanel",
-    model: "Mini Square",
-    style: "Crossbody",
-    color: "Blush",
-    size: "Mini",
-    condition: "Pristine",
-    price: 5400,
-    originalPrice: 6000,
-    imageUrl: IMG_CROSSBODY,
-    description: "Chanel Mini Square in Blush Pink Lambskin leather.",
-  },
-  {
-    externalId: "fp-006",
-    title: "Louis Vuitton Speedy 25 Monogram",
-    brand: "LV",
-    model: "Speedy",
-    style: "Top Handle",
-    color: "Brown",
-    size: "Speedy 25",
-    condition: "Very Good",
-    price: 1100,
-    imageUrl: IMG_TOP_HANDLE,
-    description: "Louis Vuitton Speedy 25 in classic Monogram canvas.",
-  },
-  {
-    externalId: "fp-007",
-    title: "Dior Lady Dior Medium Black Lambskin Cannage",
-    brand: "Christian Dior",
-    model: "Lady Dior",
-    style: "Top Handle",
-    color: "Black",
-    size: "Medium",
-    condition: "Excellent",
-    price: 4200,
-    originalPrice: 5200,
-    imageUrl: IMG_TOP_HANDLE,
-    description: "Dior Lady Dior Medium in Black Lambskin Cannage.",
-  },
-  {
-    externalId: "fp-008",
-    title: "Gucci GG Marmont Small Black Matelassé",
-    brand: "Gucci",
-    model: "GG Marmont",
-    style: "Shoulder Bag",
-    color: "Black",
-    size: "Small",
-    condition: "Very Good",
-    price: 1650,
-    imageUrl: IMG_SHOULDER,
-    description: "Gucci GG Marmont Small Shoulder Bag in Black Matelassé chevron leather.",
-  },
-  {
-    externalId: "fp-009",
-    title: "YSL LouLou Toy Crystal Blue Matelassé",
-    brand: "YSL",
-    model: "LouLou Toy",
-    style: "Crossbody",
-    color: "Cobalt",
-    size: "Mini",
-    condition: "Pristine",
-    price: 1950,
-    imageUrl: IMG_CROSSBODY,
-    description: "Saint Laurent LouLou Toy in Crystal Blue Matelassé Y-quilted leather.",
-  },
-  {
-    externalId: "fp-010",
-    title: "Bottega Veneta The Pouch Caramel Intrecciato",
-    brand: "Bottega Veneta",
-    model: "The Pouch",
-    style: "Clutch",
-    color: "Caramel",
-    size: "Small",
-    condition: "Excellent",
-    price: 2150,
-    originalPrice: 2700,
-    imageUrl: IMG_SHOULDER,
-    description: "Bottega Veneta The Pouch in Caramel Intrecciato leather.",
-  },
-  {
-    externalId: "fp-011",
-    title: "Prada Re-Edition 2005 Nylon Black",
-    brand: "Prada",
-    model: "Re-Edition 2005",
-    style: "Shoulder Bag",
-    color: "Black",
-    size: "Mini",
-    condition: "Pristine",
-    price: 1250,
-    imageUrl: IMG_SHOULDER,
-    description: "Prada Re-Edition 2005 Nylon Shoulder Bag in Black.",
-  },
-  {
-    externalId: "fp-012",
-    title: "Fendi Baguette Mamma Brown Zucca",
-    brand: "Fendi",
-    model: "Baguette",
-    style: "Shoulder Bag",
-    color: "Mocha",
-    size: "Medium",
-    condition: "Good",
-    price: 2400,
-    imageUrl: IMG_SHOULDER,
-    description: "Fendi Baguette Mamma in Brown Zucca FF jacquard.",
-  },
-  {
-    externalId: "fp-013",
-    title: "Celine Triomphe Medium Tan Calfskin",
-    brand: "Celine",
-    model: "Triomphe",
-    style: "Shoulder Bag",
-    color: "Tan",
-    size: "Medium",
-    condition: "Excellent",
-    price: 3800,
-    originalPrice: 4400,
-    imageUrl: IMG_SHOULDER,
-    description: "Celine Triomphe Medium Shoulder Bag in Tan Calfskin.",
-  },
-  {
-    externalId: "fp-014",
-    title: "Hermès Constance 24 Black Epsom GHW",
-    brand: "Hermès",
-    model: "Constance 24",
-    style: "Crossbody",
-    color: "Black",
-    size: "24",
-    condition: "Pristine",
-    price: 14500,
-    imageUrl: IMG_CROSSBODY,
-    description: "Hermès Constance 24 in Black Epsom leather with Gold hardware.",
-  },
-  {
-    externalId: "fp-015",
-    title: "Chanel Boy Bag Old Medium Burgundy Caviar",
-    brand: "Chanel",
-    model: "Boy Bag",
-    style: "Shoulder Bag",
-    color: "Burgundy",
-    size: "Medium",
-    condition: "Excellent",
-    price: 5800,
-    imageUrl: IMG_SHOULDER,
-    description: "Chanel Boy Bag Old Medium in Burgundy Caviar leather.",
-  },
-  {
-    externalId: "fp-016",
-    title: "Louis Vuitton Pochette Métis Monogram",
-    brand: "Louis Vuitton",
-    model: "Pochette Métis",
-    style: "Crossbody",
-    color: "Brown",
-    size: "Small",
-    condition: "Very Good",
-    price: 2400,
-    imageUrl: IMG_CROSSBODY,
-    description: "Louis Vuitton Pochette Métis in Monogram canvas.",
-  },
-  {
-    externalId: "fp-017",
-    title: "Dior Saddle Bag Oblique Blue",
-    brand: "Dior",
-    model: "Saddle",
-    style: "Shoulder Bag",
-    color: "Navy",
-    size: "Medium",
-    condition: "Excellent",
-    price: 2600,
-    originalPrice: 3200,
-    imageUrl: IMG_SHOULDER,
-    description: "Dior Saddle Bag in Blue Oblique jacquard.",
-  },
-  {
-    externalId: "fp-018",
-    title: "Hermès Picotin Lock 18 Gold Clemence",
-    brand: "Hermès",
-    model: "Picotin Lock 18",
-    style: "Top Handle",
-    color: "Gold",
-    size: "18",
-    condition: "Excellent",
-    price: 5400,
-    imageUrl: IMG_TOP_HANDLE,
-    description: "Hermès Picotin Lock 18 in Gold Clémence leather.",
-  },
-  {
-    externalId: "fp-019",
-    title: "Goyard Saint Louis PM Tote Brown",
-    brand: "Goyard",
-    model: "Saint Louis PM",
-    style: "Tote",
-    color: "Brown",
-    size: "PM",
-    condition: "Very Good",
-    price: 1750,
-    imageUrl: IMG_TOTE,
-    description: "Goyard Saint Louis PM Tote in classic Brown.",
-  },
-  {
-    externalId: "fp-020",
-    title: "Prada Galleria Medium Saffiano Black",
-    brand: "Prada",
-    model: "Galleria",
-    style: "Top Handle",
-    color: "Black",
-    size: "Medium",
-    condition: "Pristine",
-    price: 3400,
-    originalPrice: 3900,
-    imageUrl: IMG_TOP_HANDLE,
-    description: "Prada Galleria Medium in Black Saffiano leather. Excellent interior.",
+    imageUrl: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800",
+    description: "Mock listing.",
   },
 ];
 
-const adapter = createMockAdapter({
-  sourceName: "FASHIONPHILE",
-  sourceSlug: "fashionphile",
-  baseUrl: "https://www.fashionphile.com",
-  listings,
+const mockAdapter = createMockAdapter({
+  sourceName: SOURCE_NAME,
+  sourceSlug: SOURCE_SLUG,
+  baseUrl: BASE_URL,
+  listings: mockListings,
 });
 
+const adapter = shouldUseMockAdapters() ? mockAdapter : liveAdapter;
 export default adapter;

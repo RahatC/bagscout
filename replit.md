@@ -84,9 +84,33 @@ The ingestion system follows a formal `SourceAdapter` interface defined in `adap
 - `normalizeListing(raw)` — maps raw → canonical `NormalizedListing` (brand, color, condition, style, model all canonicalized)
 - `validateListing(normalized)` — returns `{ valid, errors[] }`
 
-`adapters/base.ts` provides a `createMockAdapter` factory plus default normalize + validate implementations. The 4 mock adapters (`fashionphile.ts`, `rebag.ts`, `therealreal.ts`, `yoogiscloset.ts`) each ship 20 realistic luxury bag listings (80 total) and are registered in `adapters/index.ts`.
+`adapters/base.ts` provides default normalize + validate implementations and a `createMockAdapter` factory. The four registered adapters fetch live listings by default; setting `INGEST_USE_MOCK_ADAPTERS=true` swaps every adapter for its hand-curated mock equivalent (used by tests / offline dev).
 
-**No scraping, no terms violations.** The mock adapters return hand-curated sample data. Production adapters can later use approved channels: official APIs, affiliate feeds, sitemaps where allowed, merchant-provided feeds, user-submitted watch URLs, or email/newsletter parsing.
+### Live source strategies
+
+- **Fashionphile** (`fashionphile.ts`) — Shopify storefront. Pulls JSON from `/collections/{handbags,shop-best-sellers,shop-new-arrivals}/products.json` (up to 4 pages × 50 products each). Mapping is shared with Rebag via `shopify.ts → mapShopifyProduct`.
+- **Rebag** (`rebag.ts`) — Shopify storefront on `shop.rebag.com`. Pulls `/collections/{all,new-arrivals}/products.json`. A title-keyword filter drops non-handbag SKUs (wallets, belts, shoes, etc.).
+- **Yoogi's Closet** (`yoogiscloset.ts`) — server-rendered Nuxt HTML. Fetches `/handbags/{brand}` for ~12 designer brands and parses microdata `Product` cards via cheerio (`parseYoogisListingHtml`).
+- **The RealReal** (`therealreal.ts`) — JSON-LD `ItemList` parser via `parseTrrListingHtml`, with explicit detection for the PerimeterX captcha page. The site routinely returns 403/captcha to non-browser clients; in that state the adapter throws a recognisable error so the source row is marked **degraded** in `ingestion_logs` and the admin UI rather than silently empty.
+
+### Shared infrastructure (`adapters/http.ts`, `adapters/parse.ts`)
+
+- `httpFetch(url, kind, opts)` — timeout (default 15s), exponential backoff, retry on 408/425/429/5xx, optional `allow404`, identifies as `BagScoutBot/1.0` (or a real-browser UA when `asBrowser: true`).
+- `RateLimiter(minIntervalMs)` — per-source token-bucket-style spacing. Each adapter holds its own limiter so a slow site can't starve another.
+- `parse.ts` helpers — `parsePrice`, `extractColor`, `extractSize`, `extractCondition`, `decodeEntities`, `stripHtml`. Used by every adapter to fold raw vendor strings onto the canonical reference seed values.
+
+### Error boundaries
+
+`runMockIngest` already isolates each source by writing failures to `ingestion_logs` and returning errors instead of throwing. `runAllIngests` adds an outer try/catch around each per-source run so an unexpected throw never aborts the rest of the cycle.
+
+### Tests + fixtures
+
+`adapters/__fixtures__/` ships real captured snapshots:
+
+- `fashionphile_handbags.json`, `rebag_handbags.json` — Shopify product feeds
+- `yoogiscloset_handbags.html` — Nuxt SSR product cards
+
+Parser tests (`*.test.ts` in `adapters/`) run against these fixtures with no network calls and cover the captcha-rejection path for The RealReal. `http.test.ts` exercises the retry / backoff / non-retryable-status logic with mocked fetch.
 
 ### Normalization (`artifacts/api-server/src/lib/normalize.ts`)
 
@@ -164,7 +188,7 @@ Weights (sum to 100):
 ## Seed Data
 
 - Reference tables (brands/styles/colors/sizes/conditions/sources) are seeded via SQL.
-- Listings are NOT pre-seeded. Trigger `/admin` ingest to populate them from the mock data baked into `artifacts/api-server/src/lib/ingest.ts`.
+- Listings are populated by the live source adapters. On first startup `autoSeedIfEmpty` runs every adapter once; subsequent ingests run on the schedule wired up in `index.ts` or via the admin "Trigger ingest" button. To run with mock data instead (no network access), set `INGEST_USE_MOCK_ADAPTERS=true`.
 
 ## Design System
 
