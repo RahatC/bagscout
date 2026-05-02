@@ -1,0 +1,135 @@
+Build the BagScout onboarding flow.
+
+The onboarding should feel premium, fast, and guided. Do not make it feel like a boring form.
+
+Screens:
+
+1. Welcome
+Headline: “Find the bag before someone else does.”
+Subtext: “Create your dream bag profile and we’ll watch trusted resale sources for you.”
+CTA: “Build My Bag Profile”
+
+2. Brand Selection
+Question: “Which brands should we watch?”
+Show luxury brand chips:
+- Chanel
+- Louis Vuitton
+- Hermès
+- Dior
+- Gucci
+- Prada
+- Saint Laurent
+- Celine
+- Goyard
+- Bottega Veneta
+- Fendi
+- Loewe
+- Miu Miu
+Allow multi-select.
+Include search.
+
+3. Bag Style
+Question: “What type of bag are you looking for?”
+Options:
+- Crossbody
+- Shoulder Bag
+- Tote
+- Top Handle
+- Hobo
+- Bucket Bag
+- Backpack
+- Clutch
+- Evening Bag
+- Travel/Luggage
+- Belt Bag
+Allow multi-select.
+
+4. Exact Model
+Question: “Are you looking for an exact model?”
+Options:
+- Yes, I know the model
+- No, show me good matches
+
+If yes:
+Show global model search input.
+Placeholder examples:
+- Chanel Classic Flap
+- Hermès Birkin 30
+- Hermès Kelly 28
+- Louis Vuitton Speedy 25
+- Dior Lady Dior
+- Fendi Baguette
+- Prada Re-Edition
+- Celine Triomphe
+
+5. Condition
+Question: “What condition are you comfortable with?”
+Options:
+- New with Tags
+- Pristine
+- Excellent
+- Very Good
+- Good
+- Fair
+Let user choose minimum acceptable condition.
+
+6. Color
+Question: “Which colors should we watch?”
+Show top 15 colors:
+Black, Brown, Beige, Tan, White, Cream, Gray, Navy, Blue, Red, Burgundy, Pink, Green, Gold, Silver.
+Allow multi-select.
+Add checkbox:
+“Include close color matches”
+Example: Beige can match cream, ivory, nude, sand, taupe.
+
+7. Size
+Question: “What size are you looking for?”
+Options:
+- Mini
+- Small
+- Medium
+- Large
+- Oversized
+- Exact size / model size
+If exact, allow text input.
+
+8. Price Range
+Question: “What price range should we watch?”
+Show min/max slider and manual fields.
+Currency default: USD.
+
+9. Match Strictness
+Question: “How strict should we be?”
+Options:
+- Exact only: only alert me when all selected criteria match
+- Smart close matches: alert me for close matches that look relevant
+Add checkbox:
+“Only show listings within my selected criteria”
+
+10. Alert Preferences
+Question: “How should we alert you?”
+Options:
+- Instant email
+- Daily digest
+- Weekly digest
+- Push/SMS later placeholder
+
+11. Confirmation
+Show profile summary:
+- Brands
+- Styles
+- Model
+- Condition
+- Colors
+- Size
+- Price
+- Match strictness
+CTA: “Start Watching”
+
+Acceptance criteria:
+- User can complete onboarding end-to-end
+- Preference is saved to database
+- User lands on dashboard after onboarding
+- Onboarding is mobile responsive
+- The flow looks premium and polished
+- No dead ends

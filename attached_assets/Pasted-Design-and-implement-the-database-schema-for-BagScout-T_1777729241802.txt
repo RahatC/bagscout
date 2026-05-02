@@ -1,0 +1,157 @@
+Design and implement the database schema for BagScout.
+
+The schema must support:
+- Users
+- User profiles
+- Bag preferences
+- Watchlists
+- Brands
+- Bag styles
+- Bag models
+- Colors
+- Conditions
+- Sizes
+- Sources
+- Listings
+- Listing snapshots
+- Match results
+- Alerts
+- Saved listings
+- Notification preferences
+- Ingestion logs
+
+Core tables:
+
+users:
+- id
+- email
+- full_name
+- created_at
+- updated_at
+
+user_profiles:
+- id
+- user_id
+- preferred_currency
+- location_country
+- alert_frequency
+- created_at
+- updated_at
+
+bag_preferences:
+- id
+- user_id
+- nickname
+- brands array or relation
+- bag_styles array or relation
+- exact_model_enabled boolean
+- model_query text
+- condition_min
+- colors array or relation
+- allow_close_color_match boolean
+- sizes array or relation
+- min_price
+- max_price
+- only_exact_criteria boolean
+- allow_close_matches boolean
+- active boolean
+- created_at
+- updated_at
+
+sources:
+- id
+- name
+- base_url
+- source_type
+- ingestion_mode
+- compliance_status
+- active
+- created_at
+- updated_at
+
+listings:
+- id
+- source_id
+- source_listing_id
+- source_url
+- title
+- brand
+- normalized_brand
+- model
+- normalized_model
+- style
+- normalized_style
+- condition
+- normalized_condition
+- color
+- normalized_color
+- size
+- price
+- currency
+- original_price
+- discount_percent
+- image_url
+- availability_status
+- first_seen_at
+- last_seen_at
+- created_at
+- updated_at
+
+listing_snapshots:
+- id
+- listing_id
+- price
+- availability_status
+- captured_at
+
+match_results:
+- id
+- user_id
+- preference_id
+- listing_id
+- match_score
+- match_type
+- match_reasons json
+- disqualifiers json
+- created_at
+
+alerts:
+- id
+- user_id
+- preference_id
+- listing_id
+- alert_type
+- status
+- sent_at
+- created_at
+
+saved_listings:
+- id
+- user_id
+- listing_id
+- note
+- created_at
+
+ingestion_logs:
+- id
+- source_id
+- job_type
+- status
+- records_seen
+- records_created
+- records_updated
+- error_message
+- started_at
+- completed_at
+
+Also create seed data:
+- Brands: Chanel, Louis Vuitton, Hermès, Dior, Gucci, Prada, Saint Laurent, Celine, Goyard, Bottega Veneta, Fendi, Loewe, Miu Miu
+- Styles: Crossbody, Shoulder Bag, Tote, Top Handle, Hobo, Bucket Bag, Backpack, Clutch, Evening Bag, Travel/Luggage, Belt Bag
+- Conditions: New with Tags, Pristine, Excellent, Very Good, Good, Fair
+- Top colors: Black, Brown, Beige, Tan, White, Cream, Gray, Navy, Blue, Red, Burgundy, Pink, Green, Gold, Silver
+
+Acceptance criteria:
+- Schema migrates successfully
+- Seed data loads successfully
+- Listing records can be normalized
+- Match results can be linked back to users and preferences
