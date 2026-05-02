@@ -3,142 +3,353 @@
  * Do not edit manually.
  * Api
  * BagScout API specification
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
 import * as zod from "zod";
 
-/**
- * @summary Health check
- */
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
 
-/**
- * @summary List all watchlists for the authenticated user
- */
-export const ListWatchlistsResponseItem = zod.object({
+export const ListBrandsResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  slug: zod.string(),
+  normalizedName: zod.string(),
+});
+export const ListBrandsResponse = zod.array(ListBrandsResponseItem);
+
+export const ListStylesResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  slug: zod.string(),
+  normalizedName: zod.string(),
+});
+export const ListStylesResponse = zod.array(ListStylesResponseItem);
+
+export const ListColorsResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  slug: zod.string(),
+  normalizedName: zod.string(),
+  family: zod.string(),
+  hex: zod.string().nullish(),
+});
+export const ListColorsResponse = zod.array(ListColorsResponseItem);
+
+export const ListConditionsResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  slug: zod.string(),
+  normalizedName: zod.string(),
+  rank: zod.number(),
+});
+export const ListConditionsResponse = zod.array(ListConditionsResponseItem);
+
+export const ListSizesResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  slug: zod.string(),
+  normalizedName: zod.string(),
+});
+export const ListSizesResponse = zod.array(ListSizesResponseItem);
+
+export const ListBagPreferencesResponseItem = zod.object({
   id: zod.number(),
   userId: zod.string(),
-  name: zod.string(),
-  brand: zod.string(),
-  model: zod.string().nullish(),
-  style: zod.string().nullish(),
-  color: zod.string().nullish(),
-  size: zod.string().nullish(),
-  condition: zod.string().nullish(),
+  nickname: zod.string(),
+  exactModelEnabled: zod.boolean(),
+  modelQuery: zod.string().nullish(),
+  conditionMin: zod
+    .object({
+      id: zod.number(),
+      name: zod.string(),
+      slug: zod.string(),
+      normalizedName: zod.string(),
+      rank: zod.number(),
+    })
+    .nullish(),
+  allowCloseColorMatch: zod.boolean(),
   minPrice: zod.number().nullish(),
   maxPrice: zod.number().nullish(),
-  matchType: zod.enum(["exact", "close"]),
-  isActive: zod.boolean(),
+  onlyExactCriteria: zod.boolean(),
+  allowCloseMatches: zod.boolean(),
+  active: zod.boolean(),
+  brands: zod.array(
+    zod.object({
+      id: zod.number(),
+      name: zod.string(),
+      slug: zod.string(),
+      normalizedName: zod.string(),
+    }),
+  ),
+  styles: zod.array(
+    zod.object({
+      id: zod.number(),
+      name: zod.string(),
+      slug: zod.string(),
+      normalizedName: zod.string(),
+    }),
+  ),
+  colors: zod.array(
+    zod.object({
+      id: zod.number(),
+      name: zod.string(),
+      slug: zod.string(),
+      normalizedName: zod.string(),
+      family: zod.string(),
+      hex: zod.string().nullish(),
+    }),
+  ),
+  sizes: zod.array(
+    zod.object({
+      id: zod.number(),
+      name: zod.string(),
+      slug: zod.string(),
+      normalizedName: zod.string(),
+    }),
+  ),
   matchCount: zod.number(),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
-export const ListWatchlistsResponse = zod.array(ListWatchlistsResponseItem);
+export const ListBagPreferencesResponse = zod.array(
+  ListBagPreferencesResponseItem,
+);
 
-/**
- * @summary Create a new watchlist
- */
-export const createWatchlistBodyMatchTypeDefault = `close`;
-
-export const CreateWatchlistBody = zod.object({
-  name: zod.string(),
-  brand: zod.string(),
-  model: zod.string().nullish(),
-  style: zod.string().nullish(),
-  color: zod.string().nullish(),
-  size: zod.string().nullish(),
-  condition: zod.string().nullish(),
+export const CreateBagPreferenceBody = zod.object({
+  nickname: zod.string().min(1),
+  brandIds: zod.array(zod.number()).min(1),
+  styleIds: zod.array(zod.number()).optional(),
+  colorIds: zod.array(zod.number()).optional(),
+  sizeIds: zod.array(zod.number()).optional(),
+  exactModelEnabled: zod.boolean().optional(),
+  modelQuery: zod.string().nullish(),
+  conditionMinId: zod.number().nullish(),
+  allowCloseColorMatch: zod.boolean().optional(),
   minPrice: zod.number().nullish(),
   maxPrice: zod.number().nullish(),
-  matchType: zod
-    .enum(["exact", "close"])
-    .default(createWatchlistBodyMatchTypeDefault),
+  onlyExactCriteria: zod.boolean().optional(),
+  allowCloseMatches: zod.boolean().optional(),
+  active: zod.boolean().optional(),
 });
 
-/**
- * @summary Get a single watchlist by ID
- */
-export const GetWatchlistParams = zod.object({
+export const GetBagPreferenceParams = zod.object({
   id: zod.coerce.number(),
 });
 
-export const GetWatchlistResponse = zod.object({
+export const GetBagPreferenceResponse = zod.object({
   id: zod.number(),
   userId: zod.string(),
-  name: zod.string(),
-  brand: zod.string(),
-  model: zod.string().nullish(),
-  style: zod.string().nullish(),
-  color: zod.string().nullish(),
-  size: zod.string().nullish(),
-  condition: zod.string().nullish(),
+  nickname: zod.string(),
+  exactModelEnabled: zod.boolean(),
+  modelQuery: zod.string().nullish(),
+  conditionMin: zod
+    .object({
+      id: zod.number(),
+      name: zod.string(),
+      slug: zod.string(),
+      normalizedName: zod.string(),
+      rank: zod.number(),
+    })
+    .nullish(),
+  allowCloseColorMatch: zod.boolean(),
   minPrice: zod.number().nullish(),
   maxPrice: zod.number().nullish(),
-  matchType: zod.enum(["exact", "close"]),
-  isActive: zod.boolean(),
+  onlyExactCriteria: zod.boolean(),
+  allowCloseMatches: zod.boolean(),
+  active: zod.boolean(),
+  brands: zod.array(
+    zod.object({
+      id: zod.number(),
+      name: zod.string(),
+      slug: zod.string(),
+      normalizedName: zod.string(),
+    }),
+  ),
+  styles: zod.array(
+    zod.object({
+      id: zod.number(),
+      name: zod.string(),
+      slug: zod.string(),
+      normalizedName: zod.string(),
+    }),
+  ),
+  colors: zod.array(
+    zod.object({
+      id: zod.number(),
+      name: zod.string(),
+      slug: zod.string(),
+      normalizedName: zod.string(),
+      family: zod.string(),
+      hex: zod.string().nullish(),
+    }),
+  ),
+  sizes: zod.array(
+    zod.object({
+      id: zod.number(),
+      name: zod.string(),
+      slug: zod.string(),
+      normalizedName: zod.string(),
+    }),
+  ),
   matchCount: zod.number(),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
 
-/**
- * @summary Update a watchlist
- */
-export const UpdateWatchlistParams = zod.object({
+export const UpdateBagPreferenceParams = zod.object({
   id: zod.coerce.number(),
 });
 
-export const UpdateWatchlistBody = zod.object({
-  name: zod.string().optional(),
-  brand: zod.string().optional(),
-  model: zod.string().nullish(),
-  style: zod.string().nullish(),
-  color: zod.string().nullish(),
-  size: zod.string().nullish(),
-  condition: zod.string().nullish(),
+export const UpdateBagPreferenceBody = zod.object({
+  nickname: zod.string().optional(),
+  brandIds: zod.array(zod.number()).optional(),
+  styleIds: zod.array(zod.number()).optional(),
+  colorIds: zod.array(zod.number()).optional(),
+  sizeIds: zod.array(zod.number()).optional(),
+  exactModelEnabled: zod.boolean().optional(),
+  modelQuery: zod.string().nullish(),
+  conditionMinId: zod.number().nullish(),
+  allowCloseColorMatch: zod.boolean().optional(),
   minPrice: zod.number().nullish(),
   maxPrice: zod.number().nullish(),
-  matchType: zod.enum(["exact", "close"]).optional(),
-  isActive: zod.boolean().optional(),
+  onlyExactCriteria: zod.boolean().optional(),
+  allowCloseMatches: zod.boolean().optional(),
+  active: zod.boolean().optional(),
 });
 
-export const UpdateWatchlistResponse = zod.object({
+export const UpdateBagPreferenceResponse = zod.object({
   id: zod.number(),
   userId: zod.string(),
-  name: zod.string(),
-  brand: zod.string(),
-  model: zod.string().nullish(),
-  style: zod.string().nullish(),
-  color: zod.string().nullish(),
-  size: zod.string().nullish(),
-  condition: zod.string().nullish(),
+  nickname: zod.string(),
+  exactModelEnabled: zod.boolean(),
+  modelQuery: zod.string().nullish(),
+  conditionMin: zod
+    .object({
+      id: zod.number(),
+      name: zod.string(),
+      slug: zod.string(),
+      normalizedName: zod.string(),
+      rank: zod.number(),
+    })
+    .nullish(),
+  allowCloseColorMatch: zod.boolean(),
   minPrice: zod.number().nullish(),
   maxPrice: zod.number().nullish(),
-  matchType: zod.enum(["exact", "close"]),
-  isActive: zod.boolean(),
+  onlyExactCriteria: zod.boolean(),
+  allowCloseMatches: zod.boolean(),
+  active: zod.boolean(),
+  brands: zod.array(
+    zod.object({
+      id: zod.number(),
+      name: zod.string(),
+      slug: zod.string(),
+      normalizedName: zod.string(),
+    }),
+  ),
+  styles: zod.array(
+    zod.object({
+      id: zod.number(),
+      name: zod.string(),
+      slug: zod.string(),
+      normalizedName: zod.string(),
+    }),
+  ),
+  colors: zod.array(
+    zod.object({
+      id: zod.number(),
+      name: zod.string(),
+      slug: zod.string(),
+      normalizedName: zod.string(),
+      family: zod.string(),
+      hex: zod.string().nullish(),
+    }),
+  ),
+  sizes: zod.array(
+    zod.object({
+      id: zod.number(),
+      name: zod.string(),
+      slug: zod.string(),
+      normalizedName: zod.string(),
+    }),
+  ),
   matchCount: zod.number(),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
 
-/**
- * @summary Delete a watchlist
- */
-export const DeleteWatchlistParams = zod.object({
+export const DeleteBagPreferenceParams = zod.object({
   id: zod.coerce.number(),
 });
 
-/**
- * @summary Browse all listings with optional filters
- */
-export const listListingsQueryLimitDefault = 20;
+export const GetPreferenceMatchesParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetPreferenceMatchesResponseItem = zod.object({
+  id: zod.number(),
+  userId: zod.string(),
+  preferenceId: zod.number(),
+  preferenceNickname: zod.string(),
+  listing: zod.object({
+    id: zod.number(),
+    sourceId: zod.number(),
+    sourceName: zod.string(),
+    sourceListingId: zod.string(),
+    sourceUrl: zod.string(),
+    title: zod.string(),
+    brand: zod.string(),
+    model: zod.string().nullish(),
+    style: zod.string().nullish(),
+    condition: zod.string().nullish(),
+    color: zod.string().nullish(),
+    size: zod.string().nullish(),
+    normalizedBrand: zod.string(),
+    normalizedModel: zod.string().nullish(),
+    normalizedStyle: zod.string().nullish(),
+    normalizedCondition: zod.string().nullish(),
+    normalizedColor: zod.string().nullish(),
+    price: zod.number(),
+    currency: zod.string(),
+    originalPrice: zod.number().nullish(),
+    discountPercent: zod.number().nullish(),
+    imageUrl: zod.string().nullish(),
+    description: zod.string().nullish(),
+    availabilityStatus: zod.string(),
+    firstSeenAt: zod.coerce.date(),
+    lastSeenAt: zod.coerce.date(),
+    createdAt: zod.coerce.date(),
+  }),
+  matchScore: zod.number(),
+  matchType: zod.string(),
+  matchReasons: zod.array(
+    zod.object({
+      field: zod.string(),
+      value: zod.string(),
+      matched: zod.boolean(),
+      weight: zod.number(),
+      detail: zod.string().nullish(),
+    }),
+  ),
+  disqualifiers: zod.array(
+    zod.object({
+      field: zod.string(),
+      value: zod.string(),
+      reason: zod.string(),
+    }),
+  ),
+  createdAt: zod.coerce.date(),
+});
+export const GetPreferenceMatchesResponse = zod.array(
+  GetPreferenceMatchesResponseItem,
+);
+
+export const listListingsQueryLimitDefault = 24;
 export const listListingsQueryOffsetDefault = 0;
 
 export const ListListingsQueryParams = zod.object({
   brand: zod.coerce.string().optional(),
-  model: zod.coerce.string().optional(),
   condition: zod.coerce.string().optional(),
   color: zod.coerce.string().optional(),
   minPrice: zod.coerce.number().optional(),
@@ -154,21 +365,29 @@ export const ListListingsResponse = zod.object({
       id: zod.number(),
       sourceId: zod.number(),
       sourceName: zod.string(),
-      externalId: zod.string(),
+      sourceListingId: zod.string(),
+      sourceUrl: zod.string(),
+      title: zod.string(),
       brand: zod.string(),
       model: zod.string().nullish(),
       style: zod.string().nullish(),
+      condition: zod.string().nullish(),
       color: zod.string().nullish(),
       size: zod.string().nullish(),
-      condition: zod.string(),
+      normalizedBrand: zod.string(),
+      normalizedModel: zod.string().nullish(),
+      normalizedStyle: zod.string().nullish(),
+      normalizedCondition: zod.string().nullish(),
+      normalizedColor: zod.string().nullish(),
       price: zod.number(),
-      originalPrice: zod.number().nullish(),
       currency: zod.string(),
+      originalPrice: zod.number().nullish(),
+      discountPercent: zod.number().nullish(),
       imageUrl: zod.string().nullish(),
-      listingUrl: zod.string(),
       description: zod.string().nullish(),
-      isAvailable: zod.boolean(),
-      seenAt: zod.coerce.date(),
+      availabilityStatus: zod.string(),
+      firstSeenAt: zod.coerce.date(),
+      lastSeenAt: zod.coerce.date(),
       createdAt: zod.coerce.date(),
     }),
   ),
@@ -177,9 +396,39 @@ export const ListListingsResponse = zod.object({
   offset: zod.number(),
 });
 
-/**
- * @summary Get a single listing by ID
- */
+export const GetFeaturedListingsResponseItem = zod.object({
+  id: zod.number(),
+  sourceId: zod.number(),
+  sourceName: zod.string(),
+  sourceListingId: zod.string(),
+  sourceUrl: zod.string(),
+  title: zod.string(),
+  brand: zod.string(),
+  model: zod.string().nullish(),
+  style: zod.string().nullish(),
+  condition: zod.string().nullish(),
+  color: zod.string().nullish(),
+  size: zod.string().nullish(),
+  normalizedBrand: zod.string(),
+  normalizedModel: zod.string().nullish(),
+  normalizedStyle: zod.string().nullish(),
+  normalizedCondition: zod.string().nullish(),
+  normalizedColor: zod.string().nullish(),
+  price: zod.number(),
+  currency: zod.string(),
+  originalPrice: zod.number().nullish(),
+  discountPercent: zod.number().nullish(),
+  imageUrl: zod.string().nullish(),
+  description: zod.string().nullish(),
+  availabilityStatus: zod.string(),
+  firstSeenAt: zod.coerce.date(),
+  lastSeenAt: zod.coerce.date(),
+  createdAt: zod.coerce.date(),
+});
+export const GetFeaturedListingsResponse = zod.array(
+  GetFeaturedListingsResponseItem,
+);
+
 export const GetListingParams = zod.object({
   id: zod.coerce.number(),
 });
@@ -188,55 +437,32 @@ export const GetListingResponse = zod.object({
   id: zod.number(),
   sourceId: zod.number(),
   sourceName: zod.string(),
-  externalId: zod.string(),
+  sourceListingId: zod.string(),
+  sourceUrl: zod.string(),
+  title: zod.string(),
   brand: zod.string(),
   model: zod.string().nullish(),
   style: zod.string().nullish(),
+  condition: zod.string().nullish(),
   color: zod.string().nullish(),
   size: zod.string().nullish(),
-  condition: zod.string(),
+  normalizedBrand: zod.string(),
+  normalizedModel: zod.string().nullish(),
+  normalizedStyle: zod.string().nullish(),
+  normalizedCondition: zod.string().nullish(),
+  normalizedColor: zod.string().nullish(),
   price: zod.number(),
-  originalPrice: zod.number().nullish(),
   currency: zod.string(),
+  originalPrice: zod.number().nullish(),
+  discountPercent: zod.number().nullish(),
   imageUrl: zod.string().nullish(),
-  listingUrl: zod.string(),
   description: zod.string().nullish(),
-  isAvailable: zod.boolean(),
-  seenAt: zod.coerce.date(),
+  availabilityStatus: zod.string(),
+  firstSeenAt: zod.coerce.date(),
+  lastSeenAt: zod.coerce.date(),
   createdAt: zod.coerce.date(),
 });
 
-/**
- * @summary Get curated featured listings for the landing page
- */
-export const GetFeaturedListingsResponseItem = zod.object({
-  id: zod.number(),
-  sourceId: zod.number(),
-  sourceName: zod.string(),
-  externalId: zod.string(),
-  brand: zod.string(),
-  model: zod.string().nullish(),
-  style: zod.string().nullish(),
-  color: zod.string().nullish(),
-  size: zod.string().nullish(),
-  condition: zod.string(),
-  price: zod.number(),
-  originalPrice: zod.number().nullish(),
-  currency: zod.string(),
-  imageUrl: zod.string().nullish(),
-  listingUrl: zod.string(),
-  description: zod.string().nullish(),
-  isAvailable: zod.boolean(),
-  seenAt: zod.coerce.date(),
-  createdAt: zod.coerce.date(),
-});
-export const GetFeaturedListingsResponse = zod.array(
-  GetFeaturedListingsResponseItem,
-);
-
-/**
- * @summary List recent matches across all of the user's watchlists
- */
 export const listMatchesQueryLimitDefault = 30;
 export const listMatchesQueryOffsetDefault = 0;
 
@@ -247,84 +473,60 @@ export const ListMatchesQueryParams = zod.object({
 
 export const ListMatchesResponseItem = zod.object({
   id: zod.number(),
-  watchlistId: zod.number(),
-  watchlistName: zod.string(),
+  userId: zod.string(),
+  preferenceId: zod.number(),
+  preferenceNickname: zod.string(),
   listing: zod.object({
     id: zod.number(),
     sourceId: zod.number(),
     sourceName: zod.string(),
-    externalId: zod.string(),
+    sourceListingId: zod.string(),
+    sourceUrl: zod.string(),
+    title: zod.string(),
     brand: zod.string(),
     model: zod.string().nullish(),
     style: zod.string().nullish(),
+    condition: zod.string().nullish(),
     color: zod.string().nullish(),
     size: zod.string().nullish(),
-    condition: zod.string(),
+    normalizedBrand: zod.string(),
+    normalizedModel: zod.string().nullish(),
+    normalizedStyle: zod.string().nullish(),
+    normalizedCondition: zod.string().nullish(),
+    normalizedColor: zod.string().nullish(),
     price: zod.number(),
-    originalPrice: zod.number().nullish(),
     currency: zod.string(),
+    originalPrice: zod.number().nullish(),
+    discountPercent: zod.number().nullish(),
     imageUrl: zod.string().nullish(),
-    listingUrl: zod.string(),
     description: zod.string().nullish(),
-    isAvailable: zod.boolean(),
-    seenAt: zod.coerce.date(),
+    availabilityStatus: zod.string(),
+    firstSeenAt: zod.coerce.date(),
+    lastSeenAt: zod.coerce.date(),
     createdAt: zod.coerce.date(),
   }),
-  score: zod.number().describe("Match confidence score 0-1"),
-  matchReasons: zod
-    .array(zod.string())
-    .describe("Human-readable reasons why this listing matched"),
-  isNew: zod.boolean(),
+  matchScore: zod.number(),
+  matchType: zod.string(),
+  matchReasons: zod.array(
+    zod.object({
+      field: zod.string(),
+      value: zod.string(),
+      matched: zod.boolean(),
+      weight: zod.number(),
+      detail: zod.string().nullish(),
+    }),
+  ),
+  disqualifiers: zod.array(
+    zod.object({
+      field: zod.string(),
+      value: zod.string(),
+      reason: zod.string(),
+    }),
+  ),
   createdAt: zod.coerce.date(),
 });
 export const ListMatchesResponse = zod.array(ListMatchesResponseItem);
 
-/**
- * @summary Get matches for a specific watchlist
- */
-export const GetWatchlistMatchesParams = zod.object({
-  id: zod.coerce.number(),
-});
-
-export const GetWatchlistMatchesResponseItem = zod.object({
-  id: zod.number(),
-  watchlistId: zod.number(),
-  watchlistName: zod.string(),
-  listing: zod.object({
-    id: zod.number(),
-    sourceId: zod.number(),
-    sourceName: zod.string(),
-    externalId: zod.string(),
-    brand: zod.string(),
-    model: zod.string().nullish(),
-    style: zod.string().nullish(),
-    color: zod.string().nullish(),
-    size: zod.string().nullish(),
-    condition: zod.string(),
-    price: zod.number(),
-    originalPrice: zod.number().nullish(),
-    currency: zod.string(),
-    imageUrl: zod.string().nullish(),
-    listingUrl: zod.string(),
-    description: zod.string().nullish(),
-    isAvailable: zod.boolean(),
-    seenAt: zod.coerce.date(),
-    createdAt: zod.coerce.date(),
-  }),
-  score: zod.number().describe("Match confidence score 0-1"),
-  matchReasons: zod
-    .array(zod.string())
-    .describe("Human-readable reasons why this listing matched"),
-  isNew: zod.boolean(),
-  createdAt: zod.coerce.date(),
-});
-export const GetWatchlistMatchesResponse = zod.array(
-  GetWatchlistMatchesResponseItem,
-);
-
-/**
- * @summary List alerts for the authenticated user
- */
 export const ListAlertsQueryParams = zod.object({
   unreadOnly: zod.coerce.boolean().optional(),
 });
@@ -332,42 +534,48 @@ export const ListAlertsQueryParams = zod.object({
 export const ListAlertsResponseItem = zod.object({
   id: zod.number(),
   userId: zod.string(),
-  matchId: zod.number().nullish(),
-  watchlistId: zod.number().nullish(),
-  watchlistName: zod.string().nullish(),
+  preferenceId: zod.number(),
+  preferenceNickname: zod.string().nullish(),
   listing: zod
     .object({
       id: zod.number(),
       sourceId: zod.number(),
       sourceName: zod.string(),
-      externalId: zod.string(),
+      sourceListingId: zod.string(),
+      sourceUrl: zod.string(),
+      title: zod.string(),
       brand: zod.string(),
       model: zod.string().nullish(),
       style: zod.string().nullish(),
+      condition: zod.string().nullish(),
       color: zod.string().nullish(),
       size: zod.string().nullish(),
-      condition: zod.string(),
+      normalizedBrand: zod.string(),
+      normalizedModel: zod.string().nullish(),
+      normalizedStyle: zod.string().nullish(),
+      normalizedCondition: zod.string().nullish(),
+      normalizedColor: zod.string().nullish(),
       price: zod.number(),
-      originalPrice: zod.number().nullish(),
       currency: zod.string(),
+      originalPrice: zod.number().nullish(),
+      discountPercent: zod.number().nullish(),
       imageUrl: zod.string().nullish(),
-      listingUrl: zod.string(),
       description: zod.string().nullish(),
-      isAvailable: zod.boolean(),
-      seenAt: zod.coerce.date(),
+      availabilityStatus: zod.string(),
+      firstSeenAt: zod.coerce.date(),
+      lastSeenAt: zod.coerce.date(),
       createdAt: zod.coerce.date(),
     })
     .nullish(),
-  type: zod.enum(["new_match", "price_drop", "back_in_stock"]),
-  message: zod.string(),
-  isRead: zod.boolean(),
+  matchResultId: zod.number().nullish(),
+  alertType: zod.string(),
+  status: zod.string(),
+  message: zod.string().nullish(),
+  sentAt: zod.coerce.date().nullish(),
   createdAt: zod.coerce.date(),
 });
 export const ListAlertsResponse = zod.array(ListAlertsResponseItem);
 
-/**
- * @summary Mark an alert as read
- */
 export const MarkAlertReadParams = zod.object({
   id: zod.coerce.number(),
 });
@@ -375,41 +583,47 @@ export const MarkAlertReadParams = zod.object({
 export const MarkAlertReadResponse = zod.object({
   id: zod.number(),
   userId: zod.string(),
-  matchId: zod.number().nullish(),
-  watchlistId: zod.number().nullish(),
-  watchlistName: zod.string().nullish(),
+  preferenceId: zod.number(),
+  preferenceNickname: zod.string().nullish(),
   listing: zod
     .object({
       id: zod.number(),
       sourceId: zod.number(),
       sourceName: zod.string(),
-      externalId: zod.string(),
+      sourceListingId: zod.string(),
+      sourceUrl: zod.string(),
+      title: zod.string(),
       brand: zod.string(),
       model: zod.string().nullish(),
       style: zod.string().nullish(),
+      condition: zod.string().nullish(),
       color: zod.string().nullish(),
       size: zod.string().nullish(),
-      condition: zod.string(),
+      normalizedBrand: zod.string(),
+      normalizedModel: zod.string().nullish(),
+      normalizedStyle: zod.string().nullish(),
+      normalizedCondition: zod.string().nullish(),
+      normalizedColor: zod.string().nullish(),
       price: zod.number(),
-      originalPrice: zod.number().nullish(),
       currency: zod.string(),
+      originalPrice: zod.number().nullish(),
+      discountPercent: zod.number().nullish(),
       imageUrl: zod.string().nullish(),
-      listingUrl: zod.string(),
       description: zod.string().nullish(),
-      isAvailable: zod.boolean(),
-      seenAt: zod.coerce.date(),
+      availabilityStatus: zod.string(),
+      firstSeenAt: zod.coerce.date(),
+      lastSeenAt: zod.coerce.date(),
       createdAt: zod.coerce.date(),
     })
     .nullish(),
-  type: zod.enum(["new_match", "price_drop", "back_in_stock"]),
-  message: zod.string(),
-  isRead: zod.boolean(),
+  matchResultId: zod.number().nullish(),
+  alertType: zod.string(),
+  status: zod.string(),
+  message: zod.string().nullish(),
+  sentAt: zod.coerce.date().nullish(),
   createdAt: zod.coerce.date(),
 });
 
-/**
- * @summary Get saved listings for the authenticated user
- */
 export const ListSavedListingsResponseItem = zod.object({
   id: zod.number(),
   userId: zod.string(),
@@ -417,51 +631,50 @@ export const ListSavedListingsResponseItem = zod.object({
     id: zod.number(),
     sourceId: zod.number(),
     sourceName: zod.string(),
-    externalId: zod.string(),
+    sourceListingId: zod.string(),
+    sourceUrl: zod.string(),
+    title: zod.string(),
     brand: zod.string(),
     model: zod.string().nullish(),
     style: zod.string().nullish(),
+    condition: zod.string().nullish(),
     color: zod.string().nullish(),
     size: zod.string().nullish(),
-    condition: zod.string(),
+    normalizedBrand: zod.string(),
+    normalizedModel: zod.string().nullish(),
+    normalizedStyle: zod.string().nullish(),
+    normalizedCondition: zod.string().nullish(),
+    normalizedColor: zod.string().nullish(),
     price: zod.number(),
-    originalPrice: zod.number().nullish(),
     currency: zod.string(),
+    originalPrice: zod.number().nullish(),
+    discountPercent: zod.number().nullish(),
     imageUrl: zod.string().nullish(),
-    listingUrl: zod.string(),
     description: zod.string().nullish(),
-    isAvailable: zod.boolean(),
-    seenAt: zod.coerce.date(),
+    availabilityStatus: zod.string(),
+    firstSeenAt: zod.coerce.date(),
+    lastSeenAt: zod.coerce.date(),
     createdAt: zod.coerce.date(),
   }),
-  notes: zod.string().nullish(),
-  savedAt: zod.coerce.date(),
+  note: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
 });
 export const ListSavedListingsResponse = zod.array(
   ListSavedListingsResponseItem,
 );
 
-/**
- * @summary Save a listing
- */
 export const SaveListingBody = zod.object({
   listingId: zod.number(),
-  notes: zod.string().nullish(),
+  note: zod.string().nullish(),
 });
 
-/**
- * @summary Remove a saved listing
- */
 export const UnsaveListingParams = zod.object({
   listingId: zod.coerce.number(),
 });
 
-/**
- * @summary Get dashboard stats — watchlist count, match count, unread alerts, etc.
- */
 export const GetDashboardSummaryResponse = zod.object({
-  watchlistCount: zod.number(),
-  activeWatchlistCount: zod.number(),
+  preferenceCount: zod.number(),
+  activePreferenceCount: zod.number(),
   totalMatchCount: zod.number(),
   newMatchCount: zod.number(),
   unreadAlertCount: zod.number(),
@@ -474,9 +687,6 @@ export const GetDashboardSummaryResponse = zod.object({
   ),
 });
 
-/**
- * @summary Get the most recent matches across all watchlists (for activity feed)
- */
 export const getRecentMatchesQueryLimitDefault = 10;
 
 export const GetRecentMatchesQueryParams = zod.object({
@@ -485,83 +695,130 @@ export const GetRecentMatchesQueryParams = zod.object({
 
 export const GetRecentMatchesResponseItem = zod.object({
   id: zod.number(),
-  watchlistId: zod.number(),
-  watchlistName: zod.string(),
+  userId: zod.string(),
+  preferenceId: zod.number(),
+  preferenceNickname: zod.string(),
   listing: zod.object({
     id: zod.number(),
     sourceId: zod.number(),
     sourceName: zod.string(),
-    externalId: zod.string(),
+    sourceListingId: zod.string(),
+    sourceUrl: zod.string(),
+    title: zod.string(),
     brand: zod.string(),
     model: zod.string().nullish(),
     style: zod.string().nullish(),
+    condition: zod.string().nullish(),
     color: zod.string().nullish(),
     size: zod.string().nullish(),
-    condition: zod.string(),
+    normalizedBrand: zod.string(),
+    normalizedModel: zod.string().nullish(),
+    normalizedStyle: zod.string().nullish(),
+    normalizedCondition: zod.string().nullish(),
+    normalizedColor: zod.string().nullish(),
     price: zod.number(),
-    originalPrice: zod.number().nullish(),
     currency: zod.string(),
+    originalPrice: zod.number().nullish(),
+    discountPercent: zod.number().nullish(),
     imageUrl: zod.string().nullish(),
-    listingUrl: zod.string(),
     description: zod.string().nullish(),
-    isAvailable: zod.boolean(),
-    seenAt: zod.coerce.date(),
+    availabilityStatus: zod.string(),
+    firstSeenAt: zod.coerce.date(),
+    lastSeenAt: zod.coerce.date(),
     createdAt: zod.coerce.date(),
   }),
-  score: zod.number().describe("Match confidence score 0-1"),
-  matchReasons: zod
-    .array(zod.string())
-    .describe("Human-readable reasons why this listing matched"),
-  isNew: zod.boolean(),
+  matchScore: zod.number(),
+  matchType: zod.string(),
+  matchReasons: zod.array(
+    zod.object({
+      field: zod.string(),
+      value: zod.string(),
+      matched: zod.boolean(),
+      weight: zod.number(),
+      detail: zod.string().nullish(),
+    }),
+  ),
+  disqualifiers: zod.array(
+    zod.object({
+      field: zod.string(),
+      value: zod.string(),
+      reason: zod.string(),
+    }),
+  ),
   createdAt: zod.coerce.date(),
 });
 export const GetRecentMatchesResponse = zod.array(GetRecentMatchesResponseItem);
 
-/**
- * @summary Get listings with recent price drops that match user watchlists
- */
 export const GetPriceDropsResponseItem = zod.object({
   id: zod.number(),
   sourceId: zod.number(),
   sourceName: zod.string(),
-  externalId: zod.string(),
+  sourceListingId: zod.string(),
+  sourceUrl: zod.string(),
+  title: zod.string(),
   brand: zod.string(),
   model: zod.string().nullish(),
   style: zod.string().nullish(),
+  condition: zod.string().nullish(),
   color: zod.string().nullish(),
   size: zod.string().nullish(),
-  condition: zod.string(),
+  normalizedBrand: zod.string(),
+  normalizedModel: zod.string().nullish(),
+  normalizedStyle: zod.string().nullish(),
+  normalizedCondition: zod.string().nullish(),
+  normalizedColor: zod.string().nullish(),
   price: zod.number(),
-  originalPrice: zod.number().nullish(),
   currency: zod.string(),
+  originalPrice: zod.number().nullish(),
+  discountPercent: zod.number().nullish(),
   imageUrl: zod.string().nullish(),
-  listingUrl: zod.string(),
   description: zod.string().nullish(),
-  isAvailable: zod.boolean(),
-  seenAt: zod.coerce.date(),
+  availabilityStatus: zod.string(),
+  firstSeenAt: zod.coerce.date(),
+  lastSeenAt: zod.coerce.date(),
   createdAt: zod.coerce.date(),
 });
 export const GetPriceDropsResponse = zod.array(GetPriceDropsResponseItem);
 
-/**
- * @summary List all configured data sources
- */
 export const ListSourcesResponseItem = zod.object({
   id: zod.number(),
   name: zod.string(),
   slug: zod.string(),
   baseUrl: zod.string(),
-  adapterType: zod.enum(["mock", "rss", "sitemap", "api", "email"]),
-  isActive: zod.boolean(),
+  sourceType: zod.string(),
+  ingestionMode: zod.string(),
+  complianceStatus: zod.string(),
+  active: zod.boolean(),
   lastIngestAt: zod.coerce.date().nullish(),
   listingCount: zod.number(),
-  status: zod.enum(["healthy", "degraded", "error", "unknown"]),
+  status: zod.string(),
+  createdAt: zod.coerce.date(),
 });
 export const ListSourcesResponse = zod.array(ListSourcesResponseItem);
 
-/**
- * @summary Trigger a manual listing ingest for a source
- */
+export const listIngestionLogsQueryLimitDefault = 50;
+
+export const ListIngestionLogsQueryParams = zod.object({
+  limit: zod.coerce.number().default(listIngestionLogsQueryLimitDefault),
+});
+
+export const ListIngestionLogsResponseItem = zod.object({
+  id: zod.number(),
+  sourceId: zod.number(),
+  sourceName: zod.string(),
+  jobType: zod.string(),
+  status: zod.string(),
+  recordsSeen: zod.number(),
+  recordsCreated: zod.number(),
+  recordsUpdated: zod.number(),
+  errorMessage: zod.string().nullish(),
+  startedAt: zod.coerce.date(),
+  completedAt: zod.coerce.date().nullish(),
+});
+export const ListIngestionLogsResponse = zod.array(
+  ListIngestionLogsResponseItem,
+);
+
 export const TriggerIngestBody = zod.object({
   sourceSlug: zod.string(),
 });
@@ -572,5 +829,5 @@ export const TriggerIngestResponse = zod.object({
   listingsAdded: zod.number(),
   listingsUpdated: zod.number(),
   durationMs: zod.number(),
-  errors: zod.array(zod.string()),
+  errors: zod.array(zod.string()).optional(),
 });

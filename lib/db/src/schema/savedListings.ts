@@ -1,28 +1,33 @@
 import {
   pgTable,
-  text,
   serial,
-  timestamp,
   integer,
+  text,
+  timestamp,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
-import { z } from "zod/v4";
+import { usersTable } from "./users";
 import { listingsTable } from "./listings";
 
-export const savedListingsTable = pgTable("saved_listings", {
-  id: serial("id").primaryKey(),
-  userId: text("user_id").notNull(),
-  listingId: integer("listing_id")
-    .notNull()
-    .references(() => listingsTable.id),
-  notes: text("notes"),
-  savedAt: timestamp("saved_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+export const savedListingsTable = pgTable(
+  "saved_listings",
+  {
+    id: serial("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => usersTable.id, { onDelete: "cascade" }),
+    listingId: integer("listing_id")
+      .notNull()
+      .references(() => listingsTable.id, { onDelete: "cascade" }),
+    note: text("note"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("saved_listings_user_listing_idx").on(t.userId, t.listingId),
+  ],
+);
 
-export const insertSavedListingSchema = createInsertSchema(
-  savedListingsTable,
-).omit({ id: true, savedAt: true });
-export type InsertSavedListing = z.infer<typeof insertSavedListingSchema>;
 export type SavedListing = typeof savedListingsTable.$inferSelect;
+export type InsertSavedListing = typeof savedListingsTable.$inferInsert;

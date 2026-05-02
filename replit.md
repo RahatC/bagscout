@@ -2,7 +2,7 @@
 
 ## Overview
 
-BagScout is a premium luxury bag resale alert web app. Users create watchlists for desired bags (brand, model, style, color, size, condition, price range, match type), the app matches listings from mock resale marketplaces against watchlists, and alerts users on matches.
+BagScout is a premium luxury bag resale alert web app. Users create **bag preferences** (a.k.a. "watchlists") describing the bags they want to track — brand(s), style(s), color(s), size(s), condition floor, price range, and matching strictness. The app ingests listings from mock resale marketplaces, runs a weighted matching engine, and produces alerts on matches and price drops.
 
 pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
 
@@ -17,7 +17,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **API framework**: Express 5
 - **Database**: PostgreSQL + Drizzle ORM
 - **Validation**: Zod (`zod/v4`), `drizzle-zod`
-- **API codegen**: Orval (from OpenAPI spec in `lib/api-spec/openapi.yaml`)
+- **API codegen**: Orval (from OpenAPI spec in `lib/api-spec/openapi.yaml`, currently v0.2.0)
 - **Build**: esbuild (bundle for API server)
 
 ## Artifacts
@@ -34,32 +34,62 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - `lib/db` — Drizzle ORM schemas + database client
 
 ### Database Schema (`lib/db/src/schema/`)
-- `watchlists` — User watchlists with bag criteria (brand, model, style, color, size, condition, price range, matchType)
-- `sources` — Resale marketplace sources (FASHIONPHILE, Rebag, The RealReal, Yoogi's Closet)
-- `listings` — Bag listings from sources
-- `matches` — Matches between watchlists and listings with score + reasons
-- `alerts` — User alerts for new matches, price drops, back-in-stock
-- `savedListings` — User-saved listings
+
+**Reference (seeded)**
+- `brands`, `bag_styles`, `colors` (with `family`), `sizes`, `conditions` (with `rank`), `sources`
+
+**Domain**
+- `users` — id is the Clerk user id (lazy upserted by `requireAuth`); minimal mirror of email + full_name
+- `user_profiles`, `notification_preferences`
+- `bag_preferences` — nickname, modelQuery + exactModelEnabled, conditionMinId, allowCloseColorMatch, minPrice/maxPrice, allowCloseMatches, onlyExactCriteria, active
+- Junctions: `bag_preference_brands`, `bag_preference_styles`, `bag_preference_colors`, `bag_preference_sizes`
+- `listings` — raw + `normalized_*` fields (brand, model, style, color, condition); `availability_status`; `source_id` FK
+- `listing_snapshots` — append-only price/availability history
+- `match_results` — `(preferenceId, listingId)` unique; `matchScore`, `matchType`, `matchReasons[]`, `disqualifiers[]`
+- `alerts` — `alertType` (new_match | price_drop | back_in_stock), `status` (pending | sent | read | dismissed)
+- `saved_listings`
+- `ingestion_logs`
 
 ### API Routes (`artifacts/api-server/src/routes/`)
-- `watchlists.ts` — CRUD watchlists + GET /:id/matches
-- `listings.ts` — Browse listings + GET /featured (no auth required)
-- `matches.ts` — GET /matches (all user matches)
-- `alerts.ts` — List/mark-read alerts
-- `saved.ts` — Save/unsave listings
-- `dashboard.ts` — GET /summary, /recent-matches, /price-drops
-- `admin.ts` — GET /sources, POST /ingest
+- `reference.ts` — Public read of brands/styles/colors/sizes/conditions
+- `preferences.ts` — CRUD bag preferences + GET /:id/matches (auth required)
+- `listings.ts` — Browse listings + /featured (no auth)
+- `matches.ts` — User's match results (auth required)
+- `alerts.ts` — List alerts, mark read, mark all read (auth required)
+- `saved.ts` — Save / unsave / list (auth required)
+- `dashboard.ts` — Summary, recent matches, price drops (auth required)
+- `admin.ts` — Sources health, ingestion logs, trigger ingest (**admin-only**)
+
+### Middlewares (`artifacts/api-server/src/middlewares/`)
+- `requireAuth` — Clerk auth + lazy upsert of local `users` row; sets `req.userId`
+- `requireAdmin` — Must be chained after `requireAuth`; allows users in `ADMIN_USER_IDS` env var (comma-separated Clerk user ids) OR users with Clerk `publicMetadata.role === "admin"`. Returns 403 otherwise.
 
 ### Frontend Pages (`artifacts/bagscout/src/pages/`)
-- `/` — Landing page (unauthenticated) / redirects to dashboard when signed in
+- `/` — Landing page (unauthenticated) / dashboard when signed in
 - `/sign-in`, `/sign-up` — Clerk auth pages (fully branded)
 - `/onboarding` — First-time watchlist creation
 - `/dashboard` — Stats + recent matches + price drops
-- `/watchlists` — Watchlist list, `/watchlists/new`, `/watchlists/:id`
-- `/listings` — Browse all listings with filters, `/listings/:id`
-- `/alerts` — Alert feed with mark-read
+- `/watchlists` — List, `/watchlists/new` (3-step multi-select form), `/watchlists/:id`
+- `/listings` — Browse + filters, `/listings/:id`
+- `/alerts` — Feed with mark-read
 - `/saved` — Saved listings
-- `/admin` — Source health + manual ingest trigger
+- `/admin` — Source health + manual ingest trigger (admin-only on the backend)
+
+## Matching Engine (`artifacts/api-server/src/lib/ingest.ts`)
+
+Each ingest run upserts listings (with `normalized_*` fields), appends a `listing_snapshots` row, then scores every active preference against the new listing. Weighted scoring:
+
+| Field | Weight | Notes |
+|---|---|---|
+| brand | 0.28 | **Must match** any preferred brand, otherwise score 0 |
+| model | 0.18 | Free-text contains check on title+model when `exactModelEnabled` |
+| style | 0.10 | Any preferred style matches `normalized_style` |
+| color | 0.13 | Exact match, or 50% credit if `allowCloseColorMatch` and listing color's family matches a preferred color's family |
+| size | 0.08 | Any preferred size matches listing size |
+| condition | 0.10 | Listing condition rank ≤ preference floor |
+| price | 0.13 | Within `[minPrice, maxPrice]` |
+
+Threshold to materialize a match: `0.99` if `onlyExactCriteria`, `0.65` if `allowCloseMatches`, else `0.85`. Each match also auto-creates an `alert` (alertType `new_match`, status `pending`) if none exists for that listing/user.
 
 ## Key Commands
 
@@ -70,7 +100,8 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 
 ## Seed Data
 
-Sources are seeded via SQL. Listings are seeded via `artifacts/api-server/src/lib/ingest.ts` (mock ingest helper). Run admin ingest to populate listings.
+- Reference tables (brands/styles/colors/sizes/conditions/sources) are seeded via SQL.
+- Listings are NOT pre-seeded. Trigger `/admin` ingest to populate them from the mock data baked into `artifacts/api-server/src/lib/ingest.ts`.
 
 ## Design System
 

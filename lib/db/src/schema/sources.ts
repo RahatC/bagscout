@@ -6,16 +6,19 @@ import {
   boolean,
   integer,
 } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
-import { z } from "zod/v4";
 
+// source_type: official_partner | resale_marketplace | auction_house
+// ingestion_mode: mock | rss | sitemap | api | email
+// compliance_status: approved | pending_review | restricted
 export const sourcesTable = pgTable("sources", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
   baseUrl: text("base_url").notNull(),
-  adapterType: text("adapter_type").notNull().default("mock"),
-  isActive: boolean("is_active").notNull().default(true),
+  sourceType: text("source_type").notNull().default("resale_marketplace"),
+  ingestionMode: text("ingestion_mode").notNull().default("mock"),
+  complianceStatus: text("compliance_status").notNull().default("approved"),
+  active: boolean("active").notNull().default(true),
   lastIngestAt: timestamp("last_ingest_at", { withTimezone: true }),
   listingCount: integer("listing_count").notNull().default(0),
   status: text("status").notNull().default("unknown"),
@@ -28,11 +31,5 @@ export const sourcesTable = pgTable("sources", {
     .$onUpdate(() => new Date()),
 });
 
-export const insertSourceSchema = createInsertSchema(sourcesTable).omit({
-  id: true,
-  listingCount: true,
-  createdAt: true,
-  updatedAt: true,
-});
-export type InsertSource = z.infer<typeof insertSourceSchema>;
 export type Source = typeof sourcesTable.$inferSelect;
+export type InsertSource = typeof sourcesTable.$inferInsert;

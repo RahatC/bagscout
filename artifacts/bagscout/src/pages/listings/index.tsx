@@ -1,14 +1,20 @@
 import { useState } from "react";
-import { Search, Filter, SlidersHorizontal } from "lucide-react";
+import { Search, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { 
-  useListListings, 
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
+  useListListings,
   getListListingsQueryKey,
   useSaveListing,
-  useUnsaveListing
+  getListSavedListingsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ListingCard } from "@/components/listing-card";
@@ -17,31 +23,29 @@ import { useDebounce } from "@/hooks/use-debounce";
 export default function ListingsPage() {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
-  
-  // Minimal filter state for demonstration
   const [brandFilter, setBrandFilter] = useState<string | undefined>(undefined);
-  
-  const { data: listingsData, isLoading } = useListListings({
-    brand: brandFilter || debouncedSearch || undefined, // Simple search maps to brand for now
-    limit: 24
-  }, {
-    query: {
-      queryKey: getListListingsQueryKey({ brand: brandFilter || debouncedSearch || undefined, limit: 24 })
-    }
+
+  const queryParams = {
+    brand: brandFilter || debouncedSearch || undefined,
+    limit: 24,
+  };
+
+  const { data: listingsData, isLoading } = useListListings(queryParams, {
+    query: { queryKey: getListListingsQueryKey(queryParams) },
   });
 
   const saveListing = useSaveListing();
-  const unsaveListing = useUnsaveListing();
   const queryClient = useQueryClient();
 
-  const handleSaveToggle = (id: number, currentlySaved: boolean) => {
-    // In a real app we'd need to know if it's saved. The mock API doesn't return isSaved on the listing object.
-    // So this is a stub for the save functionality on the browse page.
-    saveListing.mutate({ data: { listingId: id } }, {
-      onSuccess: () => {
-        // Invalidate saved listings
-      }
-    });
+  const handleSaveToggle = (listingId: number) => {
+    saveListing.mutate(
+      { data: { listingId } },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getListSavedListingsQueryKey() });
+        },
+      },
+    );
   };
 
   return (
@@ -51,23 +55,25 @@ export default function ListingsPage() {
           <h1 className="text-3xl font-serif font-medium mb-2">Browse the Network</h1>
           <p className="text-muted-foreground">Discover authenticated pieces from our trusted partners.</p>
         </div>
-        
+
         <div className="flex w-full md:w-auto gap-2">
           <div className="relative w-full md:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Search by brand..." 
+            <Input
+              placeholder="Search by brand..."
               className="pl-9 rounded-none h-12 border-border"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          
+
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="outline" className="rounded-none h-12 px-4 border-border">
                 <SlidersHorizontal className="h-4 w-4 md:mr-2" />
-                <span className="hidden md:inline uppercase tracking-widest text-xs font-semibold">Filter</span>
+                <span className="hidden md:inline uppercase tracking-widest text-xs font-semibold">
+                  Filter
+                </span>
               </Button>
             </SheetTrigger>
             <SheetContent className="rounded-none border-l border-border">
@@ -78,11 +84,11 @@ export default function ListingsPage() {
                 <div>
                   <h4 className="text-xs uppercase tracking-widest font-semibold mb-3">Brand</h4>
                   <div className="space-y-2">
-                    {["Hermès", "Chanel", "Louis Vuitton", "Dior"].map(brand => (
+                    {["Hermès", "Chanel", "Louis Vuitton", "Dior"].map((brand) => (
                       <label key={brand} className="flex items-center gap-2 text-sm cursor-pointer">
-                        <input 
-                          type="radio" 
-                          name="brand" 
+                        <input
+                          type="radio"
+                          name="brand"
                           checked={brandFilter === brand}
                           onChange={() => setBrandFilter(brand)}
                           className="accent-primary"
@@ -91,9 +97,9 @@ export default function ListingsPage() {
                       </label>
                     ))}
                     <label className="flex items-center gap-2 text-sm cursor-pointer text-muted-foreground">
-                      <input 
-                        type="radio" 
-                        name="brand" 
+                      <input
+                        type="radio"
+                        name="brand"
                         checked={!brandFilter}
                         onChange={() => setBrandFilter(undefined)}
                       />
@@ -120,9 +126,9 @@ export default function ListingsPage() {
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {listingsData.items.map((listing, index) => (
-              <ListingCard 
-                key={listing.id} 
-                listing={listing} 
+              <ListingCard
+                key={listing.id}
+                listing={listing}
                 index={index}
                 onSaveToggle={handleSaveToggle}
               />

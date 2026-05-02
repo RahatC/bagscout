@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { eq, and, desc } from "drizzle-orm";
 import { db, savedListingsTable, listingsTable, sourcesTable } from "@workspace/db";
-import { SaveListingBody, UnsaveListingParams } from "@workspace/api-zod";
+import { SaveListingBody } from "@workspace/api-zod";
 import { requireAuth } from "../middlewares/requireAuth";
 import type { Request } from "express";
 
@@ -9,7 +9,26 @@ const router = Router();
 
 type AuthRequest = Request & { userId: string };
 
-// GET /api/saved
+function mapSaved(
+  s: typeof savedListingsTable.$inferSelect,
+  l: typeof listingsTable.$inferSelect,
+  src: typeof sourcesTable.$inferSelect,
+) {
+  return {
+    id: s.id,
+    userId: s.userId,
+    listing: {
+      ...l,
+      sourceName: src.name,
+      price: parseFloat(l.price),
+      originalPrice: l.originalPrice ? parseFloat(l.originalPrice) : null,
+      discountPercent: l.discountPercent ? parseFloat(l.discountPercent) : null,
+    },
+    note: s.note,
+    createdAt: s.createdAt,
+  };
+}
+
 router.get("/", requireAuth, async (req, res) => {
   const { userId } = req as AuthRequest;
   const rows = await db
@@ -18,25 +37,11 @@ router.get("/", requireAuth, async (req, res) => {
     .innerJoin(listingsTable, eq(savedListingsTable.listingId, listingsTable.id))
     .innerJoin(sourcesTable, eq(listingsTable.sourceId, sourcesTable.id))
     .where(eq(savedListingsTable.userId, userId))
-    .orderBy(desc(savedListingsTable.savedAt));
+    .orderBy(desc(savedListingsTable.createdAt));
 
-  res.json(
-    rows.map((r) => ({
-      id: r.saved_listings.id,
-      userId: r.saved_listings.userId,
-      listing: {
-        ...r.listings,
-        sourceName: r.sources.name,
-        price: parseFloat(r.listings.price),
-        originalPrice: r.listings.originalPrice ? parseFloat(r.listings.originalPrice) : null,
-      },
-      notes: r.saved_listings.notes,
-      savedAt: r.saved_listings.savedAt,
-    })),
-  );
+  res.json(rows.map((r) => mapSaved(r.saved_listings, r.listings, r.sources)));
 });
 
-// POST /api/saved
 router.post("/", requireAuth, async (req, res) => {
   const { userId } = req as AuthRequest;
   const parsed = SaveListingBody.safeParse(req.body);
@@ -49,7 +54,7 @@ router.post("/", requireAuth, async (req, res) => {
     .values({
       userId,
       listingId: parsed.data.listingId,
-      notes: parsed.data.notes ?? null,
+      note: parsed.data.note ?? null,
     })
     .onConflictDoNothing()
     .returning();
@@ -66,35 +71,20 @@ router.post("/", requireAuth, async (req, res) => {
     .innerJoin(sourcesTable, eq(listingsTable.sourceId, sourcesTable.id))
     .where(eq(savedListingsTable.id, saved.id));
 
-  res.status(201).json({
-    id: row.saved_listings.id,
-    userId: row.saved_listings.userId,
-    listing: {
-      ...row.listings,
-      sourceName: row.sources.name,
-      price: parseFloat(row.listings.price),
-      originalPrice: row.listings.originalPrice ? parseFloat(row.listings.originalPrice) : null,
-    },
-    notes: row.saved_listings.notes,
-    savedAt: row.saved_listings.savedAt,
-  });
+  res.status(201).json(mapSaved(row.saved_listings, row.listings, row.sources));
 });
 
-// DELETE /api/saved/:listingId
 router.delete("/:listingId", requireAuth, async (req, res) => {
   const { userId } = req as AuthRequest;
-  const parsed = UnsaveListingParams.safeParse({ listingId: parseInt(req.params.listingId) });
-  if (!parsed.success) {
+  const listingId = parseInt(String(req.params.listingId));
+  if (isNaN(listingId)) {
     res.status(400).json({ error: "Invalid id" });
     return;
   }
   await db
     .delete(savedListingsTable)
     .where(
-      and(
-        eq(savedListingsTable.userId, userId),
-        eq(savedListingsTable.listingId, parsed.data.listingId),
-      ),
+      and(eq(savedListingsTable.userId, userId), eq(savedListingsTable.listingId, listingId)),
     );
   res.status(204).end();
 });

@@ -2,208 +2,240 @@ openapi: 3.1.0
 info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
-  version: 0.1.0
+  version: 0.2.0
   description: BagScout API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
-    description: Health operations
-  - name: watchlists
-    description: User bag watchlist management
+  - name: reference
+    description: Reference data — brands, styles, colors, conditions, sizes
+  - name: preferences
+    description: User bag preferences (dream bag profiles)
   - name: listings
     description: Luxury bag listings
   - name: matches
-    description: Listing matches for watchlists
+    description: Match results between preferences and listings
   - name: alerts
     description: User alerts
   - name: saved
     description: Saved listings
   - name: dashboard
-    description: Dashboard summary data
   - name: admin
-    description: Admin and source monitoring
+    description: Source health, ingestion logs, manual ingest
 
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
-      summary: Health check
       responses:
         "200":
           description: Healthy
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/HealthStatus"
+              schema: { $ref: "#/components/schemas/HealthStatus" }
 
-  # ─── Watchlists ───────────────────────────────────────────────────────────────
-  /watchlists:
+  # ─── Reference data ──────────────────────────────────────────────────────────
+  /reference/brands:
     get:
-      operationId: listWatchlists
-      tags: [watchlists]
-      summary: List all watchlists for the authenticated user
+      operationId: listBrands
+      tags: [reference]
       responses:
         "200":
-          description: List of watchlists
+          description: Brand list
           content:
             application/json:
               schema:
                 type: array
-                items:
-                  $ref: "#/components/schemas/Watchlist"
+                items: { $ref: "#/components/schemas/Brand" }
+
+  /reference/styles:
+    get:
+      operationId: listStyles
+      tags: [reference]
+      responses:
+        "200":
+          description: Bag style list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/BagStyle" }
+
+  /reference/colors:
+    get:
+      operationId: listColors
+      tags: [reference]
+      responses:
+        "200":
+          description: Color list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Color" }
+
+  /reference/conditions:
+    get:
+      operationId: listConditions
+      tags: [reference]
+      responses:
+        "200":
+          description: Condition list (ordered by rank)
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Condition" }
+
+  /reference/sizes:
+    get:
+      operationId: listSizes
+      tags: [reference]
+      responses:
+        "200":
+          description: Size list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Size" }
+
+  # ─── Bag preferences ─────────────────────────────────────────────────────────
+  /preferences:
+    get:
+      operationId: listBagPreferences
+      tags: [preferences]
+      responses:
+        "200":
+          description: List of the authenticated user's bag preferences
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/BagPreference" }
     post:
-      operationId: createWatchlist
-      tags: [watchlists]
-      summary: Create a new watchlist
+      operationId: createBagPreference
+      tags: [preferences]
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              $ref: "#/components/schemas/CreateWatchlistBody"
+            schema: { $ref: "#/components/schemas/CreateBagPreferenceBody" }
       responses:
         "201":
-          description: Created watchlist
+          description: Created
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/Watchlist"
+              schema: { $ref: "#/components/schemas/BagPreference" }
 
-  /watchlists/{id}:
+  /preferences/{id}:
     get:
-      operationId: getWatchlist
-      tags: [watchlists]
-      summary: Get a single watchlist by ID
+      operationId: getBagPreference
+      tags: [preferences]
       parameters:
         - name: id
           in: path
           required: true
-          schema:
-            type: integer
+          schema: { type: integer }
       responses:
         "200":
-          description: Watchlist
+          description: Preference
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/Watchlist"
+              schema: { $ref: "#/components/schemas/BagPreference" }
     patch:
-      operationId: updateWatchlist
-      tags: [watchlists]
-      summary: Update a watchlist
+      operationId: updateBagPreference
+      tags: [preferences]
       parameters:
         - name: id
           in: path
           required: true
-          schema:
-            type: integer
+          schema: { type: integer }
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateWatchlistBody"
+            schema: { $ref: "#/components/schemas/UpdateBagPreferenceBody" }
       responses:
         "200":
-          description: Updated watchlist
+          description: Updated
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/Watchlist"
+              schema: { $ref: "#/components/schemas/BagPreference" }
     delete:
-      operationId: deleteWatchlist
-      tags: [watchlists]
-      summary: Delete a watchlist
+      operationId: deleteBagPreference
+      tags: [preferences]
       parameters:
         - name: id
           in: path
           required: true
-          schema:
-            type: integer
+          schema: { type: integer }
       responses:
         "204":
           description: Deleted
 
-  # ─── Listings ─────────────────────────────────────────────────────────────────
-  /listings:
+  /preferences/{id}/matches:
     get:
-      operationId: listListings
-      tags: [listings]
-      summary: Browse all listings with optional filters
-      parameters:
-        - name: brand
-          in: query
-          schema:
-            type: string
-        - name: model
-          in: query
-          schema:
-            type: string
-        - name: condition
-          in: query
-          schema:
-            type: string
-        - name: color
-          in: query
-          schema:
-            type: string
-        - name: minPrice
-          in: query
-          schema:
-            type: number
-        - name: maxPrice
-          in: query
-          schema:
-            type: number
-        - name: source
-          in: query
-          schema:
-            type: string
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            default: 20
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            default: 0
-      responses:
-        "200":
-          description: List of listings
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ListingsPage"
-
-  /listings/{id}:
-    get:
-      operationId: getListing
-      tags: [listings]
-      summary: Get a single listing by ID
+      operationId: getPreferenceMatches
+      tags: [matches]
       parameters:
         - name: id
           in: path
           required: true
-          schema:
-            type: integer
+          schema: { type: integer }
       responses:
         "200":
-          description: Listing
+          description: Matches for the given preference
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Listing"
+                type: array
+                items: { $ref: "#/components/schemas/MatchResult" }
+
+  # ─── Listings ────────────────────────────────────────────────────────────────
+  /listings:
+    get:
+      operationId: listListings
+      tags: [listings]
+      parameters:
+        - name: brand
+          in: query
+          schema: { type: string }
+        - name: condition
+          in: query
+          schema: { type: string }
+        - name: color
+          in: query
+          schema: { type: string }
+        - name: minPrice
+          in: query
+          schema: { type: number }
+        - name: maxPrice
+          in: query
+          schema: { type: number }
+        - name: source
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 24 }
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0 }
+      responses:
+        "200":
+          description: Paginated listings
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ListingPage" }
 
   /listings/featured:
     get:
       operationId: getFeaturedListings
       tags: [listings]
-      summary: Get curated featured listings for the landing page
       responses:
         "200":
           description: Featured listings
@@ -211,112 +243,92 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
-                  $ref: "#/components/schemas/Listing"
+                items: { $ref: "#/components/schemas/Listing" }
 
-  # ─── Matches ──────────────────────────────────────────────────────────────────
-  /matches:
+  /listings/{id}:
     get:
-      operationId: listMatches
-      tags: [matches]
-      summary: List recent matches across all of the user's watchlists
-      parameters:
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            default: 30
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            default: 0
-      responses:
-        "200":
-          description: List of matches
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Match"
-
-  /watchlists/{id}/matches:
-    get:
-      operationId: getWatchlistMatches
-      tags: [matches]
-      summary: Get matches for a specific watchlist
+      operationId: getListing
+      tags: [listings]
       parameters:
         - name: id
           in: path
           required: true
-          schema:
-            type: integer
+          schema: { type: integer }
       responses:
         "200":
-          description: Matches for watchlist
+          description: Listing
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Listing" }
+
+  # ─── Matches (cross-preference) ──────────────────────────────────────────────
+  /matches:
+    get:
+      operationId: listMatches
+      tags: [matches]
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, default: 30 }
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0 }
+      responses:
+        "200":
+          description: All match results across the user's preferences
           content:
             application/json:
               schema:
                 type: array
-                items:
-                  $ref: "#/components/schemas/Match"
+                items: { $ref: "#/components/schemas/MatchResult" }
 
-  # ─── Alerts ───────────────────────────────────────────────────────────────────
+  # ─── Alerts ──────────────────────────────────────────────────────────────────
   /alerts:
     get:
       operationId: listAlerts
       tags: [alerts]
-      summary: List alerts for the authenticated user
       parameters:
         - name: unreadOnly
           in: query
-          schema:
-            type: boolean
+          schema: { type: boolean }
       responses:
         "200":
-          description: List of alerts
+          description: Alert feed
           content:
             application/json:
               schema:
                 type: array
-                items:
-                  $ref: "#/components/schemas/Alert"
+                items: { $ref: "#/components/schemas/Alert" }
 
   /alerts/{id}/read:
     post:
       operationId: markAlertRead
       tags: [alerts]
-      summary: Mark an alert as read
       parameters:
         - name: id
           in: path
           required: true
-          schema:
-            type: integer
+          schema: { type: integer }
       responses:
         "200":
           description: Updated alert
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/Alert"
+              schema: { $ref: "#/components/schemas/Alert" }
 
   /alerts/read-all:
     post:
       operationId: markAllAlertsRead
       tags: [alerts]
-      summary: Mark all alerts as read
       responses:
         "204":
-          description: Done
+          description: All marked read
 
-  # ─── Saved Listings ───────────────────────────────────────────────────────────
+  # ─── Saved ───────────────────────────────────────────────────────────────────
   /saved:
     get:
       operationId: listSavedListings
       tags: [saved]
-      summary: Get saved listings for the authenticated user
       responses:
         "200":
           description: Saved listings
@@ -324,553 +336,533 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
-                  $ref: "#/components/schemas/SavedListing"
+                items: { $ref: "#/components/schemas/SavedListing" }
     post:
       operationId: saveListing
       tags: [saved]
-      summary: Save a listing
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              $ref: "#/components/schemas/SaveListingBody"
+            schema: { $ref: "#/components/schemas/SaveListingBody" }
       responses:
         "201":
           description: Saved
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/SavedListing"
+              schema: { $ref: "#/components/schemas/SavedListing" }
 
   /saved/{listingId}:
     delete:
       operationId: unsaveListing
       tags: [saved]
-      summary: Remove a saved listing
       parameters:
         - name: listingId
           in: path
           required: true
-          schema:
-            type: integer
+          schema: { type: integer }
       responses:
         "204":
           description: Removed
 
-  # ─── Dashboard (wow) ──────────────────────────────────────────────────────────
+  # ─── Dashboard ───────────────────────────────────────────────────────────────
   /dashboard/summary:
     get:
       operationId: getDashboardSummary
       tags: [dashboard]
-      summary: Get dashboard stats — watchlist count, match count, unread alerts, etc.
       responses:
         "200":
-          description: Dashboard summary
+          description: Dashboard counters
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/DashboardSummary"
+              schema: { $ref: "#/components/schemas/DashboardSummary" }
 
   /dashboard/recent-matches:
     get:
       operationId: getRecentMatches
       tags: [dashboard]
-      summary: Get the most recent matches across all watchlists (for activity feed)
       parameters:
         - name: limit
           in: query
-          schema:
-            type: integer
-            default: 10
+          schema: { type: integer, default: 10 }
       responses:
         "200":
-          description: Recent matches
+          description: Recent match feed
           content:
             application/json:
               schema:
                 type: array
-                items:
-                  $ref: "#/components/schemas/Match"
+                items: { $ref: "#/components/schemas/MatchResult" }
 
   /dashboard/price-drops:
     get:
       operationId: getPriceDrops
       tags: [dashboard]
-      summary: Get listings with recent price drops that match user watchlists
       responses:
         "200":
-          description: Price drop listings
+          description: Listings whose price has dropped
           content:
             application/json:
               schema:
                 type: array
-                items:
-                  $ref: "#/components/schemas/Listing"
+                items: { $ref: "#/components/schemas/Listing" }
 
-  # ─── Admin ────────────────────────────────────────────────────────────────────
+  # ─── Admin ───────────────────────────────────────────────────────────────────
   /admin/sources:
     get:
       operationId: listSources
       tags: [admin]
-      summary: List all configured data sources
       responses:
         "200":
-          description: Sources
+          description: Source health table
           content:
             application/json:
               schema:
                 type: array
-                items:
-                  $ref: "#/components/schemas/DataSource"
+                items: { $ref: "#/components/schemas/Source" }
+
+  /admin/ingestion-logs:
+    get:
+      operationId: listIngestionLogs
+      tags: [admin]
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50 }
+      responses:
+        "200":
+          description: Recent ingestion log entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/IngestionLog" }
 
   /admin/ingest:
     post:
       operationId: triggerIngest
       tags: [admin]
-      summary: Trigger a manual listing ingest for a source
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              $ref: "#/components/schemas/TriggerIngestBody"
+            schema: { $ref: "#/components/schemas/TriggerIngestBody" }
       responses:
         "200":
           description: Ingest result
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/IngestResult"
+              schema: { $ref: "#/components/schemas/IngestResult" }
 
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
-        status:
-          type: string
-      required:
-        - status
+        status: { type: string }
 
-    # ─── Watchlist ───────────────────────────────────────────────────────────────
-    Watchlist:
+    # Reference
+    Brand:
       type: object
+      required: [id, name, slug, normalizedName]
       properties:
-        id:
-          type: integer
-        userId:
-          type: string
-        name:
-          type: string
-        brand:
-          type: string
-        model:
-          type: string
-          nullable: true
-        style:
-          type: string
-          nullable: true
-        color:
-          type: string
-          nullable: true
-        size:
-          type: string
-          nullable: true
-        condition:
-          type: string
-          nullable: true
-        minPrice:
-          type: number
-          nullable: true
-        maxPrice:
-          type: number
-          nullable: true
-        matchType:
-          type: string
-          enum: [exact, close]
-        isActive:
-          type: boolean
-        matchCount:
-          type: integer
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
+        id: { type: integer }
+        name: { type: string }
+        slug: { type: string }
+        normalizedName: { type: string }
+
+    BagStyle:
+      type: object
+      required: [id, name, slug, normalizedName]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        slug: { type: string }
+        normalizedName: { type: string }
+
+    Color:
+      type: object
+      required: [id, name, slug, normalizedName, family]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        slug: { type: string }
+        normalizedName: { type: string }
+        family: { type: string }
+        hex: { type: string, nullable: true }
+
+    Condition:
+      type: object
+      required: [id, name, slug, normalizedName, rank]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        slug: { type: string }
+        normalizedName: { type: string }
+        rank: { type: integer }
+
+    Size:
+      type: object
+      required: [id, name, slug, normalizedName]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        slug: { type: string }
+        normalizedName: { type: string }
+
+    # Bag preferences
+    BagPreference:
+      type: object
       required:
         - id
         - userId
-        - name
-        - brand
-        - matchType
-        - isActive
+        - nickname
+        - exactModelEnabled
+        - allowCloseColorMatch
+        - onlyExactCriteria
+        - allowCloseMatches
+        - active
+        - brands
+        - styles
+        - colors
+        - sizes
         - matchCount
         - createdAt
         - updatedAt
+      properties:
+        id: { type: integer }
+        userId: { type: string }
+        nickname: { type: string }
+        exactModelEnabled: { type: boolean }
+        modelQuery: { type: string, nullable: true }
+        conditionMin: { $ref: "#/components/schemas/Condition", nullable: true }
+        allowCloseColorMatch: { type: boolean }
+        minPrice: { type: number, nullable: true }
+        maxPrice: { type: number, nullable: true }
+        onlyExactCriteria: { type: boolean }
+        allowCloseMatches: { type: boolean }
+        active: { type: boolean }
+        brands:
+          type: array
+          items: { $ref: "#/components/schemas/Brand" }
+        styles:
+          type: array
+          items: { $ref: "#/components/schemas/BagStyle" }
+        colors:
+          type: array
+          items: { $ref: "#/components/schemas/Color" }
+        sizes:
+          type: array
+          items: { $ref: "#/components/schemas/Size" }
+        matchCount: { type: integer }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
 
-    CreateWatchlistBody:
+    CreateBagPreferenceBody:
+      type: object
+      required: [nickname, brandIds]
+      properties:
+        nickname: { type: string, minLength: 1 }
+        brandIds:
+          type: array
+          items: { type: integer }
+          minItems: 1
+        styleIds:
+          type: array
+          items: { type: integer }
+        colorIds:
+          type: array
+          items: { type: integer }
+        sizeIds:
+          type: array
+          items: { type: integer }
+        exactModelEnabled: { type: boolean }
+        modelQuery: { type: string, nullable: true }
+        conditionMinId: { type: integer, nullable: true }
+        allowCloseColorMatch: { type: boolean }
+        minPrice: { type: number, nullable: true }
+        maxPrice: { type: number, nullable: true }
+        onlyExactCriteria: { type: boolean }
+        allowCloseMatches: { type: boolean }
+        active: { type: boolean }
+
+    UpdateBagPreferenceBody:
       type: object
       properties:
-        name:
-          type: string
-        brand:
-          type: string
-        model:
-          type: string
-          nullable: true
-        style:
-          type: string
-          nullable: true
-        color:
-          type: string
-          nullable: true
-        size:
-          type: string
-          nullable: true
-        condition:
-          type: string
-          nullable: true
-        minPrice:
-          type: number
-          nullable: true
-        maxPrice:
-          type: number
-          nullable: true
-        matchType:
-          type: string
-          enum: [exact, close]
-          default: close
-      required:
-        - name
-        - brand
+        nickname: { type: string }
+        brandIds:
+          type: array
+          items: { type: integer }
+        styleIds:
+          type: array
+          items: { type: integer }
+        colorIds:
+          type: array
+          items: { type: integer }
+        sizeIds:
+          type: array
+          items: { type: integer }
+        exactModelEnabled: { type: boolean }
+        modelQuery: { type: string, nullable: true }
+        conditionMinId: { type: integer, nullable: true }
+        allowCloseColorMatch: { type: boolean }
+        minPrice: { type: number, nullable: true }
+        maxPrice: { type: number, nullable: true }
+        onlyExactCriteria: { type: boolean }
+        allowCloseMatches: { type: boolean }
+        active: { type: boolean }
 
-    UpdateWatchlistBody:
-      type: object
-      properties:
-        name:
-          type: string
-        brand:
-          type: string
-        model:
-          type: string
-          nullable: true
-        style:
-          type: string
-          nullable: true
-        color:
-          type: string
-          nullable: true
-        size:
-          type: string
-          nullable: true
-        condition:
-          type: string
-          nullable: true
-        minPrice:
-          type: number
-          nullable: true
-        maxPrice:
-          type: number
-          nullable: true
-        matchType:
-          type: string
-          enum: [exact, close]
-        isActive:
-          type: boolean
-
-    # ─── Listing ─────────────────────────────────────────────────────────────────
+    # Listings
     Listing:
       type: object
-      properties:
-        id:
-          type: integer
-        sourceId:
-          type: integer
-        sourceName:
-          type: string
-        externalId:
-          type: string
-        brand:
-          type: string
-        model:
-          type: string
-          nullable: true
-        style:
-          type: string
-          nullable: true
-        color:
-          type: string
-          nullable: true
-        size:
-          type: string
-          nullable: true
-        condition:
-          type: string
-        price:
-          type: number
-        originalPrice:
-          type: number
-          nullable: true
-        currency:
-          type: string
-        imageUrl:
-          type: string
-          nullable: true
-        listingUrl:
-          type: string
-        description:
-          type: string
-          nullable: true
-        isAvailable:
-          type: boolean
-        seenAt:
-          type: string
-          format: date-time
-        createdAt:
-          type: string
-          format: date-time
       required:
         - id
         - sourceId
         - sourceName
-        - externalId
+        - sourceListingId
+        - sourceUrl
+        - title
         - brand
-        - condition
+        - normalizedBrand
         - price
         - currency
-        - listingUrl
-        - isAvailable
-        - seenAt
+        - availabilityStatus
+        - firstSeenAt
+        - lastSeenAt
         - createdAt
+      properties:
+        id: { type: integer }
+        sourceId: { type: integer }
+        sourceName: { type: string }
+        sourceListingId: { type: string }
+        sourceUrl: { type: string }
+        title: { type: string }
+        brand: { type: string }
+        model: { type: string, nullable: true }
+        style: { type: string, nullable: true }
+        condition: { type: string, nullable: true }
+        color: { type: string, nullable: true }
+        size: { type: string, nullable: true }
+        normalizedBrand: { type: string }
+        normalizedModel: { type: string, nullable: true }
+        normalizedStyle: { type: string, nullable: true }
+        normalizedCondition: { type: string, nullable: true }
+        normalizedColor: { type: string, nullable: true }
+        price: { type: number }
+        currency: { type: string }
+        originalPrice: { type: number, nullable: true }
+        discountPercent: { type: number, nullable: true }
+        imageUrl: { type: string, nullable: true }
+        description: { type: string, nullable: true }
+        availabilityStatus: { type: string }
+        firstSeenAt: { type: string, format: date-time }
+        lastSeenAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
 
-    ListingsPage:
+    ListingPage:
       type: object
+      required: [items, total, limit, offset]
       properties:
         items:
           type: array
-          items:
-            $ref: "#/components/schemas/Listing"
-        total:
-          type: integer
-        limit:
-          type: integer
-        offset:
-          type: integer
-      required:
-        - items
-        - total
-        - limit
-        - offset
+          items: { $ref: "#/components/schemas/Listing" }
+        total: { type: integer }
+        limit: { type: integer }
+        offset: { type: integer }
 
-    # ─── Match ───────────────────────────────────────────────────────────────────
-    Match:
+    # Match results
+    MatchReason:
       type: object
+      required: [field, value, matched, weight]
       properties:
-        id:
-          type: integer
-        watchlistId:
-          type: integer
-        watchlistName:
-          type: string
-        listing:
-          $ref: "#/components/schemas/Listing"
-        score:
-          type: number
-          description: Match confidence score 0-1
+        field: { type: string }
+        value: { type: string }
+        matched: { type: boolean }
+        weight: { type: number }
+        detail: { type: string, nullable: true }
+
+    Disqualifier:
+      type: object
+      required: [field, value, reason]
+      properties:
+        field: { type: string }
+        value: { type: string }
+        reason: { type: string }
+
+    MatchResult:
+      type: object
+      required:
+        - id
+        - userId
+        - preferenceId
+        - preferenceNickname
+        - listing
+        - matchScore
+        - matchType
+        - matchReasons
+        - disqualifiers
+        - createdAt
+      properties:
+        id: { type: integer }
+        userId: { type: string }
+        preferenceId: { type: integer }
+        preferenceNickname: { type: string }
+        listing: { $ref: "#/components/schemas/Listing" }
+        matchScore: { type: number }
+        matchType: { type: string }
         matchReasons:
           type: array
-          items:
-            type: string
-          description: Human-readable reasons why this listing matched
-        isNew:
-          type: boolean
-        createdAt:
-          type: string
-          format: date-time
-      required:
-        - id
-        - watchlistId
-        - watchlistName
-        - listing
-        - score
-        - matchReasons
-        - isNew
-        - createdAt
+          items: { $ref: "#/components/schemas/MatchReason" }
+        disqualifiers:
+          type: array
+          items: { $ref: "#/components/schemas/Disqualifier" }
+        createdAt: { type: string, format: date-time }
 
-    # ─── Alert ───────────────────────────────────────────────────────────────────
+    # Alerts
     Alert:
       type: object
-      properties:
-        id:
-          type: integer
-        userId:
-          type: string
-        matchId:
-          type: integer
-          nullable: true
-        watchlistId:
-          type: integer
-          nullable: true
-        watchlistName:
-          type: string
-          nullable: true
-        listing:
-          $ref: "#/components/schemas/Listing"
-          nullable: true
-        type:
-          type: string
-          enum: [new_match, price_drop, back_in_stock]
-        message:
-          type: string
-        isRead:
-          type: boolean
-        createdAt:
-          type: string
-          format: date-time
       required:
         - id
         - userId
-        - type
-        - message
-        - isRead
+        - preferenceId
+        - alertType
+        - status
         - createdAt
+      properties:
+        id: { type: integer }
+        userId: { type: string }
+        preferenceId: { type: integer }
+        preferenceNickname: { type: string, nullable: true }
+        listing: { $ref: "#/components/schemas/Listing", nullable: true }
+        matchResultId: { type: integer, nullable: true }
+        alertType: { type: string }
+        status: { type: string }
+        message: { type: string, nullable: true }
+        sentAt: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
 
-    # ─── Saved Listing ───────────────────────────────────────────────────────────
+    # Saved listings
     SavedListing:
       type: object
+      required: [id, userId, listing, createdAt]
       properties:
-        id:
-          type: integer
-        userId:
-          type: string
-        listing:
-          $ref: "#/components/schemas/Listing"
-        notes:
-          type: string
-          nullable: true
-        savedAt:
-          type: string
-          format: date-time
-      required:
-        - id
-        - userId
-        - listing
-        - savedAt
+        id: { type: integer }
+        userId: { type: string }
+        listing: { $ref: "#/components/schemas/Listing" }
+        note: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
 
     SaveListingBody:
       type: object
+      required: [listingId]
       properties:
-        listingId:
-          type: integer
-        notes:
-          type: string
-          nullable: true
-      required:
-        - listingId
+        listingId: { type: integer }
+        note: { type: string, nullable: true }
 
-    # ─── Dashboard ───────────────────────────────────────────────────────────────
+    # Dashboard
+    BrandCount:
+      type: object
+      required: [brand, count]
+      properties:
+        brand: { type: string }
+        count: { type: integer }
+
     DashboardSummary:
       type: object
-      properties:
-        watchlistCount:
-          type: integer
-        activeWatchlistCount:
-          type: integer
-        totalMatchCount:
-          type: integer
-        newMatchCount:
-          type: integer
-        unreadAlertCount:
-          type: integer
-        savedCount:
-          type: integer
-        topBrands:
-          type: array
-          items:
-            type: object
-            properties:
-              brand:
-                type: string
-              count:
-                type: integer
-            required: [brand, count]
       required:
-        - watchlistCount
-        - activeWatchlistCount
+        - preferenceCount
+        - activePreferenceCount
         - totalMatchCount
         - newMatchCount
         - unreadAlertCount
         - savedCount
         - topBrands
-
-    # ─── Admin ───────────────────────────────────────────────────────────────────
-    DataSource:
-      type: object
       properties:
-        id:
-          type: integer
-        name:
-          type: string
-        slug:
-          type: string
-        baseUrl:
-          type: string
-        adapterType:
-          type: string
-          enum: [mock, rss, sitemap, api, email]
-        isActive:
-          type: boolean
-        lastIngestAt:
-          type: string
-          format: date-time
-          nullable: true
-        listingCount:
-          type: integer
-        status:
-          type: string
-          enum: [healthy, degraded, error, unknown]
+        preferenceCount: { type: integer }
+        activePreferenceCount: { type: integer }
+        totalMatchCount: { type: integer }
+        newMatchCount: { type: integer }
+        unreadAlertCount: { type: integer }
+        savedCount: { type: integer }
+        topBrands:
+          type: array
+          items: { $ref: "#/components/schemas/BrandCount" }
+
+    # Admin
+    Source:
+      type: object
       required:
         - id
         - name
         - slug
         - baseUrl
-        - adapterType
-        - isActive
-        - listingCount
+        - sourceType
+        - ingestionMode
+        - complianceStatus
+        - active
         - status
+        - listingCount
+        - createdAt
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        slug: { type: string }
+        baseUrl: { type: string }
+        sourceType: { type: string }
+        ingestionMode: { type: string }
+        complianceStatus: { type: string }
+        active: { type: boolean }
+        lastIngestAt: { type: string, format: date-time, nullable: true }
+        listingCount: { type: integer }
+        status: { type: string }
+        createdAt: { type: string, format: date-time }
+
+    IngestionLog:
+      type: object
+      required:
+        - id
+        - sourceId
+        - sourceName
+        - jobType
+        - status
+        - recordsSeen
+        - recordsCreated
+        - recordsUpdated
+        - startedAt
+      properties:
+        id: { type: integer }
+        sourceId: { type: integer }
+        sourceName: { type: string }
+        jobType: { type: string }
+        status: { type: string }
+        recordsSeen: { type: integer }
+        recordsCreated: { type: integer }
+        recordsUpdated: { type: integer }
+        errorMessage: { type: string, nullable: true }
+        startedAt: { type: string, format: date-time }
+        completedAt: { type: string, format: date-time, nullable: true }
 
     TriggerIngestBody:
       type: object
+      required: [sourceSlug]
       properties:
-        sourceSlug:
-          type: string
-      required:
-        - sourceSlug
+        sourceSlug: { type: string }
 
     IngestResult:
       type: object
-      properties:
-        sourceSlug:
-          type: string
-        listingsFound:
-          type: integer
-        listingsAdded:
-          type: integer
-        listingsUpdated:
-          type: integer
-        durationMs:
-          type: integer
-        errors:
-          type: array
-          items:
-            type: string
       required:
         - sourceSlug
         - listingsFound
         - listingsAdded
         - listingsUpdated
         - durationMs
-        - errors
+      properties:
+        sourceSlug: { type: string }
+        listingsFound: { type: integer }
+        listingsAdded: { type: integer }
+        listingsUpdated: { type: integer }
+        durationMs: { type: integer }
+        errors:
+          type: array
+          items: { type: string }

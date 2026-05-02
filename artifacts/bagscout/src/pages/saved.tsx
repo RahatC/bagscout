@@ -1,13 +1,10 @@
-import { useState } from "react";
-import { Link } from "wouter";
-import { Bookmark, Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Bookmark } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/empty-state";
-import { 
-  useListSavedListings, 
+import {
+  useListSavedListings,
   getListSavedListingsQueryKey,
-  useUnsaveListing
+  useUnsaveListing,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ListingCard } from "@/components/listing-card";
@@ -16,19 +13,20 @@ export default function SavedPage() {
   const queryClient = useQueryClient();
 
   const { data: savedListings, isLoading } = useListSavedListings({
-    query: {
-      queryKey: getListSavedListingsQueryKey()
-    }
+    query: { queryKey: getListSavedListingsQueryKey() },
   });
 
   const unsaveListing = useUnsaveListing();
 
-  const handleUnsave = (id: number) => {
-    unsaveListing.mutate({ id }, {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getListSavedListingsQueryKey() });
-      }
-    });
+  const handleUnsave = (listingId: number) => {
+    unsaveListing.mutate(
+      { listingId },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getListSavedListingsQueryKey() });
+        },
+      },
+    );
   };
 
   return (
@@ -51,9 +49,9 @@ export default function SavedPage() {
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {savedListings.map((saved, index) => (
-              <ListingCard 
-                key={saved.id} 
-                listing={saved.listing} 
+              <ListingCard
+                key={saved.id}
+                listing={saved.listing}
                 index={index}
                 isSaved={true}
                 onSaveToggle={(id) => handleUnsave(id)}
@@ -62,7 +60,7 @@ export default function SavedPage() {
           </div>
         </>
       ) : (
-        <EmptyState 
+        <EmptyState
           icon={<Bookmark className="w-10 h-10 text-muted-foreground" />}
           title="No saved items"
           description="You haven't saved any listings yet. Browse available pieces and bookmark the ones you love."

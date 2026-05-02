@@ -3,142 +3,183 @@
  * Do not edit manually.
  * Api
  * BagScout API specification
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
 export interface HealthStatus {
   status: string;
 }
 
-export type WatchlistMatchType =
-  (typeof WatchlistMatchType)[keyof typeof WatchlistMatchType];
+export interface Brand {
+  id: number;
+  name: string;
+  slug: string;
+  normalizedName: string;
+}
 
-export const WatchlistMatchType = {
-  exact: "exact",
-  close: "close",
-} as const;
+export interface BagStyle {
+  id: number;
+  name: string;
+  slug: string;
+  normalizedName: string;
+}
 
-export interface Watchlist {
+export interface Color {
+  id: number;
+  name: string;
+  slug: string;
+  normalizedName: string;
+  family: string;
+  hex?: string | null;
+}
+
+export interface Condition {
+  id: number;
+  name: string;
+  slug: string;
+  normalizedName: string;
+  rank: number;
+}
+
+export interface Size {
+  id: number;
+  name: string;
+  slug: string;
+  normalizedName: string;
+}
+
+export interface BagPreference {
   id: number;
   userId: string;
-  name: string;
-  brand: string;
-  model?: string | null;
-  style?: string | null;
-  color?: string | null;
-  size?: string | null;
-  condition?: string | null;
+  nickname: string;
+  exactModelEnabled: boolean;
+  modelQuery?: string | null;
+  conditionMin?: Condition | null;
+  allowCloseColorMatch: boolean;
   minPrice?: number | null;
   maxPrice?: number | null;
-  matchType: WatchlistMatchType;
-  isActive: boolean;
+  onlyExactCriteria: boolean;
+  allowCloseMatches: boolean;
+  active: boolean;
+  brands: Brand[];
+  styles: BagStyle[];
+  colors: Color[];
+  sizes: Size[];
   matchCount: number;
   createdAt: string;
   updatedAt: string;
 }
 
-export type CreateWatchlistBodyMatchType =
-  (typeof CreateWatchlistBodyMatchType)[keyof typeof CreateWatchlistBodyMatchType];
-
-export const CreateWatchlistBodyMatchType = {
-  exact: "exact",
-  close: "close",
-} as const;
-
-export interface CreateWatchlistBody {
-  name: string;
-  brand: string;
-  model?: string | null;
-  style?: string | null;
-  color?: string | null;
-  size?: string | null;
-  condition?: string | null;
+export interface CreateBagPreferenceBody {
+  /** @minLength 1 */
+  nickname: string;
+  /** @minItems 1 */
+  brandIds: number[];
+  styleIds?: number[];
+  colorIds?: number[];
+  sizeIds?: number[];
+  exactModelEnabled?: boolean;
+  modelQuery?: string | null;
+  conditionMinId?: number | null;
+  allowCloseColorMatch?: boolean;
   minPrice?: number | null;
   maxPrice?: number | null;
-  matchType?: CreateWatchlistBodyMatchType;
+  onlyExactCriteria?: boolean;
+  allowCloseMatches?: boolean;
+  active?: boolean;
 }
 
-export type UpdateWatchlistBodyMatchType =
-  (typeof UpdateWatchlistBodyMatchType)[keyof typeof UpdateWatchlistBodyMatchType];
-
-export const UpdateWatchlistBodyMatchType = {
-  exact: "exact",
-  close: "close",
-} as const;
-
-export interface UpdateWatchlistBody {
-  name?: string;
-  brand?: string;
-  model?: string | null;
-  style?: string | null;
-  color?: string | null;
-  size?: string | null;
-  condition?: string | null;
+export interface UpdateBagPreferenceBody {
+  nickname?: string;
+  brandIds?: number[];
+  styleIds?: number[];
+  colorIds?: number[];
+  sizeIds?: number[];
+  exactModelEnabled?: boolean;
+  modelQuery?: string | null;
+  conditionMinId?: number | null;
+  allowCloseColorMatch?: boolean;
   minPrice?: number | null;
   maxPrice?: number | null;
-  matchType?: UpdateWatchlistBodyMatchType;
-  isActive?: boolean;
+  onlyExactCriteria?: boolean;
+  allowCloseMatches?: boolean;
+  active?: boolean;
 }
 
 export interface Listing {
   id: number;
   sourceId: number;
   sourceName: string;
-  externalId: string;
+  sourceListingId: string;
+  sourceUrl: string;
+  title: string;
   brand: string;
   model?: string | null;
   style?: string | null;
+  condition?: string | null;
   color?: string | null;
   size?: string | null;
-  condition: string;
+  normalizedBrand: string;
+  normalizedModel?: string | null;
+  normalizedStyle?: string | null;
+  normalizedCondition?: string | null;
+  normalizedColor?: string | null;
   price: number;
-  originalPrice?: number | null;
   currency: string;
+  originalPrice?: number | null;
+  discountPercent?: number | null;
   imageUrl?: string | null;
-  listingUrl: string;
   description?: string | null;
-  isAvailable: boolean;
-  seenAt: string;
+  availabilityStatus: string;
+  firstSeenAt: string;
+  lastSeenAt: string;
   createdAt: string;
 }
 
-export interface ListingsPage {
+export interface ListingPage {
   items: Listing[];
   total: number;
   limit: number;
   offset: number;
 }
 
-export interface Match {
-  id: number;
-  watchlistId: number;
-  watchlistName: string;
-  listing: Listing;
-  /** Match confidence score 0-1 */
-  score: number;
-  /** Human-readable reasons why this listing matched */
-  matchReasons: string[];
-  isNew: boolean;
-  createdAt: string;
+export interface MatchReason {
+  field: string;
+  value: string;
+  matched: boolean;
+  weight: number;
+  detail?: string | null;
 }
 
-export type AlertType = (typeof AlertType)[keyof typeof AlertType];
+export interface Disqualifier {
+  field: string;
+  value: string;
+  reason: string;
+}
 
-export const AlertType = {
-  new_match: "new_match",
-  price_drop: "price_drop",
-  back_in_stock: "back_in_stock",
-} as const;
+export interface MatchResult {
+  id: number;
+  userId: string;
+  preferenceId: number;
+  preferenceNickname: string;
+  listing: Listing;
+  matchScore: number;
+  matchType: string;
+  matchReasons: MatchReason[];
+  disqualifiers: Disqualifier[];
+  createdAt: string;
+}
 
 export interface Alert {
   id: number;
   userId: string;
-  matchId?: number | null;
-  watchlistId?: number | null;
-  watchlistName?: string | null;
+  preferenceId: number;
+  preferenceNickname?: string | null;
   listing?: Listing | null;
-  type: AlertType;
-  message: string;
-  isRead: boolean;
+  matchResultId?: number | null;
+  alertType: string;
+  status: string;
+  message?: string | null;
+  sentAt?: string | null;
   createdAt: string;
 }
 
@@ -146,61 +187,57 @@ export interface SavedListing {
   id: number;
   userId: string;
   listing: Listing;
-  notes?: string | null;
-  savedAt: string;
+  note?: string | null;
+  createdAt: string;
 }
 
 export interface SaveListingBody {
   listingId: number;
-  notes?: string | null;
+  note?: string | null;
 }
 
-export type DashboardSummaryTopBrandsItem = {
+export interface BrandCount {
   brand: string;
   count: number;
-};
+}
 
 export interface DashboardSummary {
-  watchlistCount: number;
-  activeWatchlistCount: number;
+  preferenceCount: number;
+  activePreferenceCount: number;
   totalMatchCount: number;
   newMatchCount: number;
   unreadAlertCount: number;
   savedCount: number;
-  topBrands: DashboardSummaryTopBrandsItem[];
+  topBrands: BrandCount[];
 }
 
-export type DataSourceAdapterType =
-  (typeof DataSourceAdapterType)[keyof typeof DataSourceAdapterType];
-
-export const DataSourceAdapterType = {
-  mock: "mock",
-  rss: "rss",
-  sitemap: "sitemap",
-  api: "api",
-  email: "email",
-} as const;
-
-export type DataSourceStatus =
-  (typeof DataSourceStatus)[keyof typeof DataSourceStatus];
-
-export const DataSourceStatus = {
-  healthy: "healthy",
-  degraded: "degraded",
-  error: "error",
-  unknown: "unknown",
-} as const;
-
-export interface DataSource {
+export interface Source {
   id: number;
   name: string;
   slug: string;
   baseUrl: string;
-  adapterType: DataSourceAdapterType;
-  isActive: boolean;
+  sourceType: string;
+  ingestionMode: string;
+  complianceStatus: string;
+  active: boolean;
   lastIngestAt?: string | null;
   listingCount: number;
-  status: DataSourceStatus;
+  status: string;
+  createdAt: string;
+}
+
+export interface IngestionLog {
+  id: number;
+  sourceId: number;
+  sourceName: string;
+  jobType: string;
+  status: string;
+  recordsSeen: number;
+  recordsCreated: number;
+  recordsUpdated: number;
+  errorMessage?: string | null;
+  startedAt: string;
+  completedAt?: string | null;
 }
 
 export interface TriggerIngestBody {
@@ -213,12 +250,11 @@ export interface IngestResult {
   listingsAdded: number;
   listingsUpdated: number;
   durationMs: number;
-  errors: string[];
+  errors?: string[];
 }
 
 export type ListListingsParams = {
   brand?: string;
-  model?: string;
   condition?: string;
   color?: string;
   minPrice?: number;
@@ -238,5 +274,9 @@ export type ListAlertsParams = {
 };
 
 export type GetRecentMatchesParams = {
+  limit?: number;
+};
+
+export type ListIngestionLogsParams = {
   limit?: number;
 };
