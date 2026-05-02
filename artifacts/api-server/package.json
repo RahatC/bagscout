@@ -14,6 +14,8 @@
   "dependencies": {
     "@clerk/express": "^2.1.11",
     "@clerk/shared": "^4.8.7",
+    "@opentelemetry/api": "^1.9.1",
+    "@sentry/node": "^10.51.0",
     "@workspace/api-zod": "workspace:*",
     "@workspace/db": "workspace:*",
     "cheerio": "^1.2.0",

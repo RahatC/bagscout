@@ -1,5 +1,9 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { initSentry } from "./lib/sentry";
+
+initSentry();
+
 import { runMigrations } from "@workspace/db";
 import app from "./app";
 import { logger } from "./lib/logger";

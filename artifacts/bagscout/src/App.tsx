@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
-import { ClerkProvider, SignIn, SignUp, Show, useAuth, useClerk } from '@clerk/react';
+import { ClerkProvider, SignIn, SignUp, Show, useAuth, useClerk, useUser } from '@clerk/react';
+import { Sentry, isSentryEnabled } from "@/lib/sentry";
 import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
 import { Switch, Route, useLocation, Router as WouterRouter, Redirect } from 'wouter';
@@ -126,6 +127,32 @@ function ClerkAuthTokenBridge() {
   return null;
 }
 
+function SentryUserBridge() {
+  const { isLoaded, isSignedIn, user } = useUser();
+  useEffect(() => {
+    if (!isSentryEnabled() || !isLoaded) return;
+    if (isSignedIn && user) {
+      Sentry.setUser({ id: user.id });
+    } else {
+      Sentry.setUser(null);
+    }
+  }, [isLoaded, isSignedIn, user]);
+  return null;
+}
+
+function SentryRouteBreadcrumbs() {
+  const [location] = useLocation();
+  useEffect(() => {
+    if (!isSentryEnabled()) return;
+    Sentry.addBreadcrumb({
+      category: "navigation",
+      message: location,
+      level: "info",
+    });
+  }, [location]);
+  return null;
+}
+
 function ClerkQueryClientCacheInvalidator() {
   const { addListener } = useClerk();
   const queryClient = useQueryClient();
@@ -216,6 +243,8 @@ function ClerkProviderWithRoutes() {
       <QueryClientProvider client={queryClient}>
         <ClerkAuthTokenBridge />
         <ClerkQueryClientCacheInvalidator />
+        <SentryUserBridge />
+        <SentryRouteBreadcrumbs />
         <Switch>
           <Route path="/" component={HomeRedirect} />
           <Route path="/sign-in/*?" component={SignInPage} />
