@@ -150,9 +150,12 @@ export function evaluateMatch(
   // Track which criteria the user actually selected — used for matchType=exact
   // (every selected criterion must fully match) and for the onlyExactCriteria
   // strict-mode evaluation.
+  // Whitespace-only model queries are treated as not-requested so we don't
+  // award full credit on a no-op `haystack.includes("")` match.
+  const trimmedModelQuery = preference.modelQuery?.trim() ?? "";
   const requested = {
     brand: preference.brands.length > 0,
-    model: preference.exactModelEnabled && !!preference.modelQuery,
+    model: preference.exactModelEnabled && trimmedModelQuery.length > 0,
     style: preference.styles.length > 0,
     color: preference.colors.length > 0,
     size: preference.sizes.length > 0,
@@ -216,11 +219,11 @@ export function evaluateMatch(
   // 2. MODEL — only scored when user enabled exact-model search
   // -------------------------------------------------------------------------
   if (requested.model) {
-    const query = preference.modelQuery!.toLowerCase().trim();
+    const query = trimmedModelQuery.toLowerCase();
     const haystack = `${listing.normalizedModel ?? ""} ${listing.title.toLowerCase()}`;
     if (haystack.includes(query)) {
       score += W_MODEL;
-      reasons.push({ field: "model", value: preference.modelQuery!, matched: true, weight: W_MODEL });
+      reasons.push({ field: "model", value: trimmedModelQuery, matched: true, weight: W_MODEL });
       fullyMatched.model = true;
     } else if (preference.allowCloseMatches && fuzzyContains(haystack, query)) {
       score += W_MODEL / 2;
@@ -229,13 +232,13 @@ export function evaluateMatch(
         value: listing.model ?? listing.title,
         matched: true,
         weight: W_MODEL / 2,
-        detail: `Close match for "${preference.modelQuery}"`,
+        detail: `Close match for "${trimmedModelQuery}"`,
       });
     } else {
       disqualifiers.push({
         field: "model",
         value: listing.model ?? "(none)",
-        reason: `Does not match "${preference.modelQuery}"`,
+        reason: `Does not match "${trimmedModelQuery}"`,
       });
     }
   } else {
@@ -404,15 +407,31 @@ export function evaluateMatch(
   if (hardGateFailed) return reject();
 
   // -------------------------------------------------------------------------
-  // Strict mode — onlyExactCriteria rejects any disqualifier on a selected
-  // criterion (brand/model/color/size in addition to the always-strict
-  // condition + price already enforced above).
+  // Strict mode — onlyExactCriteria requires every requested criterion in
+  // {brand, model, color, size, condition, price} to be FULLY matched. This
+  // rejects close/partial credit (price ±10% buffer, color family, fuzzy
+  // model) that wouldn't otherwise produce a disqualifier. Style is
+  // intentionally excluded per spec.
   // -------------------------------------------------------------------------
   if (preference.onlyExactCriteria) {
-    const strictMissing = disqualifiers.find((d) =>
-      ["brand", "model", "color", "size", "condition", "price"].includes(d.field),
-    );
-    if (strictMissing) return reject();
+    const strictFields: Array<keyof typeof requested> = [
+      "brand",
+      "model",
+      "color",
+      "size",
+      "condition",
+      "price",
+    ];
+    for (const f of strictFields) {
+      if (requested[f] && !fullyMatched[f]) {
+        disqualifiers.push({
+          field: f,
+          value: "(strict mode)",
+          reason: `Strict mode requires an exact ${f} match`,
+        });
+        return reject();
+      }
+    }
   }
 
   // -------------------------------------------------------------------------

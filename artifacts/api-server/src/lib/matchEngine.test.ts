@@ -465,6 +465,90 @@ describe("matchEngine — additional edge cases", () => {
     expect(out.matchType).not.toBe("rejected");
   });
 
+  it("25a. Strict mode + price buffer — close price (within ±10%) is rejected, not awarded half credit", () => {
+    const pref = buildPreference({
+      onlyExactCriteria: true,
+      allowCloseMatches: true,
+      sizes: ["medium"],
+      minPrice: 4000,
+      maxPrice: 5000,
+      conditionMinRank: 4,
+      conditionMinName: "Very Good",
+    });
+    const listing = buildListing({ price: 5400 }); // outside 4–5k, inside 10% buffer
+    const out = evaluateMatch(pref, listing);
+
+    expect(out.matchType).toBe("rejected");
+    expect(out.alertEligible).toBe(false);
+  });
+
+  it("25b. Strict mode + close color family — family-only match is rejected, not awarded half credit", () => {
+    const pref = buildPreference({
+      onlyExactCriteria: true,
+      allowCloseMatches: true,
+      allowCloseColorMatch: true,
+      sizes: ["medium"],
+      colors: ["black"],
+      colorFamilies: ["neutrals"],
+      minPrice: 4000,
+      maxPrice: 5000,
+      conditionMinRank: 4,
+      conditionMinName: "Very Good",
+    });
+    const listing = buildListing({
+      color: "Brown",
+      normalizedColor: "brown",
+      colorFamily: "neutrals", // same family but different exact color
+    });
+    const out = evaluateMatch(pref, listing);
+
+    expect(out.matchType).toBe("rejected");
+    expect(out.alertEligible).toBe(false);
+  });
+
+  it("25c. Strict mode + fuzzy model — close model match is rejected, not awarded half credit", () => {
+    const pref = buildPreference({
+      onlyExactCriteria: true,
+      allowCloseMatches: true,
+      exactModelEnabled: true,
+      modelQuery: "classic flap medium",
+      sizes: ["medium"],
+      minPrice: 4000,
+      maxPrice: 5000,
+      conditionMinRank: 4,
+      conditionMinName: "Very Good",
+    });
+    const listing = buildListing({
+      title: "Chanel Classic Flap Large Caviar",
+      model: "Classic Flap Large",
+      normalizedModel: "classic flap large",
+    });
+    const out = evaluateMatch(pref, listing);
+
+    expect(out.matchType).toBe("rejected");
+    expect(out.alertEligible).toBe(false);
+  });
+
+  it("25d. Whitespace-only modelQuery is treated as not-requested (no free full credit)", () => {
+    const pref = buildPreference({
+      exactModelEnabled: true,
+      modelQuery: "   ",
+      sizes: ["medium"],
+      minPrice: 4000,
+      maxPrice: 5000,
+      conditionMinRank: 4,
+      conditionMinName: "Very Good",
+    });
+    const listing = buildListing();
+    const out = evaluateMatch(pref, listing);
+
+    // Same shape as test #1 — neutral model credit, full perfect match.
+    expect(out.matchType).toBe("exact");
+    expect(out.matchScore).toBe(100);
+    // No model reason should appear because model wasn't actually requested.
+    expect(out.matchReasons.some((r) => r.field === "model")).toBe(false);
+  });
+
   it("25. alertEligible is false for weak matches", () => {
     const pref = buildPreference({
       exactModelEnabled: true,
