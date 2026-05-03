@@ -48,6 +48,8 @@ import type {
   Source,
   TriggerIngestBody,
   UpdateBagPreferenceBody,
+  UpdateSource404,
+  UpdateSourceBody,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -2278,6 +2280,87 @@ export function useListSources<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+export const getUpdateSourceUrl = (slug: string) => {
+  return `/api/admin/sources/${slug}`;
+};
+
+export const updateSource = async (
+  slug: string,
+  updateSourceBody: UpdateSourceBody,
+  options?: RequestInit,
+): Promise<Source> => {
+  return customFetch<Source>(getUpdateSourceUrl(slug), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateSourceBody),
+  });
+};
+
+export const getUpdateSourceMutationOptions = <
+  TError = ErrorType<UpdateSource404>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateSource>>,
+    TError,
+    { slug: string; data: BodyType<UpdateSourceBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateSource>>,
+  TError,
+  { slug: string; data: BodyType<UpdateSourceBody> },
+  TContext
+> => {
+  const mutationKey = ["updateSource"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateSource>>,
+    { slug: string; data: BodyType<UpdateSourceBody> }
+  > = (props) => {
+    const { slug, data } = props ?? {};
+
+    return updateSource(slug, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateSourceMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateSource>>
+>;
+export type UpdateSourceMutationBody = BodyType<UpdateSourceBody>;
+export type UpdateSourceMutationError = ErrorType<UpdateSource404>;
+
+export const useUpdateSource = <
+  TError = ErrorType<UpdateSource404>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateSource>>,
+    TError,
+    { slug: string; data: BodyType<UpdateSourceBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateSource>>,
+  TError,
+  { slug: string; data: BodyType<UpdateSourceBody> },
+  TContext
+> => {
+  return useMutation(getUpdateSourceMutationOptions(options));
+};
 
 export const getListIngestionLogsUrl = (params?: ListIngestionLogsParams) => {
   const normalizedParams = new URLSearchParams();

@@ -378,6 +378,7 @@ export interface Source {
   ingestionMode: string;
   complianceStatus: string;
   active: boolean;
+  cadenceMinutes: number;
   lastIngestAt?: string | null;
   listingCount: number;
   status: string;
@@ -397,6 +398,16 @@ export interface IngestionLog {
   actorUserId?: string | null;
   startedAt: string;
   completedAt?: string | null;
+}
+
+export interface UpdateSourceBody {
+  /**
+   * Per-source polling cadence in minutes (1–1440).
+   * @minimum 1
+   * @maximum 1440
+   */
+  cadenceMinutes?: number;
+  active?: boolean;
 }
 
 export interface TriggerIngestBody {
@@ -438,6 +449,10 @@ export type ListAlertsParams = {
 
 export type GetRecentMatchesParams = {
   limit?: number;
+};
+
+export type UpdateSource404 = {
+  error: string;
 };
 
 export type ListIngestionLogsParams = {

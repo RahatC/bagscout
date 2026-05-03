@@ -19,6 +19,10 @@ export const sourcesTable = pgTable("sources", {
   ingestionMode: text("ingestion_mode").notNull().default("mock"),
   complianceStatus: text("compliance_status").notNull().default("approved"),
   active: boolean("active").notNull().default(true),
+  // Polling cadence in minutes. The scheduler reads this per source so some
+  // marketplaces (high-velocity resale feeds) can be polled more frequently
+  // than others (slower-moving auction houses). Default 60 min.
+  cadenceMinutes: integer("cadence_minutes").notNull().default(60),
   lastIngestAt: timestamp("last_ingest_at", { withTimezone: true }),
   listingCount: integer("listing_count").notNull().default(0),
   status: text("status").notNull().default("unknown"),

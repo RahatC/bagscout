@@ -7,7 +7,7 @@ import {
   ingestionLogsTable,
 } from "@workspace/db";
 import { z } from "zod";
-import { TriggerIngestBody, RunDigestsBody } from "@workspace/api-zod";
+import { TriggerIngestBody, RunDigestsBody, UpdateSourceBody } from "@workspace/api-zod";
 import { requireAuth, requireAdmin } from "../middlewares/requireAuth";
 import { adminWriteRateLimiter } from "../middlewares/security";
 import { runMockIngest, runAllIngests } from "../lib/ingest";
@@ -25,6 +25,7 @@ type AuthRequest = Request & { userId: string };
 // Reject unknown fields on POST bodies so typos don't silently no-op.
 const TriggerIngestBodyStrict = TriggerIngestBody.strict();
 const RunDigestsBodyStrict = RunDigestsBody.strict();
+const UpdateSourceBodyStrict = UpdateSourceBody.strict();
 
 const IngestionLogsQuery = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
@@ -47,6 +48,39 @@ router.get("/sources", async (_req, res) => {
       listingCount: r.listingCount,
     })),
   );
+});
+
+// PATCH /api/admin/sources/:slug
+// Update mutable per-source operational fields (currently cadenceMinutes
+// and active). Lets ops tune polling frequency without redeploying or
+// touching the DB directly.
+router.patch("/sources/:slug", adminWriteRateLimiter, async (req, res) => {
+  const slug = String(req.params.slug);
+  const parsed = UpdateSourceBodyStrict.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid body", details: parsed.error.issues });
+    return;
+  }
+  const updates: { cadenceMinutes?: number; active?: boolean } = {};
+  if (parsed.data.cadenceMinutes != null)
+    updates.cadenceMinutes = parsed.data.cadenceMinutes;
+  if (parsed.data.active != null) updates.active = parsed.data.active;
+
+  if (Object.keys(updates).length === 0) {
+    res.status(400).json({ error: "No fields to update" });
+    return;
+  }
+
+  const [updated] = await db
+    .update(sourcesTable)
+    .set(updates)
+    .where(eq(sourcesTable.slug, slug))
+    .returning();
+  if (!updated) {
+    res.status(404).json({ error: `Source "${slug}" not found` });
+    return;
+  }
+  res.json({ ...updated, listingCount: updated.listingCount });
 });
 
 router.get("/ingestion-logs", async (req, res) => {

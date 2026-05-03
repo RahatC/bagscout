@@ -24,9 +24,11 @@ import {
   useListSources,
   getListSourcesQueryKey,
   useTriggerIngest,
+  useUpdateSource,
   useListIngestionLogs,
   getListIngestionLogsQueryKey,
 } from "@workspace/api-client-react";
+import { Input } from "@/components/ui/input";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 
@@ -44,7 +46,59 @@ export default function AdminPage() {
   );
 
   const triggerIngest = useTriggerIngest();
+  const updateSource = useUpdateSource();
   const [ingestingSource, setIngestingSource] = useState<string | null>(null);
+  const [cadenceDraft, setCadenceDraft] = useState<Record<string, string>>({});
+
+  const commitCadence = (slug: string, currentValue: number) => {
+    const raw = cadenceDraft[slug];
+    if (raw == null) return;
+    const next = Number(raw);
+    if (!Number.isFinite(next) || next < 1 || next > 1440) {
+      toast({
+        variant: "destructive",
+        title: "Invalid cadence",
+        description: "Cadence must be a whole number between 1 and 1440 minutes.",
+      });
+      setCadenceDraft((d) => {
+        const { [slug]: _drop, ...rest } = d;
+        return rest;
+      });
+      return;
+    }
+    if (Math.round(next) === currentValue) {
+      setCadenceDraft((d) => {
+        const { [slug]: _drop, ...rest } = d;
+        return rest;
+      });
+      return;
+    }
+    updateSource.mutate(
+      { slug, data: { cadenceMinutes: Math.round(next) } },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getListSourcesQueryKey() });
+          toast({
+            title: "Cadence updated",
+            description: `${slug} will now poll every ${Math.round(next)} min.`,
+          });
+        },
+        onError: (error: unknown) => {
+          toast({
+            variant: "destructive",
+            title: "Update failed",
+            description: error instanceof Error ? error.message : "Could not update cadence.",
+          });
+        },
+        onSettled: () => {
+          setCadenceDraft((d) => {
+            const { [slug]: _drop, ...rest } = d;
+            return rest;
+          });
+        },
+      },
+    );
+  };
 
   const handleIngest = (slug: string, name: string) => {
     setIngestingSource(slug);
@@ -199,6 +253,9 @@ export default function AdminPage() {
                     Listings
                   </TableHead>
                   <TableHead className="uppercase tracking-widest text-[10px] font-semibold">
+                    Cadence
+                  </TableHead>
+                  <TableHead className="uppercase tracking-widest text-[10px] font-semibold">
                     Last Sync
                   </TableHead>
                   <TableHead className="text-right uppercase tracking-widest text-[10px] font-semibold">
@@ -224,6 +281,34 @@ export default function AdminPage() {
                     </TableCell>
                     <TableCell>{getStatusBadge(source.status)}</TableCell>
                     <TableCell>{source.listingCount.toLocaleString()}</TableCell>
+                    <TableCell className="text-muted-foreground text-sm">
+                      <div className="flex items-center gap-1">
+                        <Input
+                          type="number"
+                          min={1}
+                          max={1440}
+                          value={cadenceDraft[source.slug] ?? source.cadenceMinutes}
+                          onChange={(e) =>
+                            setCadenceDraft((d) => ({ ...d, [source.slug]: e.target.value }))
+                          }
+                          onBlur={() => commitCadence(source.slug, source.cadenceMinutes)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.currentTarget.blur();
+                            } else if (e.key === "Escape") {
+                              setCadenceDraft((d) => {
+                                const { [source.slug]: _drop, ...rest } = d;
+                                return rest;
+                              });
+                              e.currentTarget.blur();
+                            }
+                          }}
+                          disabled={updateSource.isPending}
+                          className="h-8 w-16 rounded-none text-sm"
+                        />
+                        <span className="text-xs">min</span>
+                      </div>
+                    </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
                       {source.lastIngestAt
                         ? formatDistanceToNow(new Date(source.lastIngestAt), { addSuffix: true })

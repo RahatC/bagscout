@@ -1,6 +1,7 @@
 import { sql, eq } from "drizzle-orm";
-import { db, pool, ingestionLogsTable } from "@workspace/db";
-import { runAllIngests } from "./ingest";
+import { db, pool, ingestionLogsTable, sourcesTable } from "@workspace/db";
+import { runMockIngest, type IngestResult } from "./ingest";
+import { adapters } from "../adapters";
 import { runDigest, type DigestRunResult } from "./digest";
 import { logger } from "./logger";
 
@@ -94,6 +95,7 @@ export type ScheduledIngestSummary = {
   reason?: "locked" | "disabled";
   durationMs: number;
   sourcesRun: number;
+  sourcesSkipped: number;
   totals: {
     listingsFound: number;
     listingsAdded: number;
@@ -101,6 +103,13 @@ export type ScheduledIngestSummary = {
     listingsRejected: number;
     errors: number;
   };
+  perSource: Array<{
+    sourceSlug: string;
+    ran: boolean;
+    skipReason?: "not_due" | "no_adapter" | "inactive";
+    result?: IngestResult;
+    error?: string;
+  }>;
 };
 
 export type ScheduledDigestSummary = {
@@ -111,13 +120,21 @@ export type ScheduledDigestSummary = {
 };
 
 /**
- * Run a full ingest cycle (every adapter, sequentially) under an advisory
- * lock so concurrent ticks no-op rather than overlap. Each per-source result
- * is already persisted to `ingestion_logs` by `runMockIngest`.
+ * Run one scheduler tick: examine every active registered source and run
+ * its ingest if its per-source cadence has elapsed since `lastIngestAt`.
+ *
+ * Wrapped in the global ingest advisory lock so concurrent ticks (or a
+ * Scheduled Deployment invocation) can't double-fire. Each source is run
+ * inside its own try/catch so one failing adapter never blocks the rest.
+ *
+ * `force=true` ignores cadence and runs every active source whose adapter
+ * is registered (used by the manual "trigger all" admin path).
  */
-export async function runScheduledIngest(): Promise<ScheduledIngestSummary> {
+export async function runScheduledIngest(
+  opts: { force?: boolean } = {},
+): Promise<ScheduledIngestSummary> {
   const start = Date.now();
-  const result = await withIngestLock(() => doScheduledIngest(start));
+  const result = await withIngestLock(() => doScheduledIngest(start, opts));
   if (!result.acquired) {
     logger.info(
       { lockKey: LOCK_KEY_INGEST },
@@ -128,6 +145,7 @@ export async function runScheduledIngest(): Promise<ScheduledIngestSummary> {
       reason: "locked",
       durationMs: 0,
       sourcesRun: 0,
+      sourcesSkipped: 0,
       totals: {
         listingsFound: 0,
         listingsAdded: 0,
@@ -135,15 +153,22 @@ export async function runScheduledIngest(): Promise<ScheduledIngestSummary> {
         listingsRejected: 0,
         errors: 0,
       },
+      perSource: [],
     };
   }
   return result.value;
 }
 
-async function doScheduledIngest(start: number): Promise<ScheduledIngestSummary> {
-  // Open an aggregate scheduled_run row up-front. source_id is null because
-  // this represents the whole cycle (per-source rows are still written by
-  // runMockIngest). The admin ingestion-log feed surfaces both shapes.
+async function doScheduledIngest(
+  start: number,
+  opts: { force?: boolean },
+): Promise<ScheduledIngestSummary> {
+  const force = opts.force ?? false;
+
+  // Open an aggregate `scheduled_run` row up-front so the admin ingestion-log
+  // feed always has a one-line summary per scheduler tick (per-source rows
+  // are still written separately by runMockIngest). source_id is null
+  // because this represents the whole cycle.
   const [aggregateLog] = await db
     .insert(ingestionLogsTable)
     .values({
@@ -153,69 +178,122 @@ async function doScheduledIngest(start: number): Promise<ScheduledIngestSummary>
     })
     .returning({ id: ingestionLogsTable.id });
 
-  try {
-    logger.info({ aggregateLogId: aggregateLog.id }, "Scheduled ingest starting");
-    const results = await runAllIngests({ jobType: "scheduled" });
-    const totals = results.reduce(
-      (acc, r) => {
-        acc.listingsFound += r.listingsFound;
-        acc.listingsAdded += r.listingsAdded;
-        acc.listingsUpdated += r.listingsUpdated;
-        acc.listingsRejected += r.listingsRejected;
-        acc.errors += r.errors.length;
-        return acc;
-      },
-      {
-        listingsFound: 0,
-        listingsAdded: 0,
-        listingsUpdated: 0,
-        listingsRejected: 0,
-        errors: 0,
-      },
-    );
-    const durationMs = Date.now() - start;
-    const status: "success" | "partial" | "failed" =
-      totals.errors === 0
-        ? "success"
-        : totals.listingsAdded + totals.listingsUpdated === 0
-          ? "failed"
-          : "partial";
-    await db
-      .update(ingestionLogsTable)
-      .set({
-        status,
-        recordsSeen: totals.listingsFound,
-        recordsCreated: totals.listingsAdded,
-        recordsUpdated: totals.listingsUpdated,
-        errorMessage:
-          totals.errors > 0
-            ? `${totals.errors} per-source errors across ${results.length} sources`
-            : null,
-        completedAt: new Date(),
-      })
-      .where(eq(ingestionLogsTable.id, aggregateLog.id));
-    logger.info(
-      { durationMs, sourcesRun: results.length, totals, aggregateLogId: aggregateLog.id },
-      "Scheduled ingest finished",
-    );
-    return {
-      ran: true,
-      durationMs,
-      sourcesRun: results.length,
-      totals,
-    };
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    await db
-      .update(ingestionLogsTable)
-      .set({
-        status: "failed",
-        errorMessage: msg.slice(0, 500),
-        completedAt: new Date(),
-      })
-      .where(eq(ingestionLogsTable.id, aggregateLog.id));
-    throw err;
+  // Resolve which sources are due. We use the DB row (not just the static
+  // adapter registry) because cadence_minutes and last_ingest_at live there
+  // — that's how operators tune polling without redeploying code.
+  const sourceRows = await db
+    .select()
+    .from(sourcesTable)
+    .where(eq(sourcesTable.active, true));
+
+  const now = Date.now();
+  const perSource: ScheduledIngestSummary["perSource"] = [];
+  const totals = {
+    listingsFound: 0,
+    listingsAdded: 0,
+    listingsUpdated: 0,
+    listingsRejected: 0,
+    errors: 0,
+  };
+  let sourcesRun = 0;
+  let sourcesSkipped = 0;
+
+  for (const src of sourceRows) {
+    const adapter = adapters.find((a) => a.sourceSlug === src.slug);
+    if (!adapter) {
+      perSource.push({
+        sourceSlug: src.slug,
+        ran: false,
+        skipReason: "no_adapter",
+      });
+      sourcesSkipped++;
+      continue;
+    }
+
+    const cadenceMs = Math.max(1, src.cadenceMinutes) * 60_000;
+    const dueAt = src.lastIngestAt
+      ? src.lastIngestAt.getTime() + cadenceMs
+      : 0;
+    if (!force && now < dueAt) {
+      perSource.push({
+        sourceSlug: src.slug,
+        ran: false,
+        skipReason: "not_due",
+      });
+      sourcesSkipped++;
+      continue;
+    }
+
+    try {
+      const result = await runMockIngest(src.slug, { jobType: "scheduled" });
+      totals.listingsFound += result.listingsFound;
+      totals.listingsAdded += result.listingsAdded;
+      totals.listingsUpdated += result.listingsUpdated;
+      totals.listingsRejected += result.listingsRejected;
+      totals.errors += result.errors.length;
+      perSource.push({ sourceSlug: src.slug, ran: true, result });
+      sourcesRun++;
+    } catch (err) {
+      // Per-source isolation: log and move on so one bad adapter doesn't
+      // poison the rest of the tick. runMockIngest already records its own
+      // failures into ingestion_logs; this is a final safety net.
+      const msg = err instanceof Error ? err.message : String(err);
+      logger.error(
+        { err, sourceSlug: src.slug },
+        "Scheduled ingest: source threw, continuing with next",
+      );
+      totals.errors += 1;
+      perSource.push({ sourceSlug: src.slug, ran: true, error: msg });
+      sourcesRun++;
+    }
   }
+
+  const durationMs = Date.now() - start;
+  const aggregateStatus: "success" | "partial" | "failed" =
+    totals.errors === 0
+      ? "success"
+      : totals.listingsAdded + totals.listingsUpdated === 0 && sourcesRun > 0
+        ? "failed"
+        : "partial";
+  await db
+    .update(ingestionLogsTable)
+    .set({
+      status: aggregateStatus,
+      recordsSeen: totals.listingsFound,
+      recordsCreated: totals.listingsAdded,
+      recordsUpdated: totals.listingsUpdated,
+      errorMessage:
+        totals.errors > 0
+          ? `${totals.errors} per-source error(s) across ${sourcesRun} run / ${sourcesSkipped} skipped sources`
+          : null,
+      completedAt: new Date(),
+    })
+    .where(eq(ingestionLogsTable.id, aggregateLog.id));
+
+  logger.info(
+    {
+      durationMs,
+      sourcesRun,
+      sourcesSkipped,
+      totals,
+      aggregateLogId: aggregateLog.id,
+      perSource: perSource.map((p) => ({
+        slug: p.sourceSlug,
+        ran: p.ran,
+        skipReason: p.skipReason,
+      })),
+    },
+    "Scheduled ingest tick finished",
+  );
+
+  return {
+    ran: true,
+    durationMs,
+    sourcesRun,
+    sourcesSkipped,
+    totals,
+    perSource,
+  };
 }
 
 /**
@@ -350,13 +428,18 @@ export type SchedulerConfig = {
 };
 
 /**
- * Resolve scheduler config from env. Defaults are intentionally conservative
- * (60 min ingest / 30 min digest) so a fresh deployment doesn't hammer
- * upstream sources or burn email quota.
+ * Resolve scheduler config from env.
+ *
+ * `INGEST_INTERVAL_MINUTES` is the *tick* interval — how often the scheduler
+ * wakes up to check which sources are due. Each source then runs only if its
+ * own `cadence_minutes` (stored on the `sources` row) has elapsed since
+ * `last_ingest_at`. Default 5 min so a 15-min source is only ever ~5 min
+ * late but a 60-min source still only runs hourly. Digest cadence is
+ * single-purpose and stays a flat interval.
  */
 export function resolveSchedulerConfig(): SchedulerConfig {
   const enabled = parseEnvBool("SCHEDULER_ENABLED", true);
-  const ingestMinutes = parseEnvPositiveNumber("INGEST_INTERVAL_MINUTES", 60);
+  const ingestMinutes = parseEnvPositiveNumber("INGEST_INTERVAL_MINUTES", 5);
   const digestMinutes = parseEnvPositiveNumber("DIGEST_INTERVAL_MINUTES", 30);
   return {
     enabled,

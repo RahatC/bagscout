@@ -1035,12 +1035,45 @@ export const ListSourcesResponseItem = zod.object({
   ingestionMode: zod.string(),
   complianceStatus: zod.string(),
   active: zod.boolean(),
+  cadenceMinutes: zod.number(),
   lastIngestAt: zod.coerce.date().nullish(),
   listingCount: zod.number(),
   status: zod.string(),
   createdAt: zod.coerce.date(),
 });
 export const ListSourcesResponse = zod.array(ListSourcesResponseItem);
+
+export const UpdateSourceParams = zod.object({
+  slug: zod.coerce.string(),
+});
+
+export const updateSourceBodyCadenceMinutesMax = 1440;
+
+export const UpdateSourceBody = zod.object({
+  cadenceMinutes: zod
+    .number()
+    .min(1)
+    .max(updateSourceBodyCadenceMinutesMax)
+    .optional()
+    .describe("Per-source polling cadence in minutes (1–1440)."),
+  active: zod.boolean().optional(),
+});
+
+export const UpdateSourceResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  slug: zod.string(),
+  baseUrl: zod.string(),
+  sourceType: zod.string(),
+  ingestionMode: zod.string(),
+  complianceStatus: zod.string(),
+  active: zod.boolean(),
+  cadenceMinutes: zod.number(),
+  lastIngestAt: zod.coerce.date().nullish(),
+  listingCount: zod.number(),
+  status: zod.string(),
+  createdAt: zod.coerce.date(),
+});
 
 export const listIngestionLogsQueryLimitDefault = 50;
 export const listIngestionLogsQueryLimitMax = 200;

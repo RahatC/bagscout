@@ -474,6 +474,36 @@ paths:
                 type: array
                 items: { $ref: "#/components/schemas/Source" }
 
+  /admin/sources/{slug}:
+    patch:
+      operationId: updateSource
+      tags: [admin]
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateSourceBody" }
+      responses:
+        "200":
+          description: Updated source row
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Source" }
+        "404":
+          description: Source not found
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [error]
+                properties:
+                  error: { type: string }
+
   /admin/ingestion-logs:
     get:
       operationId: listIngestionLogs
@@ -1042,6 +1072,7 @@ components:
         - ingestionMode
         - complianceStatus
         - active
+        - cadenceMinutes
         - status
         - listingCount
         - createdAt
@@ -1054,6 +1085,7 @@ components:
         ingestionMode: { type: string }
         complianceStatus: { type: string }
         active: { type: boolean }
+        cadenceMinutes: { type: integer }
         lastIngestAt: { type: string, format: date-time, nullable: true }
         listingCount: { type: integer }
         status: { type: string }
@@ -1085,6 +1117,17 @@ components:
         actorUserId: { type: string, nullable: true }
         startedAt: { type: string, format: date-time }
         completedAt: { type: string, format: date-time, nullable: true }
+
+    UpdateSourceBody:
+      type: object
+      properties:
+        cadenceMinutes:
+          type: integer
+          minimum: 1
+          maximum: 1440
+          description: Per-source polling cadence in minutes (1–1440).
+        active:
+          type: boolean
 
     TriggerIngestBody:
       type: object
