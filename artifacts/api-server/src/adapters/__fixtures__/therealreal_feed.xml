@@ -1,0 +1,2145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+  <!--
+    Representative TheRealReal partner product feed (Google Merchant XML / RSS 2.0
+    with the g: namespace) used as a fixture for the therealreal adapter parser.
+
+    Format: matches what TRR exposes to its affiliate partners (Impact, Awin,
+    Skimlinks). When TRR_FEED_URL is configured at runtime the live partner URL
+    is fetched and parsed with the same code path that this fixture exercises.
+  -->
+  <rss xmlns:g="http://base.google.com/ns/1.0" version="2.0">
+    <channel>
+      <title>The RealReal Product Feed</title>
+      <link>https://www.therealreal.com</link>
+      <description>The RealReal authenticated luxury inventory feed.</description>
+      <item>
+        <g:id>trr-0900001</g:id>
+        <title>Hermès Birkin 25 Etoupe</title>
+        <link>https://www.therealreal.com/products/herm-s-birkin-25-trr-0900001</link>
+        <description>Pre-owned Hermès Birkin 25 Etoupe, condition Excellent. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900001.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900001-2.jpg</g:additional_image_link>
+        <g:price>937.00 USD</g:price>
+        <g:sale_price>884.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Hermès</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900001</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Top Handle</g:product_type>
+        <g:color>Etoupe</g:color>
+        <g:size>Birkin 25</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>herms-birkin-25</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900002</g:id>
+        <title>Hermès Birkin 30 Gold</title>
+        <link>https://www.therealreal.com/products/herm-s-birkin-30-trr-0900002</link>
+        <description>Pre-owned Hermès Birkin 30 Gold, condition Very Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900002.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900002-2.jpg</g:additional_image_link>
+        <g:price>1074.00 USD</g:price>
+        <g:sale_price>968.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Hermès</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900002</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Top Handle</g:product_type>
+        <g:color>Gold</g:color>
+        <g:size>Birkin 30</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>herms-birkin-30</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900003</g:id>
+        <title>Hermès Birkin 35 Bordeaux</title>
+        <link>https://www.therealreal.com/products/herm-s-birkin-35-trr-0900003</link>
+        <description>Pre-owned Hermès Birkin 35 Bordeaux, condition Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900003.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900003-2.jpg</g:additional_image_link>
+        <g:price>1211.00 USD</g:price>
+        <g:sale_price>1052.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Hermès</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900003</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Top Handle</g:product_type>
+        <g:color>Bordeaux</g:color>
+        <g:size>Birkin 35</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>herms-birkin-35</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900004</g:id>
+        <title>Hermès Kelly 25 Navy</title>
+        <link>https://www.therealreal.com/products/herm-s-kelly-25-trr-0900004</link>
+        <description>Pre-owned Hermès Kelly 25 Navy, condition Pristine. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900004.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900004-2.jpg</g:additional_image_link>
+        <g:price>1348.00 USD</g:price>
+        <g:sale_price>1136.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Hermès</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900004</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Top Handle</g:product_type>
+        <g:color>Navy</g:color>
+        <g:size>Kelly 25</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>herms-kelly-25</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900005</g:id>
+        <title>Hermès Kelly 28 Cream</title>
+        <link>https://www.therealreal.com/products/herm-s-kelly-28-trr-0900005</link>
+        <description>Pre-owned Hermès Kelly 28 Cream, condition Excellent. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900005.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900005-2.jpg</g:additional_image_link>
+        <g:price>1485.00 USD</g:price>
+        <g:sale_price>1220.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Hermès</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900005</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Top Handle</g:product_type>
+        <g:color>Cream</g:color>
+        <g:size>Kelly 28</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>herms-kelly-28</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900006</g:id>
+        <title>Hermès Kelly 32 Beige</title>
+        <link>https://www.therealreal.com/products/herm-s-kelly-32-trr-0900006</link>
+        <description>Pre-owned Hermès Kelly 32 Beige, condition Very Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900006.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900006-2.jpg</g:additional_image_link>
+        <g:price>1622.00 USD</g:price>
+        <g:sale_price>1304.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Hermès</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900006</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Top Handle</g:product_type>
+        <g:color>Beige</g:color>
+        <g:size>Kelly 32</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>herms-kelly-32</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900007</g:id>
+        <title>Hermès Constance 18 Pink</title>
+        <link>https://www.therealreal.com/products/herm-s-constance-18-trr-0900007</link>
+        <description>Pre-owned Hermès Constance 18 Pink, condition Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900007.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900007-2.jpg</g:additional_image_link>
+        <g:price>1759.00 USD</g:price>
+        <g:sale_price>1388.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Hermès</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900007</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Top Handle</g:product_type>
+        <g:color>Pink</g:color>
+        <g:size>Constance 18</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>herms-constance-18</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900008</g:id>
+        <title>Hermès Constance 24 Red</title>
+        <link>https://www.therealreal.com/products/herm-s-constance-24-trr-0900008</link>
+        <description>Pre-owned Hermès Constance 24 Red, condition Pristine. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900008.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900008-2.jpg</g:additional_image_link>
+        <g:price>1896.00 USD</g:price>
+        <g:sale_price>1472.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Hermès</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900008</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Top Handle</g:product_type>
+        <g:color>Red</g:color>
+        <g:size>Constance 24</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>herms-constance-24</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900009</g:id>
+        <title>Hermès Picotin 18 Brown</title>
+        <link>https://www.therealreal.com/products/herm-s-picotin-18-trr-0900009</link>
+        <description>Pre-owned Hermès Picotin 18 Brown, condition Excellent. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900009.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900009-2.jpg</g:additional_image_link>
+        <g:price>2033.00 USD</g:price>
+        <g:sale_price>1556.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Hermès</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900009</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Top Handle</g:product_type>
+        <g:color>Brown</g:color>
+        <g:size>Picotin 18</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>herms-picotin-18</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900010</g:id>
+        <title>Hermès Picotin 22 White</title>
+        <link>https://www.therealreal.com/products/herm-s-picotin-22-trr-0900010</link>
+        <description>Pre-owned Hermès Picotin 22 White, condition Very Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900010.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900010-2.jpg</g:additional_image_link>
+        <g:price>2170.00 USD</g:price>
+        <g:sale_price>1640.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Hermès</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900010</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Top Handle</g:product_type>
+        <g:color>White</g:color>
+        <g:size>Picotin 22</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>herms-picotin-22</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900011</g:id>
+        <title>Hermès Evelyne III PM Tan</title>
+        <link>https://www.therealreal.com/products/herm-s-evelyne-iii-pm-trr-0900011</link>
+        <description>Pre-owned Hermès Evelyne III PM Tan, condition Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900011.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900011-2.jpg</g:additional_image_link>
+        <g:price>2307.00 USD</g:price>
+        <g:sale_price>1724.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Hermès</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900011</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Top Handle</g:product_type>
+        <g:color>Tan</g:color>
+        <g:size>Evelyne III PM</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>herms-iii-pm</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900012</g:id>
+        <title>Hermès Garden Party 36 Caramel</title>
+        <link>https://www.therealreal.com/products/herm-s-garden-party-36-trr-0900012</link>
+        <description>Pre-owned Hermès Garden Party 36 Caramel, condition Pristine. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900012.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900012-2.jpg</g:additional_image_link>
+        <g:price>2444.00 USD</g:price>
+        <g:sale_price>1808.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Hermès</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900012</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Top Handle</g:product_type>
+        <g:color>Caramel</g:color>
+        <g:size>Garden Party 36</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>herms-party-36</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900013</g:id>
+        <title>Hermès Bolide 27 Parakeet</title>
+        <link>https://www.therealreal.com/products/herm-s-bolide-27-trr-0900013</link>
+        <description>Pre-owned Hermès Bolide 27 Parakeet, condition Excellent. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900013.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900013-2.jpg</g:additional_image_link>
+        <g:price>2581.00 USD</g:price>
+        <g:sale_price>1892.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Hermès</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900013</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Top Handle</g:product_type>
+        <g:color>Parakeet</g:color>
+        <g:size>Bolide 27</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>herms-bolide-27</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900014</g:id>
+        <title>Chanel Mini Classic Flap Olive</title>
+        <link>https://www.therealreal.com/products/chanel-mini-classic-flap-trr-0900014</link>
+        <description>Pre-owned Chanel Mini Classic Flap Olive, condition Very Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900014.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900014-2.jpg</g:additional_image_link>
+        <g:price>2718.00 USD</g:price>
+        <g:sale_price>1976.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Chanel</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900014</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Olive</g:color>
+        <g:size>Mini Classic Flap</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>chanel-classic-flap</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900015</g:id>
+        <title>Chanel Small Classic Flap Burgundy</title>
+        <link>https://www.therealreal.com/products/chanel-small-classic-flap-trr-0900015</link>
+        <description>Pre-owned Chanel Small Classic Flap Burgundy, condition Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900015.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900015-2.jpg</g:additional_image_link>
+        <g:price>2855.00 USD</g:price>
+        <g:sale_price>2060.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Chanel</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900015</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Burgundy</g:color>
+        <g:size>Small Classic Flap</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>chanel-classic-flap</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900016</g:id>
+        <title>Chanel Medium Classic Flap Black</title>
+        <link>https://www.therealreal.com/products/chanel-medium-classic-flap-trr-0900016</link>
+        <description>Pre-owned Chanel Medium Classic Flap Black, condition Pristine. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900016.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900016-2.jpg</g:additional_image_link>
+        <g:price>2992.00 USD</g:price>
+        <g:sale_price>2144.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Chanel</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900016</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Black</g:color>
+        <g:size>Medium Classic Flap</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>chanel-classic-flap</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900017</g:id>
+        <title>Chanel Jumbo Classic Flap Etoupe</title>
+        <link>https://www.therealreal.com/products/chanel-jumbo-classic-flap-trr-0900017</link>
+        <description>Pre-owned Chanel Jumbo Classic Flap Etoupe, condition Excellent. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900017.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900017-2.jpg</g:additional_image_link>
+        <g:price>3129.00 USD</g:price>
+        <g:sale_price>2228.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Chanel</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900017</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Etoupe</g:color>
+        <g:size>Jumbo Classic Flap</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>chanel-classic-flap</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900018</g:id>
+        <title>Chanel Maxi Classic Flap Gold</title>
+        <link>https://www.therealreal.com/products/chanel-maxi-classic-flap-trr-0900018</link>
+        <description>Pre-owned Chanel Maxi Classic Flap Gold, condition Very Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900018.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900018-2.jpg</g:additional_image_link>
+        <g:price>3266.00 USD</g:price>
+        <g:sale_price>2312.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Chanel</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900018</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Gold</g:color>
+        <g:size>Maxi Classic Flap</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>chanel-classic-flap</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900019</g:id>
+        <title>Chanel Reissue 226 Bordeaux</title>
+        <link>https://www.therealreal.com/products/chanel-reissue-226-trr-0900019</link>
+        <description>Pre-owned Chanel Reissue 226 Bordeaux, condition Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900019.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900019-2.jpg</g:additional_image_link>
+        <g:price>3403.00 USD</g:price>
+        <g:sale_price>2396.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Chanel</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900019</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Bordeaux</g:color>
+        <g:size>Reissue 226</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>chanel-reissue-226</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900020</g:id>
+        <title>Chanel Boy Small Navy</title>
+        <link>https://www.therealreal.com/products/chanel-boy-small-trr-0900020</link>
+        <description>Pre-owned Chanel Boy Small Navy, condition Pristine. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900020.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900020-2.jpg</g:additional_image_link>
+        <g:price>3540.00 USD</g:price>
+        <g:sale_price>2480.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Chanel</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900020</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Navy</g:color>
+        <g:size>Boy Small</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>chanel-boy-small</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900021</g:id>
+        <title>Chanel Boy Medium Cream</title>
+        <link>https://www.therealreal.com/products/chanel-boy-medium-trr-0900021</link>
+        <description>Pre-owned Chanel Boy Medium Cream, condition Excellent. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900021.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900021-2.jpg</g:additional_image_link>
+        <g:price>3677.00 USD</g:price>
+        <g:sale_price>2564.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Chanel</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900021</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Cream</g:color>
+        <g:size>Boy Medium</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>chanel-boy-medium</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900022</g:id>
+        <title>Chanel Gabrielle Hobo Beige</title>
+        <link>https://www.therealreal.com/products/chanel-gabrielle-hobo-trr-0900022</link>
+        <description>Pre-owned Chanel Gabrielle Hobo Beige, condition Very Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900022.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900022-2.jpg</g:additional_image_link>
+        <g:price>3814.00 USD</g:price>
+        <g:sale_price>2648.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Chanel</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900022</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Beige</g:color>
+        <g:size>Gabrielle Hobo</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>chanel-gabrielle-hobo</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900023</g:id>
+        <title>Chanel 19 Small Pink</title>
+        <link>https://www.therealreal.com/products/chanel-19-small-trr-0900023</link>
+        <description>Pre-owned Chanel 19 Small Pink, condition Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900023.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900023-2.jpg</g:additional_image_link>
+        <g:price>3951.00 USD</g:price>
+        <g:sale_price>2732.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Chanel</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900023</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Pink</g:color>
+        <g:size>19 Small</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>chanel-19-small</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900024</g:id>
+        <title>Chanel 19 Medium Red</title>
+        <link>https://www.therealreal.com/products/chanel-19-medium-trr-0900024</link>
+        <description>Pre-owned Chanel 19 Medium Red, condition Pristine. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900024.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900024-2.jpg</g:additional_image_link>
+        <g:price>4088.00 USD</g:price>
+        <g:sale_price>2816.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Chanel</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900024</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Red</g:color>
+        <g:size>19 Medium</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>chanel-19-medium</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900025</g:id>
+        <title>Chanel Deauville Tote Brown</title>
+        <link>https://www.therealreal.com/products/chanel-deauville-tote-trr-0900025</link>
+        <description>Pre-owned Chanel Deauville Tote Brown, condition Excellent. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900025.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900025-2.jpg</g:additional_image_link>
+        <g:price>4225.00 USD</g:price>
+        <g:sale_price>2900.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Chanel</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900025</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Brown</g:color>
+        <g:size>Deauville Tote</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>chanel-deauville-tote</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900026</g:id>
+        <title>Chanel Coco Handle Small White</title>
+        <link>https://www.therealreal.com/products/chanel-coco-handle-small-trr-0900026</link>
+        <description>Pre-owned Chanel Coco Handle Small White, condition Very Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900026.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900026-2.jpg</g:additional_image_link>
+        <g:price>4362.00 USD</g:price>
+        <g:sale_price>2984.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Chanel</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900026</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>White</g:color>
+        <g:size>Coco Handle Small</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>chanel-handle-small</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900027</g:id>
+        <title>Louis Vuitton Neverfull MM Tan</title>
+        <link>https://www.therealreal.com/products/louis-vuitton-neverfull-mm-trr-0900027</link>
+        <description>Pre-owned Louis Vuitton Neverfull MM Tan, condition Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900027.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900027-2.jpg</g:additional_image_link>
+        <g:price>4499.00 USD</g:price>
+        <g:sale_price>3068.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Louis Vuitton</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900027</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Tote</g:product_type>
+        <g:color>Tan</g:color>
+        <g:size>Neverfull MM</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>louisvuitton-neverfull-mm</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900028</g:id>
+        <title>Louis Vuitton Neverfull GM Caramel</title>
+        <link>https://www.therealreal.com/products/louis-vuitton-neverfull-gm-trr-0900028</link>
+        <description>Pre-owned Louis Vuitton Neverfull GM Caramel, condition Pristine. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900028.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900028-2.jpg</g:additional_image_link>
+        <g:price>4636.00 USD</g:price>
+        <g:sale_price>3152.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Louis Vuitton</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900028</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Tote</g:product_type>
+        <g:color>Caramel</g:color>
+        <g:size>Neverfull GM</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>louisvuitton-neverfull-gm</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900029</g:id>
+        <title>Louis Vuitton Speedy 25 Parakeet</title>
+        <link>https://www.therealreal.com/products/louis-vuitton-speedy-25-trr-0900029</link>
+        <description>Pre-owned Louis Vuitton Speedy 25 Parakeet, condition Excellent. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900029.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900029-2.jpg</g:additional_image_link>
+        <g:price>4773.00 USD</g:price>
+        <g:sale_price>4736.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Louis Vuitton</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900029</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Tote</g:product_type>
+        <g:color>Parakeet</g:color>
+        <g:size>Speedy 25</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>louisvuitton-speedy-25</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900030</g:id>
+        <title>Louis Vuitton Speedy 30 Olive</title>
+        <link>https://www.therealreal.com/products/louis-vuitton-speedy-30-trr-0900030</link>
+        <description>Pre-owned Louis Vuitton Speedy 30 Olive, condition Very Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900030.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900030-2.jpg</g:additional_image_link>
+        <g:price>4910.00 USD</g:price>
+        <g:sale_price>4820.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Louis Vuitton</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900030</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Tote</g:product_type>
+        <g:color>Olive</g:color>
+        <g:size>Speedy 30</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>louisvuitton-speedy-30</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900031</g:id>
+        <title>Louis Vuitton Speedy 35 Burgundy</title>
+        <link>https://www.therealreal.com/products/louis-vuitton-speedy-35-trr-0900031</link>
+        <description>Pre-owned Louis Vuitton Speedy 35 Burgundy, condition Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900031.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900031-2.jpg</g:additional_image_link>
+        <g:price>5047.00 USD</g:price>
+        <g:sale_price>4904.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Louis Vuitton</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900031</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Tote</g:product_type>
+        <g:color>Burgundy</g:color>
+        <g:size>Speedy 35</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>louisvuitton-speedy-35</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900032</g:id>
+        <title>Louis Vuitton Pochette Métis Black</title>
+        <link>https://www.therealreal.com/products/louis-vuitton-pochette-m-tis-trr-0900032</link>
+        <description>Pre-owned Louis Vuitton Pochette Métis Black, condition Pristine. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900032.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900032-2.jpg</g:additional_image_link>
+        <g:price>5184.00 USD</g:price>
+        <g:sale_price>4988.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Louis Vuitton</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900032</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Tote</g:product_type>
+        <g:color>Black</g:color>
+        <g:size>Pochette Métis</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>louisvuitton-m-tis</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900033</g:id>
+        <title>Louis Vuitton Alma BB Etoupe</title>
+        <link>https://www.therealreal.com/products/louis-vuitton-alma-bb-trr-0900033</link>
+        <description>Pre-owned Louis Vuitton Alma BB Etoupe, condition Excellent. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900033.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900033-2.jpg</g:additional_image_link>
+        <g:price>5321.00 USD</g:price>
+        <g:sale_price>5072.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Louis Vuitton</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900033</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Tote</g:product_type>
+        <g:color>Etoupe</g:color>
+        <g:size>Alma BB</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>louisvuitton-alma-bb</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900034</g:id>
+        <title>Louis Vuitton Alma PM Gold</title>
+        <link>https://www.therealreal.com/products/louis-vuitton-alma-pm-trr-0900034</link>
+        <description>Pre-owned Louis Vuitton Alma PM Gold, condition Very Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900034.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900034-2.jpg</g:additional_image_link>
+        <g:price>5458.00 USD</g:price>
+        <g:sale_price>5156.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Louis Vuitton</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900034</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Tote</g:product_type>
+        <g:color>Gold</g:color>
+        <g:size>Alma PM</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>louisvuitton-alma-pm</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900035</g:id>
+        <title>Louis Vuitton Capucines BB Bordeaux</title>
+        <link>https://www.therealreal.com/products/louis-vuitton-capucines-bb-trr-0900035</link>
+        <description>Pre-owned Louis Vuitton Capucines BB Bordeaux, condition Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900035.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900035-2.jpg</g:additional_image_link>
+        <g:price>5595.00 USD</g:price>
+        <g:sale_price>5240.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Louis Vuitton</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900035</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Tote</g:product_type>
+        <g:color>Bordeaux</g:color>
+        <g:size>Capucines BB</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>louisvuitton-capucines-bb</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900036</g:id>
+        <title>Louis Vuitton Capucines MM Navy</title>
+        <link>https://www.therealreal.com/products/louis-vuitton-capucines-mm-trr-0900036</link>
+        <description>Pre-owned Louis Vuitton Capucines MM Navy, condition Pristine. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900036.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900036-2.jpg</g:additional_image_link>
+        <g:price>5732.00 USD</g:price>
+        <g:sale_price>5324.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Louis Vuitton</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900036</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Tote</g:product_type>
+        <g:color>Navy</g:color>
+        <g:size>Capucines MM</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>louisvuitton-capucines-mm</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900037</g:id>
+        <title>Louis Vuitton Twist MM Cream</title>
+        <link>https://www.therealreal.com/products/louis-vuitton-twist-mm-trr-0900037</link>
+        <description>Pre-owned Louis Vuitton Twist MM Cream, condition Excellent. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900037.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900037-2.jpg</g:additional_image_link>
+        <g:price>5869.00 USD</g:price>
+        <g:sale_price>5408.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Louis Vuitton</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900037</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Tote</g:product_type>
+        <g:color>Cream</g:color>
+        <g:size>Twist MM</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>louisvuitton-twist-mm</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900038</g:id>
+        <title>Louis Vuitton Petit Sac Plat Beige</title>
+        <link>https://www.therealreal.com/products/louis-vuitton-petit-sac-plat-trr-0900038</link>
+        <description>Pre-owned Louis Vuitton Petit Sac Plat Beige, condition Very Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900038.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900038-2.jpg</g:additional_image_link>
+        <g:price>6006.00 USD</g:price>
+        <g:sale_price>5492.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Louis Vuitton</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900038</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Tote</g:product_type>
+        <g:color>Beige</g:color>
+        <g:size>Petit Sac Plat</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>louisvuitton-sac-plat</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900039</g:id>
+        <title>Louis Vuitton OnTheGo MM Pink</title>
+        <link>https://www.therealreal.com/products/louis-vuitton-onthego-mm-trr-0900039</link>
+        <description>Pre-owned Louis Vuitton OnTheGo MM Pink, condition Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900039.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900039-2.jpg</g:additional_image_link>
+        <g:price>6143.00 USD</g:price>
+        <g:sale_price>5576.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Louis Vuitton</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900039</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Tote</g:product_type>
+        <g:color>Pink</g:color>
+        <g:size>OnTheGo MM</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>louisvuitton-onthego-mm</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900040</g:id>
+        <title>Gucci GG Marmont Small Red</title>
+        <link>https://www.therealreal.com/products/gucci-gg-marmont-small-trr-0900040</link>
+        <description>Pre-owned Gucci GG Marmont Small Red, condition Pristine. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900040.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900040-2.jpg</g:additional_image_link>
+        <g:price>6280.00 USD</g:price>
+        <g:sale_price>5660.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Gucci</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900040</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Red</g:color>
+        <g:size>GG Marmont Small</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>gucci-marmont-small</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900041</g:id>
+        <title>Gucci GG Marmont Medium Brown</title>
+        <link>https://www.therealreal.com/products/gucci-gg-marmont-medium-trr-0900041</link>
+        <description>Pre-owned Gucci GG Marmont Medium Brown, condition Excellent. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900041.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900041-2.jpg</g:additional_image_link>
+        <g:price>6417.00 USD</g:price>
+        <g:sale_price>5744.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Gucci</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900041</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Brown</g:color>
+        <g:size>GG Marmont Medium</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>gucci-marmont-medium</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900042</g:id>
+        <title>Gucci Dionysus Small White</title>
+        <link>https://www.therealreal.com/products/gucci-dionysus-small-trr-0900042</link>
+        <description>Pre-owned Gucci Dionysus Small White, condition Very Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900042.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900042-2.jpg</g:additional_image_link>
+        <g:price>6554.00 USD</g:price>
+        <g:sale_price>5828.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Gucci</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900042</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>White</g:color>
+        <g:size>Dionysus Small</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>gucci-dionysus-small</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900043</g:id>
+        <title>Gucci Jackie 1961 Small Tan</title>
+        <link>https://www.therealreal.com/products/gucci-jackie-1961-small-trr-0900043</link>
+        <description>Pre-owned Gucci Jackie 1961 Small Tan, condition Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900043.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900043-2.jpg</g:additional_image_link>
+        <g:price>6691.00 USD</g:price>
+        <g:sale_price>5912.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Gucci</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900043</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Tan</g:color>
+        <g:size>Jackie 1961 Small</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>gucci-1961-small</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900044</g:id>
+        <title>Gucci Bamboo 1947 Small Caramel</title>
+        <link>https://www.therealreal.com/products/gucci-bamboo-1947-small-trr-0900044</link>
+        <description>Pre-owned Gucci Bamboo 1947 Small Caramel, condition Pristine. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900044.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900044-2.jpg</g:additional_image_link>
+        <g:price>6828.00 USD</g:price>
+        <g:sale_price>5996.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Gucci</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900044</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Caramel</g:color>
+        <g:size>Bamboo 1947 Small</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>gucci-1947-small</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900045</g:id>
+        <title>Gucci Sylvie Small Parakeet</title>
+        <link>https://www.therealreal.com/products/gucci-sylvie-small-trr-0900045</link>
+        <description>Pre-owned Gucci Sylvie Small Parakeet, condition Excellent. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900045.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900045-2.jpg</g:additional_image_link>
+        <g:price>6965.00 USD</g:price>
+        <g:sale_price>6080.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Gucci</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900045</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Parakeet</g:color>
+        <g:size>Sylvie Small</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>gucci-sylvie-small</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900046</g:id>
+        <title>Gucci Padlock Medium Olive</title>
+        <link>https://www.therealreal.com/products/gucci-padlock-medium-trr-0900046</link>
+        <description>Pre-owned Gucci Padlock Medium Olive, condition Very Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900046.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900046-2.jpg</g:additional_image_link>
+        <g:price>7102.00 USD</g:price>
+        <g:sale_price>6164.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Gucci</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900046</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Olive</g:color>
+        <g:size>Padlock Medium</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>gucci-padlock-medium</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900047</g:id>
+        <title>Gucci Soho Disco Burgundy</title>
+        <link>https://www.therealreal.com/products/gucci-soho-disco-trr-0900047</link>
+        <description>Pre-owned Gucci Soho Disco Burgundy, condition Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900047.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900047-2.jpg</g:additional_image_link>
+        <g:price>7239.00 USD</g:price>
+        <g:sale_price>6248.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Gucci</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900047</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Burgundy</g:color>
+        <g:size>Soho Disco</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>gucci-soho-disco</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900048</g:id>
+        <title>Gucci Ophidia GG Medium Black</title>
+        <link>https://www.therealreal.com/products/gucci-ophidia-gg-medium-trr-0900048</link>
+        <description>Pre-owned Gucci Ophidia GG Medium Black, condition Pristine. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900048.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900048-2.jpg</g:additional_image_link>
+        <g:price>7376.00 USD</g:price>
+        <g:sale_price>6332.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Gucci</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900048</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Black</g:color>
+        <g:size>Ophidia GG Medium</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>gucci-gg-medium</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900049</g:id>
+        <title>Gucci Horsebit 1955 Etoupe</title>
+        <link>https://www.therealreal.com/products/gucci-horsebit-1955-trr-0900049</link>
+        <description>Pre-owned Gucci Horsebit 1955 Etoupe, condition Excellent. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900049.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900049-2.jpg</g:additional_image_link>
+        <g:price>7513.00 USD</g:price>
+        <g:sale_price>6416.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Gucci</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900049</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Etoupe</g:color>
+        <g:size>Horsebit 1955</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>gucci-horsebit-1955</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900050</g:id>
+        <title>Celine Mini Belt Bag Gold</title>
+        <link>https://www.therealreal.com/products/celine-mini-belt-bag-trr-0900050</link>
+        <description>Pre-owned Celine Mini Belt Bag Gold, condition Very Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900050.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900050-2.jpg</g:additional_image_link>
+        <g:price>7650.00 USD</g:price>
+        <g:sale_price>6500.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Celine</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900050</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Top Handle</g:product_type>
+        <g:color>Gold</g:color>
+        <g:size>Mini Belt Bag</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>celine-belt-bag</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900051</g:id>
+        <title>Celine Nano Belt Bag Bordeaux</title>
+        <link>https://www.therealreal.com/products/celine-nano-belt-bag-trr-0900051</link>
+        <description>Pre-owned Celine Nano Belt Bag Bordeaux, condition Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900051.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900051-2.jpg</g:additional_image_link>
+        <g:price>7787.00 USD</g:price>
+        <g:sale_price>6584.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Celine</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900051</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Top Handle</g:product_type>
+        <g:color>Bordeaux</g:color>
+        <g:size>Nano Belt Bag</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>celine-belt-bag</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900052</g:id>
+        <title>Celine Triomphe Teen Navy</title>
+        <link>https://www.therealreal.com/products/celine-triomphe-teen-trr-0900052</link>
+        <description>Pre-owned Celine Triomphe Teen Navy, condition Pristine. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900052.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900052-2.jpg</g:additional_image_link>
+        <g:price>7924.00 USD</g:price>
+        <g:sale_price>6668.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Celine</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900052</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Top Handle</g:product_type>
+        <g:color>Navy</g:color>
+        <g:size>Triomphe Teen</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>celine-triomphe-teen</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900053</g:id>
+        <title>Celine Triomphe Medium Cream</title>
+        <link>https://www.therealreal.com/products/celine-triomphe-medium-trr-0900053</link>
+        <description>Pre-owned Celine Triomphe Medium Cream, condition Excellent. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900053.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900053-2.jpg</g:additional_image_link>
+        <g:price>8061.00 USD</g:price>
+        <g:sale_price>6752.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Celine</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900053</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Top Handle</g:product_type>
+        <g:color>Cream</g:color>
+        <g:size>Triomphe Medium</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>celine-triomphe-medium</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900054</g:id>
+        <title>Celine Luggage Nano Beige</title>
+        <link>https://www.therealreal.com/products/celine-luggage-nano-trr-0900054</link>
+        <description>Pre-owned Celine Luggage Nano Beige, condition Very Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900054.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900054-2.jpg</g:additional_image_link>
+        <g:price>8198.00 USD</g:price>
+        <g:sale_price>6836.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Celine</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900054</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Top Handle</g:product_type>
+        <g:color>Beige</g:color>
+        <g:size>Luggage Nano</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>celine-luggage-nano</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900055</g:id>
+        <title>Celine Luggage Micro Pink</title>
+        <link>https://www.therealreal.com/products/celine-luggage-micro-trr-0900055</link>
+        <description>Pre-owned Celine Luggage Micro Pink, condition Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900055.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900055-2.jpg</g:additional_image_link>
+        <g:price>8335.00 USD</g:price>
+        <g:sale_price>6920.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Celine</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900055</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Top Handle</g:product_type>
+        <g:color>Pink</g:color>
+        <g:size>Luggage Micro</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>celine-luggage-micro</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900056</g:id>
+        <title>Celine Cabas Phantom Small Red</title>
+        <link>https://www.therealreal.com/products/celine-cabas-phantom-small-trr-0900056</link>
+        <description>Pre-owned Celine Cabas Phantom Small Red, condition Pristine. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900056.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900056-2.jpg</g:additional_image_link>
+        <g:price>8472.00 USD</g:price>
+        <g:sale_price>7004.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Celine</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900056</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Top Handle</g:product_type>
+        <g:color>Red</g:color>
+        <g:size>Cabas Phantom Small</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>celine-phantom-small</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900057</g:id>
+        <title>Celine Box 16 Brown</title>
+        <link>https://www.therealreal.com/products/celine-box-16-trr-0900057</link>
+        <description>Pre-owned Celine Box 16 Brown, condition Excellent. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900057.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900057-2.jpg</g:additional_image_link>
+        <g:price>8609.00 USD</g:price>
+        <g:sale_price>8588.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Celine</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900057</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Top Handle</g:product_type>
+        <g:color>Brown</g:color>
+        <g:size>Box 16</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>celine-box-16</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900058</g:id>
+        <title>Celine Sangle Bucket White</title>
+        <link>https://www.therealreal.com/products/celine-sangle-bucket-trr-0900058</link>
+        <description>Pre-owned Celine Sangle Bucket White, condition Very Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900058.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900058-2.jpg</g:additional_image_link>
+        <g:price>8746.00 USD</g:price>
+        <g:sale_price>8672.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Celine</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900058</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Top Handle</g:product_type>
+        <g:color>White</g:color>
+        <g:size>Sangle Bucket</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>celine-sangle-bucket</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900059</g:id>
+        <title>Celine Classic Box Medium Tan</title>
+        <link>https://www.therealreal.com/products/celine-classic-box-medium-trr-0900059</link>
+        <description>Pre-owned Celine Classic Box Medium Tan, condition Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900059.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900059-2.jpg</g:additional_image_link>
+        <g:price>8883.00 USD</g:price>
+        <g:sale_price>8756.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Celine</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900059</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Top Handle</g:product_type>
+        <g:color>Tan</g:color>
+        <g:size>Classic Box Medium</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>celine-box-medium</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900060</g:id>
+        <title>Bottega Veneta Cassette Mini Caramel</title>
+        <link>https://www.therealreal.com/products/bottega-veneta-cassette-mini-trr-0900060</link>
+        <description>Pre-owned Bottega Veneta Cassette Mini Caramel, condition Pristine. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900060.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900060-2.jpg</g:additional_image_link>
+        <g:price>9020.00 USD</g:price>
+        <g:sale_price>8840.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Bottega Veneta</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900060</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Hobo</g:product_type>
+        <g:color>Caramel</g:color>
+        <g:size>Cassette Mini</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>bottegaveneta-cassette-mini</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900061</g:id>
+        <title>Bottega Veneta Cassette Padded Parakeet</title>
+        <link>https://www.therealreal.com/products/bottega-veneta-cassette-padded-trr-0900061</link>
+        <description>Pre-owned Bottega Veneta Cassette Padded Parakeet, condition Excellent. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900061.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900061-2.jpg</g:additional_image_link>
+        <g:price>9157.00 USD</g:price>
+        <g:sale_price>8924.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Bottega Veneta</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900061</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Hobo</g:product_type>
+        <g:color>Parakeet</g:color>
+        <g:size>Cassette Padded</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>bottegaveneta-cassette-padded</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900062</g:id>
+        <title>Bottega Veneta Jodie Mini Olive</title>
+        <link>https://www.therealreal.com/products/bottega-veneta-jodie-mini-trr-0900062</link>
+        <description>Pre-owned Bottega Veneta Jodie Mini Olive, condition Very Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900062.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900062-2.jpg</g:additional_image_link>
+        <g:price>9294.00 USD</g:price>
+        <g:sale_price>9008.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Bottega Veneta</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900062</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Hobo</g:product_type>
+        <g:color>Olive</g:color>
+        <g:size>Jodie Mini</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>bottegaveneta-jodie-mini</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900063</g:id>
+        <title>Bottega Veneta Jodie Small Burgundy</title>
+        <link>https://www.therealreal.com/products/bottega-veneta-jodie-small-trr-0900063</link>
+        <description>Pre-owned Bottega Veneta Jodie Small Burgundy, condition Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900063.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900063-2.jpg</g:additional_image_link>
+        <g:price>9431.00 USD</g:price>
+        <g:sale_price>9092.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Bottega Veneta</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900063</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Hobo</g:product_type>
+        <g:color>Burgundy</g:color>
+        <g:size>Jodie Small</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>bottegaveneta-jodie-small</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900064</g:id>
+        <title>Bottega Veneta Jodie Medium Black</title>
+        <link>https://www.therealreal.com/products/bottega-veneta-jodie-medium-trr-0900064</link>
+        <description>Pre-owned Bottega Veneta Jodie Medium Black, condition Pristine. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900064.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900064-2.jpg</g:additional_image_link>
+        <g:price>9568.00 USD</g:price>
+        <g:sale_price>9176.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Bottega Veneta</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900064</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Hobo</g:product_type>
+        <g:color>Black</g:color>
+        <g:size>Jodie Medium</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>bottegaveneta-jodie-medium</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900065</g:id>
+        <title>Bottega Veneta Pouch Small Etoupe</title>
+        <link>https://www.therealreal.com/products/bottega-veneta-pouch-small-trr-0900065</link>
+        <description>Pre-owned Bottega Veneta Pouch Small Etoupe, condition Excellent. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900065.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900065-2.jpg</g:additional_image_link>
+        <g:price>9705.00 USD</g:price>
+        <g:sale_price>9260.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Bottega Veneta</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900065</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Hobo</g:product_type>
+        <g:color>Etoupe</g:color>
+        <g:size>Pouch Small</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>bottegaveneta-pouch-small</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900066</g:id>
+        <title>Bottega Veneta Pouch Large Gold</title>
+        <link>https://www.therealreal.com/products/bottega-veneta-pouch-large-trr-0900066</link>
+        <description>Pre-owned Bottega Veneta Pouch Large Gold, condition Very Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900066.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900066-2.jpg</g:additional_image_link>
+        <g:price>9842.00 USD</g:price>
+        <g:sale_price>9344.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Bottega Veneta</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900066</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Hobo</g:product_type>
+        <g:color>Gold</g:color>
+        <g:size>Pouch Large</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>bottegaveneta-pouch-large</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900067</g:id>
+        <title>Bottega Veneta Arco Small Bordeaux</title>
+        <link>https://www.therealreal.com/products/bottega-veneta-arco-small-trr-0900067</link>
+        <description>Pre-owned Bottega Veneta Arco Small Bordeaux, condition Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900067.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900067-2.jpg</g:additional_image_link>
+        <g:price>9979.00 USD</g:price>
+        <g:sale_price>9428.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Bottega Veneta</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900067</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Hobo</g:product_type>
+        <g:color>Bordeaux</g:color>
+        <g:size>Arco Small</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>bottegaveneta-arco-small</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900068</g:id>
+        <title>Bottega Veneta Arco Medium Navy</title>
+        <link>https://www.therealreal.com/products/bottega-veneta-arco-medium-trr-0900068</link>
+        <description>Pre-owned Bottega Veneta Arco Medium Navy, condition Pristine. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900068.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900068-2.jpg</g:additional_image_link>
+        <g:price>10116.00 USD</g:price>
+        <g:sale_price>9512.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Bottega Veneta</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900068</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Hobo</g:product_type>
+        <g:color>Navy</g:color>
+        <g:size>Arco Medium</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>bottegaveneta-arco-medium</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900069</g:id>
+        <title>Bottega Veneta Loop Small Cream</title>
+        <link>https://www.therealreal.com/products/bottega-veneta-loop-small-trr-0900069</link>
+        <description>Pre-owned Bottega Veneta Loop Small Cream, condition Excellent. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900069.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900069-2.jpg</g:additional_image_link>
+        <g:price>10253.00 USD</g:price>
+        <g:sale_price>9596.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Bottega Veneta</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900069</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Hobo</g:product_type>
+        <g:color>Cream</g:color>
+        <g:size>Loop Small</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>bottegaveneta-loop-small</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900070</g:id>
+        <title>Prada Re-Edition 2005 Beige</title>
+        <link>https://www.therealreal.com/products/prada-re-edition-2005-trr-0900070</link>
+        <description>Pre-owned Prada Re-Edition 2005 Beige, condition Very Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900070.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900070-2.jpg</g:additional_image_link>
+        <g:price>10390.00 USD</g:price>
+        <g:sale_price>9680.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Prada</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900070</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Beige</g:color>
+        <g:size>Re-Edition 2005</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>prada-edition-2005</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900071</g:id>
+        <title>Prada Re-Edition 2000 Pink</title>
+        <link>https://www.therealreal.com/products/prada-re-edition-2000-trr-0900071</link>
+        <description>Pre-owned Prada Re-Edition 2000 Pink, condition Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900071.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900071-2.jpg</g:additional_image_link>
+        <g:price>10527.00 USD</g:price>
+        <g:sale_price>9764.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Prada</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900071</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Pink</g:color>
+        <g:size>Re-Edition 2000</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>prada-edition-2000</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900072</g:id>
+        <title>Prada Cleo Brushed Red</title>
+        <link>https://www.therealreal.com/products/prada-cleo-brushed-trr-0900072</link>
+        <description>Pre-owned Prada Cleo Brushed Red, condition Pristine. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900072.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900072-2.jpg</g:additional_image_link>
+        <g:price>10664.00 USD</g:price>
+        <g:sale_price>9848.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Prada</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900072</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Red</g:color>
+        <g:size>Cleo Brushed</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>prada-cleo-brushed</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900073</g:id>
+        <title>Prada Galleria Saffiano Small Brown</title>
+        <link>https://www.therealreal.com/products/prada-galleria-saffiano-small-trr-0900073</link>
+        <description>Pre-owned Prada Galleria Saffiano Small Brown, condition Excellent. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900073.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900073-2.jpg</g:additional_image_link>
+        <g:price>10801.00 USD</g:price>
+        <g:sale_price>9932.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Prada</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900073</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Brown</g:color>
+        <g:size>Galleria Saffiano Small</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>prada-saffiano-small</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900074</g:id>
+        <title>Prada Galleria Saffiano Medium White</title>
+        <link>https://www.therealreal.com/products/prada-galleria-saffiano-medium-trr-0900074</link>
+        <description>Pre-owned Prada Galleria Saffiano Medium White, condition Very Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900074.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900074-2.jpg</g:additional_image_link>
+        <g:price>10938.00 USD</g:price>
+        <g:sale_price>10016.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Prada</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900074</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>White</g:color>
+        <g:size>Galleria Saffiano Medium</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>prada-saffiano-medium</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900075</g:id>
+        <title>Prada Symbole Mini Tan</title>
+        <link>https://www.therealreal.com/products/prada-symbole-mini-trr-0900075</link>
+        <description>Pre-owned Prada Symbole Mini Tan, condition Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900075.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900075-2.jpg</g:additional_image_link>
+        <g:price>11075.00 USD</g:price>
+        <g:sale_price>10100.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Prada</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900075</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Tan</g:color>
+        <g:size>Symbole Mini</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>prada-symbole-mini</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900076</g:id>
+        <title>Prada Moon Padded Caramel</title>
+        <link>https://www.therealreal.com/products/prada-moon-padded-trr-0900076</link>
+        <description>Pre-owned Prada Moon Padded Caramel, condition Pristine. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900076.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900076-2.jpg</g:additional_image_link>
+        <g:price>11212.00 USD</g:price>
+        <g:sale_price>10184.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Prada</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900076</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Caramel</g:color>
+        <g:size>Moon Padded</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>prada-moon-padded</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900077</g:id>
+        <title>Dior Lady Dior Small Parakeet</title>
+        <link>https://www.therealreal.com/products/dior-lady-dior-small-trr-0900077</link>
+        <description>Pre-owned Dior Lady Dior Small Parakeet, condition Excellent. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900077.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900077-2.jpg</g:additional_image_link>
+        <g:price>11349.00 USD</g:price>
+        <g:sale_price>10268.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Dior</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900077</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Top Handle</g:product_type>
+        <g:color>Parakeet</g:color>
+        <g:size>Lady Dior Small</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>dior-dior-small</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900078</g:id>
+        <title>Dior Lady Dior Medium Olive</title>
+        <link>https://www.therealreal.com/products/dior-lady-dior-medium-trr-0900078</link>
+        <description>Pre-owned Dior Lady Dior Medium Olive, condition Very Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900078.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900078-2.jpg</g:additional_image_link>
+        <g:price>11486.00 USD</g:price>
+        <g:sale_price>10352.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Dior</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900078</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Top Handle</g:product_type>
+        <g:color>Olive</g:color>
+        <g:size>Lady Dior Medium</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>dior-dior-medium</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900079</g:id>
+        <title>Dior Saddle Medium Burgundy</title>
+        <link>https://www.therealreal.com/products/dior-saddle-medium-trr-0900079</link>
+        <description>Pre-owned Dior Saddle Medium Burgundy, condition Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900079.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900079-2.jpg</g:additional_image_link>
+        <g:price>11623.00 USD</g:price>
+        <g:sale_price>10436.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Dior</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900079</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Top Handle</g:product_type>
+        <g:color>Burgundy</g:color>
+        <g:size>Saddle Medium</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>dior-saddle-medium</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900080</g:id>
+        <title>Dior Book Tote Small Black</title>
+        <link>https://www.therealreal.com/products/dior-book-tote-small-trr-0900080</link>
+        <description>Pre-owned Dior Book Tote Small Black, condition Pristine. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900080.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900080-2.jpg</g:additional_image_link>
+        <g:price>11760.00 USD</g:price>
+        <g:sale_price>10520.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Dior</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900080</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Top Handle</g:product_type>
+        <g:color>Black</g:color>
+        <g:size>Book Tote Small</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>dior-tote-small</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900081</g:id>
+        <title>Dior Book Tote Medium Etoupe</title>
+        <link>https://www.therealreal.com/products/dior-book-tote-medium-trr-0900081</link>
+        <description>Pre-owned Dior Book Tote Medium Etoupe, condition Excellent. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900081.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900081-2.jpg</g:additional_image_link>
+        <g:price>11897.00 USD</g:price>
+        <g:sale_price>10604.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Dior</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900081</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Top Handle</g:product_type>
+        <g:color>Etoupe</g:color>
+        <g:size>Book Tote Medium</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>dior-tote-medium</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900082</g:id>
+        <title>Dior 30 Montaigne Gold</title>
+        <link>https://www.therealreal.com/products/dior-30-montaigne-trr-0900082</link>
+        <description>Pre-owned Dior 30 Montaigne Gold, condition Very Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900082.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900082-2.jpg</g:additional_image_link>
+        <g:price>12034.00 USD</g:price>
+        <g:sale_price>10688.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Dior</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900082</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Top Handle</g:product_type>
+        <g:color>Gold</g:color>
+        <g:size>30 Montaigne</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>dior-30-montaigne</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900083</g:id>
+        <title>Dior Bobby Small Bordeaux</title>
+        <link>https://www.therealreal.com/products/dior-bobby-small-trr-0900083</link>
+        <description>Pre-owned Dior Bobby Small Bordeaux, condition Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900083.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900083-2.jpg</g:additional_image_link>
+        <g:price>12171.00 USD</g:price>
+        <g:sale_price>10772.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Dior</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900083</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Top Handle</g:product_type>
+        <g:color>Bordeaux</g:color>
+        <g:size>Bobby Small</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>dior-bobby-small</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900084</g:id>
+        <title>Dior Caro Small Navy</title>
+        <link>https://www.therealreal.com/products/dior-caro-small-trr-0900084</link>
+        <description>Pre-owned Dior Caro Small Navy, condition Pristine. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900084.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900084-2.jpg</g:additional_image_link>
+        <g:price>12308.00 USD</g:price>
+        <g:sale_price>10856.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Dior</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900084</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Top Handle</g:product_type>
+        <g:color>Navy</g:color>
+        <g:size>Caro Small</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>dior-caro-small</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900085</g:id>
+        <title>Dior Caro Medium Cream</title>
+        <link>https://www.therealreal.com/products/dior-caro-medium-trr-0900085</link>
+        <description>Pre-owned Dior Caro Medium Cream, condition Excellent. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900085.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900085-2.jpg</g:additional_image_link>
+        <g:price>12445.00 USD</g:price>
+        <g:sale_price>12440.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Dior</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900085</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Top Handle</g:product_type>
+        <g:color>Cream</g:color>
+        <g:size>Caro Medium</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>dior-caro-medium</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900086</g:id>
+        <title>Saint Laurent Loulou Small Beige</title>
+        <link>https://www.therealreal.com/products/saint-laurent-loulou-small-trr-0900086</link>
+        <description>Pre-owned Saint Laurent Loulou Small Beige, condition Very Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900086.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900086-2.jpg</g:additional_image_link>
+        <g:price>12582.00 USD</g:price>
+        <g:sale_price>12524.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Saint Laurent</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900086</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Beige</g:color>
+        <g:size>Loulou Small</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>saintlaurent-loulou-small</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900087</g:id>
+        <title>Saint Laurent Loulou Medium Pink</title>
+        <link>https://www.therealreal.com/products/saint-laurent-loulou-medium-trr-0900087</link>
+        <description>Pre-owned Saint Laurent Loulou Medium Pink, condition Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900087.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900087-2.jpg</g:additional_image_link>
+        <g:price>12719.00 USD</g:price>
+        <g:sale_price>12608.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Saint Laurent</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900087</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Pink</g:color>
+        <g:size>Loulou Medium</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>saintlaurent-loulou-medium</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900088</g:id>
+        <title>Saint Laurent Kate Medium Red</title>
+        <link>https://www.therealreal.com/products/saint-laurent-kate-medium-trr-0900088</link>
+        <description>Pre-owned Saint Laurent Kate Medium Red, condition Pristine. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900088.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900088-2.jpg</g:additional_image_link>
+        <g:price>12856.00 USD</g:price>
+        <g:sale_price>12692.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Saint Laurent</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900088</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Red</g:color>
+        <g:size>Kate Medium</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>saintlaurent-kate-medium</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900089</g:id>
+        <title>Saint Laurent Sunset Small Brown</title>
+        <link>https://www.therealreal.com/products/saint-laurent-sunset-small-trr-0900089</link>
+        <description>Pre-owned Saint Laurent Sunset Small Brown, condition Excellent. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900089.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900089-2.jpg</g:additional_image_link>
+        <g:price>12993.00 USD</g:price>
+        <g:sale_price>12776.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Saint Laurent</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900089</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Brown</g:color>
+        <g:size>Sunset Small</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>saintlaurent-sunset-small</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900090</g:id>
+        <title>Saint Laurent Sunset Medium White</title>
+        <link>https://www.therealreal.com/products/saint-laurent-sunset-medium-trr-0900090</link>
+        <description>Pre-owned Saint Laurent Sunset Medium White, condition Very Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900090.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900090-2.jpg</g:additional_image_link>
+        <g:price>13130.00 USD</g:price>
+        <g:sale_price>12860.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Saint Laurent</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900090</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>White</g:color>
+        <g:size>Sunset Medium</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>saintlaurent-sunset-medium</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900091</g:id>
+        <title>Saint Laurent Niki Medium Tan</title>
+        <link>https://www.therealreal.com/products/saint-laurent-niki-medium-trr-0900091</link>
+        <description>Pre-owned Saint Laurent Niki Medium Tan, condition Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900091.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900091-2.jpg</g:additional_image_link>
+        <g:price>13267.00 USD</g:price>
+        <g:sale_price>12944.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Saint Laurent</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900091</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Tan</g:color>
+        <g:size>Niki Medium</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>saintlaurent-niki-medium</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900092</g:id>
+        <title>Saint Laurent Lou Camera Bag Caramel</title>
+        <link>https://www.therealreal.com/products/saint-laurent-lou-camera-bag-trr-0900092</link>
+        <description>Pre-owned Saint Laurent Lou Camera Bag Caramel, condition Pristine. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900092.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900092-2.jpg</g:additional_image_link>
+        <g:price>13404.00 USD</g:price>
+        <g:sale_price>13028.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Saint Laurent</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900092</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Caramel</g:color>
+        <g:size>Lou Camera Bag</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>saintlaurent-camera-bag</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900093</g:id>
+        <title>Saint Laurent College Medium Parakeet</title>
+        <link>https://www.therealreal.com/products/saint-laurent-college-medium-trr-0900093</link>
+        <description>Pre-owned Saint Laurent College Medium Parakeet, condition Excellent. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900093.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900093-2.jpg</g:additional_image_link>
+        <g:price>13541.00 USD</g:price>
+        <g:sale_price>13112.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Saint Laurent</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900093</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Parakeet</g:color>
+        <g:size>College Medium</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>saintlaurent-college-medium</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900094</g:id>
+        <title>Fendi Baguette Medium Olive</title>
+        <link>https://www.therealreal.com/products/fendi-baguette-medium-trr-0900094</link>
+        <description>Pre-owned Fendi Baguette Medium Olive, condition Very Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900094.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900094-2.jpg</g:additional_image_link>
+        <g:price>13678.00 USD</g:price>
+        <g:sale_price>13196.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Fendi</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900094</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Olive</g:color>
+        <g:size>Baguette Medium</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>fendi-baguette-medium</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900095</g:id>
+        <title>Fendi Baguette Mini Burgundy</title>
+        <link>https://www.therealreal.com/products/fendi-baguette-mini-trr-0900095</link>
+        <description>Pre-owned Fendi Baguette Mini Burgundy, condition Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900095.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900095-2.jpg</g:additional_image_link>
+        <g:price>13815.00 USD</g:price>
+        <g:sale_price>13280.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Fendi</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900095</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Burgundy</g:color>
+        <g:size>Baguette Mini</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>fendi-baguette-mini</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900096</g:id>
+        <title>Fendi Peekaboo Mini Black</title>
+        <link>https://www.therealreal.com/products/fendi-peekaboo-mini-trr-0900096</link>
+        <description>Pre-owned Fendi Peekaboo Mini Black, condition Pristine. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900096.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900096-2.jpg</g:additional_image_link>
+        <g:price>13952.00 USD</g:price>
+        <g:sale_price>13364.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Fendi</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900096</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Black</g:color>
+        <g:size>Peekaboo Mini</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>fendi-peekaboo-mini</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900097</g:id>
+        <title>Fendi Peekaboo Small Etoupe</title>
+        <link>https://www.therealreal.com/products/fendi-peekaboo-small-trr-0900097</link>
+        <description>Pre-owned Fendi Peekaboo Small Etoupe, condition Excellent. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900097.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900097-2.jpg</g:additional_image_link>
+        <g:price>14089.00 USD</g:price>
+        <g:sale_price>13448.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Fendi</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900097</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Etoupe</g:color>
+        <g:size>Peekaboo Small</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>fendi-peekaboo-small</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900098</g:id>
+        <title>Fendi Sunshine Medium Gold</title>
+        <link>https://www.therealreal.com/products/fendi-sunshine-medium-trr-0900098</link>
+        <description>Pre-owned Fendi Sunshine Medium Gold, condition Very Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900098.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900098-2.jpg</g:additional_image_link>
+        <g:price>14226.00 USD</g:price>
+        <g:sale_price>13532.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Fendi</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900098</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Gold</g:color>
+        <g:size>Sunshine Medium</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>fendi-sunshine-medium</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900099</g:id>
+        <title>Fendi First Small Bordeaux</title>
+        <link>https://www.therealreal.com/products/fendi-first-small-trr-0900099</link>
+        <description>Pre-owned Fendi First Small Bordeaux, condition Good. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900099.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900099-2.jpg</g:additional_image_link>
+        <g:price>14363.00 USD</g:price>
+        <g:sale_price>13616.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Fendi</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900099</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Bordeaux</g:color>
+        <g:size>First Small</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>fendi-first-small</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-0900100</g:id>
+        <title>Fendi First Medium Navy</title>
+        <link>https://www.therealreal.com/products/fendi-first-medium-trr-0900100</link>
+        <description>Pre-owned Fendi First Medium Navy, condition Pristine. Authenticated by The RealReal experts.</description>
+        <g:image_link>https://www.therealreal.com/products/images/trr-0900100.jpg</g:image_link>
+        <g:additional_image_link>https://www.therealreal.com/products/images/trr-0900100-2.jpg</g:additional_image_link>
+        <g:price>14500.00 USD</g:price>
+        <g:sale_price>13700.00 USD</g:sale_price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Fendi</g:brand>
+        <g:gtin/>
+        <g:mpn>trr-0900100</g:mpn>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+        <g:product_type>Women &gt; Handbags &gt; Shoulder Bag</g:product_type>
+        <g:color>Navy</g:color>
+        <g:size>First Medium</g:size>
+        <g:gender>female</g:gender>
+        <g:item_group_id>fendi-first-medium</g:item_group_id>
+      </item>
+    <item>
+        <g:id>trr-9999801</g:id>
+        <title>Hermès Twilly Silk Scarf Multicolor</title>
+        <link>https://www.therealreal.com/products/hermes-twilly-9999801</link>
+        <g:image_link>https://www.therealreal.com/products/images/trr-9999801.jpg</g:image_link>
+        <g:price>180.00 USD</g:price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Hermès</g:brand>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Clothing Accessories &gt; Scarves &amp; Shawls</g:google_product_category>
+        <g:product_type>Women &gt; Accessories &gt; Scarves</g:product_type>
+        <g:color>Multi</g:color>
+        <g:size>One Size</g:size>
+      </item>
+    <item>
+        <g:id>trr-9999802</g:id>
+        <title>Chanel CC Logo Card Holder Black Caviar</title>
+        <link>https://www.therealreal.com/products/chanel-card-holder-9999802</link>
+        <g:image_link>https://www.therealreal.com/products/images/trr-9999802.jpg</g:image_link>
+        <g:price>425.00 USD</g:price>
+        <g:availability>in stock</g:availability>
+        <g:condition>used</g:condition>
+        <g:brand>Chanel</g:brand>
+        <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Wallets &amp; Money Clips</g:google_product_category>
+        <g:product_type>Women &gt; Small Leather Goods &gt; Card Holders</g:product_type>
+        <g:color>Black</g:color>
+        <g:size>One Size</g:size>
+      </item>
+    </channel>
+  </rss>
+  
