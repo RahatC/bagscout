@@ -43,6 +43,41 @@ export interface ShopifyProductsResponse {
 }
 
 /**
+ * Heuristic to tell whether a marketplace title describes a handbag (vs.
+ * accessories, jewelry, shoes, etc.). Shared by the Shopify adapters since
+ * Shopify storefronts mix categories under generic collections like
+ * "best-sellers" or "all".
+ */
+export function looksLikeBag(title: string, productType?: string): boolean {
+  const text = `${productType ?? ""} ${title}`.toLowerCase();
+  const drop = [
+    // SLG / accessories
+    "wallet", "card holder", "card case", "key pouch", "key holder",
+    "coin purse", "passport", "agenda", "notebook",
+    // Belts, straps, scarves, ties, sunglasses, watches
+    "belt ", "belts", "scarf", "shawl", "stole", "tie ", "ties",
+    "sunglass", "watch", "hat ", "hats", "cap ", "gloves",
+    // Footwear
+    "shoe", "sneaker", "pump", "boot", "loafer", "sandal", "slide", "espadrille", "mule",
+    // Jewelry
+    "ring ", "rings", "bracelet", "earring", "necklace", "pendant", "charm",
+    "brooch", "pin ", "cufflink",
+    // Apparel
+    "dress", "shirt", "skirt", "pants", "jacket", "coat", "sweater",
+    // Home / fragrance / misc
+    "candle", "fragrance", "perfume", "tray", "blanket",
+  ];
+  for (const term of drop) {
+    if (text.includes(term)) {
+      // Allow "belt bag" (a bag style) even though "belt" is dropped.
+      if (term.startsWith("belt") && /belt\s+bag/.test(text)) continue;
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
  * Convert one Shopify product into a `RawListing`. Returns null when the
  * product is unsellable (no available variants, missing price, no images).
  */

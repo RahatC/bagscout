@@ -6,7 +6,7 @@ import {
   shouldUseMockAdapters,
 } from "./base";
 import { RateLimiter } from "./http";
-import { fetchShopifyCollectionPage } from "./shopify";
+import { fetchShopifyCollectionPage, looksLikeBag } from "./shopify";
 import type { RawListing, SourceAdapter } from "./types";
 
 const SOURCE_NAME = "Rebag";
@@ -63,39 +63,6 @@ async function fetchListings(): Promise<RawListing[]> {
     "rebag: fetch complete",
   );
   return bagOnly;
-}
-
-/**
- * Light heuristic to drop accessories/wallets/shoes that come back from the
- * "all" collection. Adapter-level filter so the matcher and dashboard only
- * see actual handbag listings.
- */
-function looksLikeBag(title: string): boolean {
-  const lower = title.toLowerCase();
-  const drop = [
-    "wallet",
-    "card holder",
-    "card case",
-    "key pouch",
-    "belt",
-    "watch",
-    "sunglass",
-    "scarf",
-    "shoe",
-    "sneaker",
-    "pump",
-    "boot",
-    "loafer",
-    "sandal",
-    "ring",
-    "bracelet",
-    "earring",
-    "necklace",
-  ];
-  for (const term of drop) {
-    if (lower.includes(term)) return false;
-  }
-  return true;
 }
 
 const liveAdapter: SourceAdapter = {

@@ -230,6 +230,62 @@ const MODEL_STOP_WORDS = new Set([
   "small", "medium", "large", "mini", "micro", "nano", "jumbo", "pm", "mm", "gm", "bb",
 ]);
 
+// Known iconic bag models per brand. When any of these appear in the title
+// we use them directly — far more reliable than the heuristic word-grab.
+// Multi-word models must come before their single-word substrings.
+const KNOWN_MODELS: Record<string, string[]> = {
+  hermes: [
+    "birkin", "kelly", "constance", "bolide", "picotin", "evelyne",
+    "garden party", "lindy", "jypsiere", "halzan", "verrou", "victoria",
+    "ptit arcon", "p'tit arcon", "arcon",
+  ],
+  chanel: [
+    "classic flap", "reissue", "boy", "gabrielle", "deauville", "coco handle",
+    "19", "2.55", "wallet on chain", "woc", "trendy cc", "business affinity",
+  ],
+  "louis vuitton": [
+    "speedy", "neverfull", "alma", "capucines", "pochette metis", "metis",
+    "twist", "petit malle", "noe", "keepall", "pochette accessoires",
+    "onthego", "on the go", "favorite", "lockme", "lockit", "dauphine",
+    "petite boite", "vavin", "felicie", "shelton",
+  ],
+  gucci: [
+    "dionysus", "marmont", "gg marmont", "jackie", "jackie 1961", "horsebit",
+    "sylvie", "ophidia", "padlock", "soho", "bamboo",
+  ],
+  celine: [
+    "luggage", "trapeze", "belt", "triomphe", "classic box", "16", "ava",
+    "cabas",
+  ],
+  dior: [
+    "lady dior", "saddle", "book tote", "bobby", "30 montaigne", "diorama",
+    "caro",
+  ],
+  prada: [
+    "galleria", "double bag", "cahier", "sidonie", "re-edition", "re edition",
+    "cleo", "symbole", "arque",
+  ],
+  fendi: [
+    "peekaboo", "baguette", "kan i", "kan u", "sunshine", "first",
+    "runaway", "way",
+  ],
+  "saint laurent": [
+    "sac de jour", "loulou", "envelope", "kate", "niki", "lou",
+    "college", "manhattan",
+  ],
+  "bottega veneta": [
+    "jodie", "cassette", "padded cassette", "pouch", "arco", "the chain pouch",
+    "andiamo", "loop", "mount",
+  ],
+  loewe: [
+    "puzzle", "hammock", "gate", "balloon", "amazona", "flamenco",
+  ],
+  goyard: [
+    "saint louis", "anjou", "artois", "vendome", "rouette",
+  ],
+  "bvlgari": ["serpenti"],
+};
+
 export function extractModel(
   title: string,
   brandCanonical: string,
@@ -238,6 +294,20 @@ export function extractModel(
   if (fallback && fallback.trim()) return fallback.trim();
   const normalizedBrand = normalizeText(brandCanonical);
   const normalizedTitle = normalizeText(title);
+
+  // Strong signal: known bag model present in the title. Try multi-word
+  // names first since they're more specific (e.g. "lady dior" before "dior").
+  const known = KNOWN_MODELS[normalizedBrand];
+  if (known) {
+    const sorted = [...known].sort((a, b) => b.length - a.length);
+    for (const candidate of sorted) {
+      // Word-boundary match so "1961" doesn't match "1961196" etc.
+      const escaped = candidate.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const re = new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`, "i");
+      if (re.test(normalizedTitle)) return candidate;
+    }
+  }
+
   let stripped = normalizedTitle;
   if (normalizedBrand && stripped.startsWith(normalizedBrand)) {
     stripped = stripped.slice(normalizedBrand.length).trim();

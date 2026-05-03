@@ -6,7 +6,7 @@ import {
   shouldUseMockAdapters,
 } from "./base";
 import { RateLimiter } from "./http";
-import { fetchShopifyCollectionPage } from "./shopify";
+import { fetchShopifyCollectionPage, looksLikeBag } from "./shopify";
 import type { RawListing, SourceAdapter } from "./types";
 
 const SOURCE_NAME = "FASHIONPHILE";
@@ -58,8 +58,14 @@ async function fetchListings(): Promise<RawListing[]> {
       page++;
     }
   }
-  logger.info({ source: SOURCE_SLUG, count: all.length }, "fashionphile: fetch complete");
-  return all;
+  // Drop non-bag categories (scarves, jewelry, accessories) that sometimes
+  // appear in the "best-sellers" / "new-arrivals" collections.
+  const bagOnly = all.filter((listing) => looksLikeBag(listing.title));
+  logger.info(
+    { source: SOURCE_SLUG, fetched: all.length, kept: bagOnly.length },
+    "fashionphile: fetch complete",
+  );
+  return bagOnly;
 }
 
 const liveAdapter: SourceAdapter = {
