@@ -145,5 +145,6 @@ const mockAdapter = createMockAdapter({
   listings: mockListings,
 });
 
+export { liveAdapter as rebagLiveAdapter, mockAdapter as rebagMockAdapter };
 const adapter = shouldUseMockAdapters() ? mockAdapter : liveAdapter;
 export default adapter;

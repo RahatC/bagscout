@@ -69,6 +69,25 @@ audit (2026-05-03). Adapters default to **mock-only** (no live scraping) — set
 - **Typography**: Playfair Display (serif for headings), Plus Jakarta Sans (sans-serif for body).
 - **Aesthetics**: Editorial, luxury, unhurried, with generous spacing and high typographic contrast.
 
+## Data Sources & Ingestion
+
+BagScout pulls real luxury-bag listings from ToS-compliant surfaces. Each
+source has its own adapter and an `ingestion_mode` column on the `sources`
+table that flips between `live` and `mock` without redeploying.
+
+| Source | Surface | Default mode | Auth |
+|---|---|---|---|
+| eBay | Browse API (REST + OAuth `client_credentials`) | `live` (no-op until creds set) | `EBAY_APP_ID` + `EBAY_CERT_ID` secrets |
+| FASHIONPHILE | Shopify `/products.json` (official public endpoint) | `live` | none |
+| Rebag | Shopify `/products.json` (official public endpoint) | `live` | none |
+| The RealReal | HTML / sitemap | `mock` (disabled) | needs partner program before re-enabling |
+| Yoogi's Closet | HTML | `mock` (disabled) | needs partner program before re-enabling |
+
+`getAdapterForSource(slug, mode)` in `artifacts/api-server/src/adapters/index.ts`
+is the runtime dispatcher. The scheduler ticks every `INGEST_INTERVAL_MINUTES`
+(default 5) and per-source cadence is enforced via `sources.cadence_minutes`
+(default 60).
+
 ## External Dependencies
 
 - **Authentication**: Clerk

@@ -112,5 +112,6 @@ const mockAdapter = createMockAdapter({
   listings: mockListings,
 });
 
+export { liveAdapter as fashionphileLiveAdapter, mockAdapter as fashionphileMockAdapter };
 const adapter = shouldUseMockAdapters() ? mockAdapter : liveAdapter;
 export default adapter;

@@ -194,3 +194,64 @@ Both paths use the mock adapter set (now the default — see fix #2).
    with a justification) so `typecheck` returns clean.
 5. Add a digest-rendering snapshot test so future template changes can't
    silently regress the email layout.
+
+---
+
+## Round 2 — Real production data via ethical sources (2026-05-03)
+
+The mock-only default from round 1 was only intended as a temporary safety net.
+This round wires up real, ToS-compliant data sources so the deployed app shows
+genuine luxury-bag listings.
+
+### Data-source inventory
+
+| Source | Surface | Mode | Notes |
+|---|---|---|---|
+| **eBay** | Browse API (REST + OAuth) | `live` (no-op until creds set) | New adapter. Requires free `EBAY_APP_ID` + `EBAY_CERT_ID` from developer.ebay.com. Silently returns `[]` when missing. |
+| **FASHIONPHILE** | Shopify Storefront `/products.json` | `live` | Officially documented public Shopify endpoint, exposed intentionally by the store. **Confirmed pulling 222 real listings.** |
+| **Rebag** | Shopify Storefront `/products.json` | `live` | Same Shopify path. **Confirmed pulling 256 real listings.** |
+| **The RealReal** | HTML + sitemap | `mock` (disabled) | Live ingestion would be HTML scraping. Re-enable only after signing up for the TRR partner program. |
+| **Yoogi's Closet** | HTML scrape | `mock` (disabled) | Same reasoning — gray area, swap to affiliate program before enabling. |
+
+### Per-source ingestion mode
+
+`sources.ingestion_mode` is now the single source of truth at runtime. The
+ingest engine calls `getAdapterForSource(slug, source.ingestionMode)` which
+selects the live or mock adapter independently per source. Admins can flip a
+source live or mock from the DB / admin UI without redeploying.
+
+### New code
+
+- `artifacts/api-server/src/adapters/ebay.ts` — eBay Browse API adapter with
+  OAuth `client_credentials` token caching, per-brand paged search against the
+  Women's Bags & Handbags category (`169291`), `RateLimiter` throttling, and
+  silent degradation when credentials are absent.
+- `artifacts/api-server/src/adapters/index.ts` — new `PAIRS` registry with
+  explicit `live`/`mock` for every source, plus `getAdapterForSource()`.
+- `artifacts/api-server/src/adapters/{fashionphile,rebag}.ts` — exposed their
+  internal `liveAdapter` / `mockAdapter` so the registry can pick directly
+  rather than going through the env-flag default.
+- `artifacts/api-server/src/lib/ingest.ts` — `runMockIngest` now reads
+  `source.ingestionMode` and dispatches via `getAdapterForSource`.
+- `lib/db/drizzle/0005_seed_ebay_source.sql` (+ journal entry) — inserts the
+  `ebay` source row, sets fashionphile/rebag to `live`, locks therealreal /
+  yoogiscloset to `mock`.
+- `artifacts/api-server/src/adapters/ebay.test.ts` — 9 new tests covering
+  `mapEbayItem` mapping, condition-id table, image fallback, marketing-price
+  guard, and credential detection.
+
+### Test results
+
+`pnpm --filter @workspace/api-server exec vitest run` → **164 pass / 0 fail / 15 files**
+(was 155 / 14 in round 1; +9 ebay tests). All other suites are unchanged.
+
+### Operator runbook
+
+1. **Enable eBay**: add `EBAY_APP_ID` + `EBAY_CERT_ID` secrets, restart api-server.
+   Adapter starts pulling on next 5-min scheduler tick. Set `EBAY_ENV=sandbox`
+   to point at the sandbox host instead of production.
+2. **Toggle a source**: `UPDATE sources SET ingestion_mode = 'mock' WHERE slug = '...'` —
+   no deploy required.
+3. **Add a partner-program source** (TRR / Yoogi's): once approved, replace
+   the stub in `index.ts` `PAIRS` with the new live adapter and seed-update
+   the row.

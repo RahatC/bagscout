@@ -1,6 +1,9 @@
 import ebay, { ebayLiveAdapter, ebayMockAdapter } from "./ebay";
-import fashionphile from "./fashionphile";
-import rebag from "./rebag";
+import fashionphile, {
+  fashionphileLiveAdapter,
+  fashionphileMockAdapter,
+} from "./fashionphile";
+import rebag, { rebagLiveAdapter, rebagMockAdapter } from "./rebag";
 import therealreal from "./therealreal";
 import yoogiscloset from "./yoogiscloset";
 import { createMockAdapter } from "./base";
@@ -33,8 +36,8 @@ const PAIRS: AdapterPair[] = [
   { slug: "ebay", live: ebayLiveAdapter, mock: ebayMockAdapter },
   // Shopify storefront `/products.json` is an officially documented public
   // Shopify endpoint, exposed intentionally by these stores. Live is OK.
-  { slug: "fashionphile", live: fashionphile, mock: emptyMock("fashionphile", "FASHIONPHILE", "https://www.fashionphile.com") },
-  { slug: "rebag", live: rebag, mock: emptyMock("rebag", "Rebag", "https://shop.rebag.com") },
+  { slug: "fashionphile", live: fashionphileLiveAdapter, mock: fashionphileMockAdapter },
+  { slug: "rebag", live: rebagLiveAdapter, mock: rebagMockAdapter },
   // The RealReal & Yoogi's Closet only have HTML / sitemap surfaces. Live
   // ingestion of those would be HTML scraping in a gray area — disabled by
   // default. Operators should switch the source to ingestion_mode='mock' or

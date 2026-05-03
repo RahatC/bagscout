@@ -8,6 +8,20 @@ import { httpFetch, HttpFetchError, RateLimiter } from "./http";
 import type { RawListing, SourceAdapter } from "./types";
 
 /**
+ * Test seam: replace with `fetch` in unit tests. Defaults to global fetch.
+ * Kept on a module-level binding (not pulled from globalThis at call time)
+ * so tests can swap it via `__setEbayFetch`.
+ */
+let _fetch: typeof fetch = (...args) => fetch(...args);
+export function __setEbayFetch(fn: typeof fetch | null): void {
+  _fetch = fn ?? ((...args) => fetch(...args));
+}
+export function __resetEbayState(): void {
+  cachedToken = null;
+  warnedMissingCreds = false;
+}
+
+/**
  * eBay Browse API adapter.
  *
  * **Why eBay?** It is the largest single source of authenticated luxury bag
@@ -109,6 +123,7 @@ interface EbayTokenResponse {
 }
 
 let cachedToken: { token: string; expiresAt: number } | null = null;
+let warnedMissingCreds = false;
 
 function ebayBaseUrl(): string {
   return process.env.EBAY_ENV === "sandbox" ? SANDBOX_BASE : PROD_BASE;
@@ -140,16 +155,33 @@ async function getApplicationToken(): Promise<string> {
     grant_type: "client_credentials",
     scope: "https://api.ebay.com/oauth/api_scope",
   }).toString();
-  const tok = await httpFetch<EbayTokenResponse>(tokenUrl, "json", {
-    timeoutMs: 15_000,
-    retries: 2,
-    backoffMs: 500,
-    headers: {
-      Authorization: `Basic ${basic}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    context: { source: SOURCE_SLUG, op: "token" },
-  });
+  // OAuth client_credentials requires POST + form body — the shared
+  // `httpFetch` helper is GET-only, so we POST directly with `fetch` and a
+  // hand-rolled timeout.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15_000);
+  let res: Response;
+  try {
+    res = await _fetch(tokenUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${basic}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+        Accept: "application/json",
+      },
+      body,
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timer);
+  }
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(
+      `eBay token endpoint returned ${res.status}: ${text.slice(0, 200)}`,
+    );
+  }
+  const tok = (await res.json()) as EbayTokenResponse;
   if (!tok || !tok.access_token) {
     throw new Error("eBay token endpoint returned no access_token");
   }
@@ -159,6 +191,9 @@ async function getApplicationToken(): Promise<string> {
   };
   return cachedToken.token;
 }
+
+// Re-export for tests so they can call the (otherwise private) token fetcher.
+export const __getApplicationToken = getApplicationToken;
 
 /**
  * One paged search call against /buy/browse/v1/item_summary/search.
@@ -272,6 +307,16 @@ export function mapEbayItem(item: EbayItemSummary): RawListing | null {
 }
 
 async function fetchListings(): Promise<RawListing[]> {
+  if (!ebayCredentialsConfigured()) {
+    if (!warnedMissingCreds) {
+      logger.warn(
+        { source: SOURCE_SLUG },
+        "ebay: EBAY_APP_ID / EBAY_CERT_ID not set — live adapter is a no-op until configured. Flip sources.ingestion_mode='mock' to suppress, or add the secrets.",
+      );
+      warnedMissingCreds = true;
+    }
+    return [];
+  }
   const token = await getApplicationToken();
   const seen = new Set<string>();
   const out: RawListing[] = [];

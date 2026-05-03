@@ -1,5 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { mapEbayItem, ebayCredentialsConfigured } from "./ebay";
+import {
+  mapEbayItem,
+  ebayCredentialsConfigured,
+  ebayLiveAdapter,
+  __setEbayFetch,
+  __resetEbayState,
+  __getApplicationToken,
+} from "./ebay";
 
 describe("ebay adapter — mapEbayItem", () => {
   it("maps a complete eBay item summary into a RawListing", () => {
@@ -136,5 +143,123 @@ describe("ebay adapter — ebayCredentialsConfigured", () => {
     process.env.EBAY_APP_ID = "x";
     process.env.EBAY_CERT_ID = "y";
     expect(ebayCredentialsConfigured()).toBe(true);
+  });
+});
+
+describe("ebay adapter — OAuth token flow", () => {
+  let origAppId: string | undefined;
+  let origCertId: string | undefined;
+
+  beforeEach(() => {
+    origAppId = process.env.EBAY_APP_ID;
+    origCertId = process.env.EBAY_CERT_ID;
+    __resetEbayState();
+  });
+  afterEach(() => {
+    if (origAppId === undefined) delete process.env.EBAY_APP_ID;
+    else process.env.EBAY_APP_ID = origAppId;
+    if (origCertId === undefined) delete process.env.EBAY_CERT_ID;
+    else process.env.EBAY_CERT_ID = origCertId;
+    __setEbayFetch(null);
+    __resetEbayState();
+  });
+
+  it("POSTs form body with Basic auth and parses access_token", async () => {
+    process.env.EBAY_APP_ID = "myAppId";
+    process.env.EBAY_CERT_ID = "myCertId";
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      expect(url).toContain("/identity/v1/oauth2/token");
+      expect(init?.method).toBe("POST");
+      const headers = init?.headers as Record<string, string>;
+      expect(headers["Content-Type"]).toBe("application/x-www-form-urlencoded");
+      const expectedBasic =
+        "Basic " + Buffer.from("myAppId:myCertId").toString("base64");
+      expect(headers.Authorization).toBe(expectedBasic);
+      expect(String(init?.body)).toContain("grant_type=client_credentials");
+      expect(String(init?.body)).toContain("scope=");
+      return new Response(
+        JSON.stringify({ access_token: "tok-123", expires_in: 7200, token_type: "Application Access Token" }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      );
+    });
+    __setEbayFetch(fetchMock as unknown as typeof fetch);
+    const token = await __getApplicationToken();
+    expect(token).toBe("tok-123");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("caches the token and does not re-POST on the next call", async () => {
+    process.env.EBAY_APP_ID = "a";
+    process.env.EBAY_CERT_ID = "b";
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({ access_token: "cached", expires_in: 7200, token_type: "x" }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+    );
+    __setEbayFetch(fetchMock as unknown as typeof fetch);
+    const t1 = await __getApplicationToken();
+    const t2 = await __getApplicationToken();
+    expect(t1).toBe("cached");
+    expect(t2).toBe("cached");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("throws a descriptive error on non-2xx token response", async () => {
+    process.env.EBAY_APP_ID = "a";
+    process.env.EBAY_CERT_ID = "b";
+    __setEbayFetch(
+      (async () =>
+        new Response("invalid_client", { status: 401 })) as unknown as typeof fetch,
+    );
+    await expect(__getApplicationToken()).rejects.toThrow(/401/);
+  });
+
+  it("throws when access_token is missing in the response", async () => {
+    process.env.EBAY_APP_ID = "a";
+    process.env.EBAY_CERT_ID = "b";
+    __setEbayFetch(
+      (async () =>
+        new Response(JSON.stringify({}), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })) as unknown as typeof fetch,
+    );
+    await expect(__getApplicationToken()).rejects.toThrow(/no access_token/);
+  });
+
+  it("throws when credentials are absent (defensive — fetchListings is the user-facing guard)", async () => {
+    delete process.env.EBAY_APP_ID;
+    delete process.env.EBAY_CERT_ID;
+    await expect(__getApplicationToken()).rejects.toThrow(/EBAY_APP_ID/);
+  });
+});
+
+describe("ebay adapter — fetchListings missing-creds no-op", () => {
+  let origAppId: string | undefined;
+  let origCertId: string | undefined;
+  beforeEach(() => {
+    origAppId = process.env.EBAY_APP_ID;
+    origCertId = process.env.EBAY_CERT_ID;
+    delete process.env.EBAY_APP_ID;
+    delete process.env.EBAY_CERT_ID;
+    __resetEbayState();
+  });
+  afterEach(() => {
+    if (origAppId === undefined) delete process.env.EBAY_APP_ID;
+    else process.env.EBAY_APP_ID = origAppId;
+    if (origCertId === undefined) delete process.env.EBAY_CERT_ID;
+    else process.env.EBAY_CERT_ID = origCertId;
+    __resetEbayState();
+  });
+
+  it("returns [] without throwing and does not call fetch when EBAY creds are absent", async () => {
+    const fetchMock = vi.fn();
+    __setEbayFetch(fetchMock as unknown as typeof fetch);
+    const listings = await ebayLiveAdapter.fetchListings();
+    expect(listings).toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+    __setEbayFetch(null);
   });
 });
