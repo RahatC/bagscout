@@ -588,6 +588,435 @@ paths:
                 properties:
                   error: { type: string }
 
+  /admin/listings:
+    get:
+      operationId: listAdminListings
+      tags: [admin]
+      description: >-
+        Admin listing explorer — same listings table as the public endpoint,
+        but with extra filters (source slug, availability status, free-text
+        search) and no implicit "available only" filter.
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50, minimum: 1, maximum: 200 }
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0, minimum: 0 }
+        - name: q
+          in: query
+          description: Free-text match against title, brand, model, or color.
+          schema: { type: string }
+        - name: source
+          in: query
+          description: Source slug.
+          schema: { type: string }
+        - name: brand
+          in: query
+          schema: { type: string }
+        - name: model
+          in: query
+          schema: { type: string }
+        - name: style
+          in: query
+          schema: { type: string }
+        - name: color
+          in: query
+          schema: { type: string }
+        - name: condition
+          in: query
+          schema: { type: string }
+        - name: minPrice
+          in: query
+          schema: { type: number, minimum: 0 }
+        - name: maxPrice
+          in: query
+          schema: { type: number, minimum: 0 }
+        - name: availability
+          in: query
+          description: Availability status — defaults to "all".
+          schema:
+            type: string
+            enum: [all, available, sold, reserved, unknown]
+            default: all
+      responses:
+        "200":
+          description: Paginated admin listing rows
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminListingPage" }
+
+  /admin/preferences:
+    get:
+      operationId: listAdminPreferences
+      tags: [admin]
+      description: >-
+        Flat list of every user preference across all users — admin-only,
+        used by the match debugger to pick a preference to test against a
+        listing.
+      responses:
+        "200":
+          description: Preference list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AdminPreferenceSummary" }
+
+  /admin/match-debug:
+    post:
+      operationId: debugMatch
+      tags: [admin]
+      description: >-
+        Run the match engine against a chosen (preference, listing) pair and
+        return the full result — score, reasons, disqualifiers, alert
+        eligibility, and the resolved inputs (so the operator can see the
+        normalized facts the engine actually saw).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MatchDebugBody" }
+      responses:
+        "200":
+          description: Match debug result
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MatchDebugResult" }
+        "404":
+          description: Preference or listing not found
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [error]
+                properties:
+                  error: { type: string }
+
+  /admin/taxonomy/brands:
+    get:
+      operationId: listTaxonomyBrands
+      tags: [admin]
+      responses:
+        "200":
+          description: Brand list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Brand" }
+    post:
+      operationId: createTaxonomyBrand
+      tags: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TaxonomyBrandBody" }
+      responses:
+        "201":
+          description: Created brand
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Brand" }
+        "409":
+          description: Brand already exists
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TaxonomyError" }
+
+  /admin/taxonomy/brands/{id}:
+    delete:
+      operationId: deleteTaxonomyBrand
+      tags: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204": { description: Deleted }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TaxonomyError" }
+        "409":
+          description: Brand still referenced by other rows
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TaxonomyError" }
+
+  /admin/taxonomy/colors:
+    get:
+      operationId: listTaxonomyColors
+      tags: [admin]
+      responses:
+        "200":
+          description: Color list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Color" }
+    post:
+      operationId: createTaxonomyColor
+      tags: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TaxonomyColorBody" }
+      responses:
+        "201":
+          description: Created color
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Color" }
+        "409":
+          description: Color already exists
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TaxonomyError" }
+
+  /admin/taxonomy/colors/{id}:
+    delete:
+      operationId: deleteTaxonomyColor
+      tags: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204": { description: Deleted }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TaxonomyError" }
+        "409":
+          description: Still referenced
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TaxonomyError" }
+
+  /admin/taxonomy/conditions:
+    get:
+      operationId: listTaxonomyConditions
+      tags: [admin]
+      responses:
+        "200":
+          description: Condition list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Condition" }
+    post:
+      operationId: createTaxonomyCondition
+      tags: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TaxonomyConditionBody" }
+      responses:
+        "201":
+          description: Created condition
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Condition" }
+        "409":
+          description: Condition already exists
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TaxonomyError" }
+
+  /admin/taxonomy/conditions/{id}:
+    delete:
+      operationId: deleteTaxonomyCondition
+      tags: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204": { description: Deleted }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TaxonomyError" }
+        "409":
+          description: Still referenced
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TaxonomyError" }
+
+  /admin/taxonomy/sizes:
+    get:
+      operationId: listTaxonomySizes
+      tags: [admin]
+      responses:
+        "200":
+          description: Size list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Size" }
+    post:
+      operationId: createTaxonomySize
+      tags: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TaxonomySimpleBody" }
+      responses:
+        "201":
+          description: Created size
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Size" }
+        "409":
+          description: Already exists
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TaxonomyError" }
+
+  /admin/taxonomy/sizes/{id}:
+    delete:
+      operationId: deleteTaxonomySize
+      tags: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204": { description: Deleted }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TaxonomyError" }
+        "409":
+          description: Still referenced
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TaxonomyError" }
+
+  /admin/taxonomy/styles:
+    get:
+      operationId: listTaxonomyStyles
+      tags: [admin]
+      responses:
+        "200":
+          description: Style list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/BagStyle" }
+    post:
+      operationId: createTaxonomyStyle
+      tags: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TaxonomySimpleBody" }
+      responses:
+        "201":
+          description: Created style
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BagStyle" }
+        "409":
+          description: Already exists
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TaxonomyError" }
+
+  /admin/taxonomy/styles/{id}:
+    delete:
+      operationId: deleteTaxonomyStyle
+      tags: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204": { description: Deleted }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TaxonomyError" }
+        "409":
+          description: Still referenced
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TaxonomyError" }
+
+  /admin/taxonomy/models:
+    get:
+      operationId: listTaxonomyModels
+      tags: [admin]
+      parameters:
+        - name: brandId
+          in: query
+          required: false
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Model list (optionally filtered by brand)
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/TaxonomyModel" }
+    post:
+      operationId: createTaxonomyModel
+      tags: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TaxonomyModelBody" }
+      responses:
+        "201":
+          description: Created model
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TaxonomyModel" }
+        "409":
+          description: Model already exists for this brand
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TaxonomyError" }
+
+  /admin/taxonomy/models/{id}:
+    delete:
+      operationId: deleteTaxonomyModel
+      tags: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204": { description: Deleted }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TaxonomyError" }
+
 components:
   schemas:
     HealthStatus:
@@ -1214,3 +1643,247 @@ components:
         errors:
           type: array
           items: { type: string }
+
+    AdminListing:
+      type: object
+      required:
+        - id
+        - sourceId
+        - sourceName
+        - sourceSlug
+        - sourceUrl
+        - title
+        - brand
+        - normalizedBrand
+        - price
+        - currency
+        - availabilityStatus
+        - firstSeenAt
+        - lastSeenAt
+      properties:
+        id: { type: integer }
+        sourceId: { type: integer }
+        sourceName: { type: string }
+        sourceSlug: { type: string }
+        sourceUrl: { type: string }
+        sourceListingId: { type: string }
+        title: { type: string }
+        brand: { type: string }
+        model: { type: string, nullable: true }
+        style: { type: string, nullable: true }
+        condition: { type: string, nullable: true }
+        color: { type: string, nullable: true }
+        size: { type: string, nullable: true }
+        normalizedBrand: { type: string }
+        normalizedModel: { type: string, nullable: true }
+        normalizedStyle: { type: string, nullable: true }
+        normalizedCondition: { type: string, nullable: true }
+        normalizedColor: { type: string, nullable: true }
+        price: { type: number }
+        currency: { type: string }
+        imageUrl: { type: string, nullable: true }
+        availabilityStatus: { type: string }
+        firstSeenAt: { type: string, format: date-time }
+        lastSeenAt: { type: string, format: date-time }
+
+    AdminListingPage:
+      type: object
+      required: [items, total, limit, offset]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/AdminListing" }
+        total: { type: integer }
+        limit: { type: integer }
+        offset: { type: integer }
+
+    AdminPreferenceSummary:
+      type: object
+      required: [id, userId, nickname, active, alertFrequency]
+      properties:
+        id: { type: integer }
+        userId: { type: string }
+        userEmail: { type: string, nullable: true }
+        userFullName: { type: string, nullable: true }
+        nickname: { type: string }
+        active: { type: boolean }
+        alertFrequency: { type: string }
+
+    MatchDebugBody:
+      type: object
+      required: [preferenceId, listingId]
+      properties:
+        preferenceId: { type: integer, minimum: 1 }
+        listingId: { type: integer, minimum: 1 }
+
+    MatchReasonItem:
+      type: object
+      required: [field, value, matched, weight]
+      properties:
+        field: { type: string }
+        value: { type: string }
+        matched: { type: boolean }
+        weight: { type: number }
+        detail: { type: string, nullable: true }
+
+    DisqualifierItem:
+      type: object
+      required: [field, value, reason]
+      properties:
+        field: { type: string }
+        value: { type: string }
+        reason: { type: string }
+
+    MatchDebugResolvedPreference:
+      type: object
+      required:
+        - id
+        - nickname
+        - userId
+        - onlyExactCriteria
+        - exactModelEnabled
+        - allowCloseMatches
+        - allowCloseColorMatch
+        - brands
+        - styles
+        - colors
+        - sizes
+        - colorFamilies
+      properties:
+        id: { type: integer }
+        userId: { type: string }
+        nickname: { type: string }
+        modelQuery: { type: string, nullable: true }
+        minPrice: { type: number, nullable: true }
+        maxPrice: { type: number, nullable: true }
+        conditionMinName: { type: string, nullable: true }
+        conditionMinRank: { type: integer, nullable: true }
+        onlyExactCriteria: { type: boolean }
+        exactModelEnabled: { type: boolean }
+        allowCloseMatches: { type: boolean }
+        allowCloseColorMatch: { type: boolean }
+        brands:
+          type: array
+          items: { type: string }
+        styles:
+          type: array
+          items: { type: string }
+        colors:
+          type: array
+          items: { type: string }
+        sizes:
+          type: array
+          items: { type: string }
+        colorFamilies:
+          type: array
+          items: { type: string }
+
+    MatchDebugResolvedListing:
+      type: object
+      required:
+        - id
+        - title
+        - brand
+        - price
+        - currency
+        - normalizedBrand
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        brand: { type: string }
+        model: { type: string, nullable: true }
+        style: { type: string, nullable: true }
+        condition: { type: string, nullable: true }
+        color: { type: string, nullable: true }
+        size: { type: string, nullable: true }
+        price: { type: number }
+        currency: { type: string }
+        normalizedBrand: { type: string }
+        normalizedModel: { type: string, nullable: true }
+        normalizedStyle: { type: string, nullable: true }
+        normalizedCondition: { type: string, nullable: true }
+        normalizedColor: { type: string, nullable: true }
+        normalizedSize: { type: string, nullable: true }
+        conditionRank: { type: integer, nullable: true }
+        colorFamily: { type: string, nullable: true }
+
+    MatchDebugResult:
+      type: object
+      required:
+        - matchScore
+        - matchType
+        - alertEligible
+        - explanation
+        - matchReasons
+        - disqualifiers
+        - preference
+        - listing
+      properties:
+        matchScore: { type: number }
+        matchType:
+          type: string
+          enum: [exact, strong, close, weak, rejected]
+        alertEligible: { type: boolean }
+        explanation: { type: string }
+        matchReasons:
+          type: array
+          items: { $ref: "#/components/schemas/MatchReasonItem" }
+        disqualifiers:
+          type: array
+          items: { $ref: "#/components/schemas/DisqualifierItem" }
+        preference: { $ref: "#/components/schemas/MatchDebugResolvedPreference" }
+        listing: { $ref: "#/components/schemas/MatchDebugResolvedListing" }
+
+    TaxonomyError:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
+
+    TaxonomyBrandBody:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 100 }
+        slug: { type: string, minLength: 1, maxLength: 100 }
+
+    TaxonomyColorBody:
+      type: object
+      required: [name, family]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 100 }
+        slug: { type: string, minLength: 1, maxLength: 100 }
+        family: { type: string, minLength: 1, maxLength: 50 }
+        hex: { type: string, nullable: true, maxLength: 9 }
+
+    TaxonomyConditionBody:
+      type: object
+      required: [name, rank]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 100 }
+        slug: { type: string, minLength: 1, maxLength: 100 }
+        rank: { type: integer, minimum: 1, maximum: 99 }
+
+    TaxonomySimpleBody:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 100 }
+        slug: { type: string, minLength: 1, maxLength: 100 }
+
+    TaxonomyModel:
+      type: object
+      required: [id, brandId, brandName, name, normalizedName]
+      properties:
+        id: { type: integer }
+        brandId: { type: integer }
+        brandName: { type: string }
+        name: { type: string }
+        normalizedName: { type: string }
+
+    TaxonomyModelBody:
+      type: object
+      required: [brandId, name]
+      properties:
+        brandId: { type: integer, minimum: 1 }
+        name: { type: string, minLength: 1, maxLength: 100 }

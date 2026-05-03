@@ -1,18 +1,49 @@
 import { Router } from "express";
-import { eq, desc, count, and, gte, isNotNull, sql } from "drizzle-orm";
+import { eq, desc, count, and, gte, lte, isNotNull, ilike, or, asc, sql } from "drizzle-orm";
 import {
   db,
   sourcesTable,
   listingsTable,
   ingestionLogsTable,
+  brandsTable,
+  colorsTable,
+  conditionsTable,
+  sizesTable,
+  bagStylesTable,
+  bagModelsTable,
+  bagPreferencesTable,
+  bagPreferenceBrandsTable,
+  bagPreferenceStylesTable,
+  bagPreferenceColorsTable,
+  bagPreferenceSizesTable,
+  matchResultsTable,
+  usersTable,
 } from "@workspace/db";
 import { z } from "zod";
-import { TriggerIngestBody, RunDigestsBody, UpdateSourceBody } from "@workspace/api-zod";
+import {
+  TriggerIngestBody,
+  RunDigestsBody,
+  UpdateSourceBody,
+  ListAdminListingsQueryParams,
+  DebugMatchBody,
+  CreateTaxonomyBrandBody,
+  CreateTaxonomyColorBody,
+  CreateTaxonomyConditionBody,
+  CreateTaxonomySizeBody,
+  CreateTaxonomyStyleBody,
+  CreateTaxonomyModelBody,
+} from "@workspace/api-zod";
 import { requireAuth, requireAdmin } from "../middlewares/requireAuth";
 import { adminWriteRateLimiter } from "../middlewares/security";
 import { runMockIngest, runAllIngests } from "../lib/ingest";
 import { withDigestLock, withIngestLock } from "../lib/scheduler";
 import { runDigest } from "../lib/digest";
+import {
+  evaluateMatch,
+  type PreferenceCriteria,
+  type ListingFacts,
+} from "../lib/matchEngine";
+import { normalizeText, conditionRank } from "../lib/normalize";
 import type { Request } from "express";
 
 const router = Router();
@@ -26,6 +57,24 @@ type AuthRequest = Request & { userId: string };
 const TriggerIngestBodyStrict = TriggerIngestBody.strict();
 const RunDigestsBodyStrict = RunDigestsBody.strict();
 const UpdateSourceBodyStrict = UpdateSourceBody.strict();
+const DebugMatchBodyStrict = DebugMatchBody.strict();
+const CreateTaxonomyBrandBodyStrict = CreateTaxonomyBrandBody.strict();
+const CreateTaxonomyColorBodyStrict = CreateTaxonomyColorBody.strict();
+const CreateTaxonomyConditionBodyStrict = CreateTaxonomyConditionBody.strict();
+const CreateTaxonomySizeBodyStrict = CreateTaxonomySizeBody.strict();
+const CreateTaxonomyStyleBodyStrict = CreateTaxonomyStyleBody.strict();
+const CreateTaxonomyModelBodyStrict = CreateTaxonomyModelBody.strict();
+const IdParam = z.object({ id: z.coerce.number().int().positive() });
+
+function slugify(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
 
 const IngestionLogsQuery = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
@@ -499,6 +548,609 @@ router.post("/digests/run", adminWriteRateLimiter, async (req, res) => {
     return;
   }
   res.json(result);
+});
+
+// ─── Listing Explorer ───────────────────────────────────────────────────────
+router.get("/listings", async (req, res) => {
+  const parsed = ListAdminListingsQueryParams.strict().safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid query", details: parsed.error.issues });
+    return;
+  }
+  const { limit, offset, q, source, brand, model, style, color, condition, minPrice, maxPrice, availability } =
+    parsed.data;
+
+  const conds = [];
+  if (availability !== "all") {
+    conds.push(eq(listingsTable.availabilityStatus, availability));
+  }
+  if (source) conds.push(eq(sourcesTable.slug, source));
+  if (brand) conds.push(ilike(listingsTable.brand, `%${brand}%`));
+  if (model) conds.push(ilike(listingsTable.model!, `%${model}%`));
+  if (style) conds.push(ilike(listingsTable.style!, `%${style}%`));
+  if (color) conds.push(ilike(listingsTable.color!, `%${color}%`));
+  if (condition) conds.push(ilike(listingsTable.condition!, `%${condition}%`));
+  if (minPrice != null) conds.push(gte(listingsTable.price, String(minPrice)));
+  if (maxPrice != null) conds.push(lte(listingsTable.price, String(maxPrice)));
+  if (q) {
+    const like = `%${q}%`;
+    conds.push(
+      or(
+        ilike(listingsTable.title, like),
+        ilike(listingsTable.brand, like),
+        ilike(listingsTable.model!, like),
+        ilike(listingsTable.color!, like),
+      )!,
+    );
+  }
+  const where = conds.length ? and(...conds) : undefined;
+
+  const [{ total }] = await db
+    .select({ total: sql<number>`count(*)::int` })
+    .from(listingsTable)
+    .innerJoin(sourcesTable, eq(listingsTable.sourceId, sourcesTable.id))
+    .where(where);
+
+  const rows = await db
+    .select({ l: listingsTable, s: sourcesTable })
+    .from(listingsTable)
+    .innerJoin(sourcesTable, eq(listingsTable.sourceId, sourcesTable.id))
+    .where(where)
+    .orderBy(desc(listingsTable.lastSeenAt))
+    .limit(limit)
+    .offset(offset);
+
+  res.json({
+    items: rows.map(({ l, s }) => ({
+      id: l.id,
+      sourceId: l.sourceId,
+      sourceName: s.name,
+      sourceSlug: s.slug,
+      sourceUrl: l.sourceUrl,
+      sourceListingId: l.sourceListingId,
+      title: l.title,
+      brand: l.brand,
+      model: l.model,
+      style: l.style,
+      condition: l.condition,
+      color: l.color,
+      size: l.size,
+      normalizedBrand: l.normalizedBrand,
+      normalizedModel: l.normalizedModel,
+      normalizedStyle: l.normalizedStyle,
+      normalizedCondition: l.normalizedCondition,
+      normalizedColor: l.normalizedColor,
+      price: parseFloat(l.price),
+      currency: l.currency,
+      imageUrl: l.imageUrl,
+      availabilityStatus: l.availabilityStatus,
+      firstSeenAt: l.firstSeenAt,
+      lastSeenAt: l.lastSeenAt,
+    })),
+    total,
+    limit,
+    offset,
+  });
+});
+
+// ─── Match Debugger ─────────────────────────────────────────────────────────
+router.get("/preferences", async (_req, res) => {
+  const rows = await db
+    .select({
+      id: bagPreferencesTable.id,
+      userId: bagPreferencesTable.userId,
+      nickname: bagPreferencesTable.nickname,
+      active: bagPreferencesTable.active,
+      alertFrequency: bagPreferencesTable.alertFrequency,
+      userEmail: usersTable.email,
+      userFullName: usersTable.fullName,
+    })
+    .from(bagPreferencesTable)
+    .leftJoin(usersTable, eq(bagPreferencesTable.userId, usersTable.id))
+    .orderBy(desc(bagPreferencesTable.createdAt));
+  res.json(rows);
+});
+
+router.post("/match-debug", adminWriteRateLimiter, async (req, res) => {
+  const parsed = DebugMatchBodyStrict.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid body", details: parsed.error.issues });
+    return;
+  }
+  const { preferenceId, listingId } = parsed.data;
+
+  const [pref] = await db
+    .select()
+    .from(bagPreferencesTable)
+    .where(eq(bagPreferencesTable.id, preferenceId));
+  if (!pref) {
+    res.status(404).json({ error: "Preference not found" });
+    return;
+  }
+
+  const [listing] = await db
+    .select()
+    .from(listingsTable)
+    .where(eq(listingsTable.id, listingId));
+  if (!listing) {
+    res.status(404).json({ error: "Listing not found" });
+    return;
+  }
+
+  const [brands, styles, colors, sizes, condMin] = await Promise.all([
+    db
+      .select({ b: brandsTable })
+      .from(bagPreferenceBrandsTable)
+      .innerJoin(brandsTable, eq(bagPreferenceBrandsTable.brandId, brandsTable.id))
+      .where(eq(bagPreferenceBrandsTable.preferenceId, pref.id)),
+    db
+      .select({ s: bagStylesTable })
+      .from(bagPreferenceStylesTable)
+      .innerJoin(bagStylesTable, eq(bagPreferenceStylesTable.styleId, bagStylesTable.id))
+      .where(eq(bagPreferenceStylesTable.preferenceId, pref.id)),
+    db
+      .select({ c: colorsTable })
+      .from(bagPreferenceColorsTable)
+      .innerJoin(colorsTable, eq(bagPreferenceColorsTable.colorId, colorsTable.id))
+      .where(eq(bagPreferenceColorsTable.preferenceId, pref.id)),
+    db
+      .select({ s: sizesTable })
+      .from(bagPreferenceSizesTable)
+      .innerJoin(sizesTable, eq(bagPreferenceSizesTable.sizeId, sizesTable.id))
+      .where(eq(bagPreferenceSizesTable.preferenceId, pref.id)),
+    pref.conditionMinId
+      ? db.select().from(conditionsTable).where(eq(conditionsTable.id, pref.conditionMinId))
+      : Promise.resolve([]),
+  ]);
+
+  const criteria: PreferenceCriteria = {
+    nickname: pref.nickname,
+    onlyExactCriteria: pref.onlyExactCriteria,
+    exactModelEnabled: pref.exactModelEnabled,
+    allowCloseMatches: pref.allowCloseMatches,
+    allowCloseColorMatch: pref.allowCloseColorMatch,
+    modelQuery: pref.modelQuery,
+    minPrice: pref.minPrice ? parseFloat(pref.minPrice) : null,
+    maxPrice: pref.maxPrice ? parseFloat(pref.maxPrice) : null,
+    conditionMinRank: condMin[0]?.rank ?? null,
+    conditionMinName: condMin[0]?.name ?? null,
+    brands: brands.map((b) => b.b.normalizedName),
+    styles: styles.map((s) => s.s.normalizedName),
+    colors: colors.map((c) => c.c.normalizedName),
+    sizes: sizes.map((s) => s.s.normalizedName),
+    colorFamilies: Array.from(
+      new Set(colors.map((c) => c.c.family).filter((f): f is string => Boolean(f))),
+    ),
+  };
+
+  const colorFamily = listing.normalizedColor
+    ? (
+        await db
+          .select({ family: colorsTable.family })
+          .from(colorsTable)
+          .where(eq(colorsTable.normalizedName, listing.normalizedColor))
+      )[0]?.family ?? null
+    : null;
+
+  const facts: ListingFacts = {
+    brand: listing.brand,
+    model: listing.model,
+    style: listing.style,
+    condition: listing.condition,
+    color: listing.color,
+    size: listing.size,
+    title: listing.title,
+    price: parseFloat(listing.price),
+    currency: listing.currency,
+    normalizedBrand: listing.normalizedBrand,
+    normalizedModel: listing.normalizedModel,
+    normalizedStyle: listing.normalizedStyle,
+    normalizedCondition: listing.normalizedCondition,
+    normalizedColor: listing.normalizedColor,
+    normalizedSize: listing.size ? normalizeText(listing.size) : null,
+    conditionRank: listing.condition ? conditionRank(listing.condition) : null,
+    colorFamily,
+  };
+
+  const result = evaluateMatch(criteria, facts);
+
+  res.json({
+    matchScore: result.matchScore,
+    matchType: result.matchType,
+    alertEligible: result.alertEligible,
+    explanation: result.explanation,
+    matchReasons: result.matchReasons,
+    disqualifiers: result.disqualifiers,
+    preference: {
+      id: pref.id,
+      userId: pref.userId,
+      nickname: criteria.nickname,
+      modelQuery: criteria.modelQuery,
+      minPrice: criteria.minPrice,
+      maxPrice: criteria.maxPrice,
+      conditionMinName: criteria.conditionMinName,
+      conditionMinRank: criteria.conditionMinRank,
+      onlyExactCriteria: criteria.onlyExactCriteria,
+      exactModelEnabled: criteria.exactModelEnabled,
+      allowCloseMatches: criteria.allowCloseMatches,
+      allowCloseColorMatch: criteria.allowCloseColorMatch,
+      brands: criteria.brands,
+      styles: criteria.styles,
+      colors: criteria.colors,
+      sizes: criteria.sizes,
+      colorFamilies: criteria.colorFamilies,
+    },
+    listing: {
+      id: listing.id,
+      title: facts.title,
+      brand: facts.brand,
+      model: facts.model,
+      style: facts.style,
+      condition: facts.condition,
+      color: facts.color,
+      size: facts.size,
+      price: facts.price,
+      currency: facts.currency,
+      normalizedBrand: facts.normalizedBrand,
+      normalizedModel: facts.normalizedModel,
+      normalizedStyle: facts.normalizedStyle,
+      normalizedCondition: facts.normalizedCondition,
+      normalizedColor: facts.normalizedColor,
+      normalizedSize: facts.normalizedSize,
+      conditionRank: facts.conditionRank,
+      colorFamily: facts.colorFamily,
+    },
+  });
+});
+
+// ─── Taxonomy Manager ───────────────────────────────────────────────────────
+function isUniqueViolation(err: unknown): boolean {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "code" in err &&
+    (err as { code?: string }).code === "23505"
+  );
+}
+function isFkViolation(err: unknown): boolean {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "code" in err &&
+    (err as { code?: string }).code === "23503"
+  );
+}
+
+// Brands
+router.get("/taxonomy/brands", async (_req, res) => {
+  const rows = await db.select().from(brandsTable).orderBy(asc(brandsTable.name));
+  res.json(rows);
+});
+router.post("/taxonomy/brands", adminWriteRateLimiter, async (req, res) => {
+  const parsed = CreateTaxonomyBrandBodyStrict.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid body", details: parsed.error.issues });
+    return;
+  }
+  const name = parsed.data.name.trim();
+  const slug = (parsed.data.slug ?? slugify(name)).trim();
+  try {
+    const [row] = await db
+      .insert(brandsTable)
+      .values({ name, slug, normalizedName: normalizeText(name) })
+      .returning();
+    res.status(201).json(row);
+  } catch (err) {
+    if (isUniqueViolation(err)) {
+      res.status(409).json({ error: "Brand with that name or slug already exists" });
+      return;
+    }
+    throw err;
+  }
+});
+router.delete("/taxonomy/brands/:id", adminWriteRateLimiter, async (req, res) => {
+  const parsed = IdParam.safeParse(req.params);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid id" });
+    return;
+  }
+  try {
+    const result = await db.delete(brandsTable).where(eq(brandsTable.id, parsed.data.id)).returning();
+    if (result.length === 0) {
+      res.status(404).json({ error: "Brand not found" });
+      return;
+    }
+    res.status(204).end();
+  } catch (err) {
+    if (isFkViolation(err)) {
+      res.status(409).json({ error: "Brand is still referenced by other rows" });
+      return;
+    }
+    throw err;
+  }
+});
+
+// Colors
+router.get("/taxonomy/colors", async (_req, res) => {
+  const rows = await db.select().from(colorsTable).orderBy(asc(colorsTable.name));
+  res.json(rows);
+});
+router.post("/taxonomy/colors", adminWriteRateLimiter, async (req, res) => {
+  const parsed = CreateTaxonomyColorBodyStrict.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid body", details: parsed.error.issues });
+    return;
+  }
+  const name = parsed.data.name.trim();
+  const slug = (parsed.data.slug ?? slugify(name)).trim();
+  try {
+    const [row] = await db
+      .insert(colorsTable)
+      .values({
+        name,
+        slug,
+        normalizedName: normalizeText(name),
+        family: parsed.data.family.trim(),
+        hex: parsed.data.hex ?? null,
+      })
+      .returning();
+    res.status(201).json(row);
+  } catch (err) {
+    if (isUniqueViolation(err)) {
+      res.status(409).json({ error: "Color with that name or slug already exists" });
+      return;
+    }
+    throw err;
+  }
+});
+router.delete("/taxonomy/colors/:id", adminWriteRateLimiter, async (req, res) => {
+  const parsed = IdParam.safeParse(req.params);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid id" });
+    return;
+  }
+  try {
+    const result = await db.delete(colorsTable).where(eq(colorsTable.id, parsed.data.id)).returning();
+    if (result.length === 0) {
+      res.status(404).json({ error: "Color not found" });
+      return;
+    }
+    res.status(204).end();
+  } catch (err) {
+    if (isFkViolation(err)) {
+      res.status(409).json({ error: "Color is still referenced by other rows" });
+      return;
+    }
+    throw err;
+  }
+});
+
+// Conditions
+router.get("/taxonomy/conditions", async (_req, res) => {
+  const rows = await db.select().from(conditionsTable).orderBy(asc(conditionsTable.rank));
+  res.json(rows);
+});
+router.post("/taxonomy/conditions", adminWriteRateLimiter, async (req, res) => {
+  const parsed = CreateTaxonomyConditionBodyStrict.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid body", details: parsed.error.issues });
+    return;
+  }
+  const name = parsed.data.name.trim();
+  const slug = (parsed.data.slug ?? slugify(name)).trim();
+  try {
+    const [row] = await db
+      .insert(conditionsTable)
+      .values({
+        name,
+        slug,
+        normalizedName: normalizeText(name),
+        rank: parsed.data.rank,
+      })
+      .returning();
+    res.status(201).json(row);
+  } catch (err) {
+    if (isUniqueViolation(err)) {
+      res.status(409).json({ error: "Condition with that name or slug already exists" });
+      return;
+    }
+    throw err;
+  }
+});
+router.delete("/taxonomy/conditions/:id", adminWriteRateLimiter, async (req, res) => {
+  const parsed = IdParam.safeParse(req.params);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid id" });
+    return;
+  }
+  try {
+    const result = await db.delete(conditionsTable).where(eq(conditionsTable.id, parsed.data.id)).returning();
+    if (result.length === 0) {
+      res.status(404).json({ error: "Condition not found" });
+      return;
+    }
+    res.status(204).end();
+  } catch (err) {
+    if (isFkViolation(err)) {
+      res.status(409).json({ error: "Condition is still referenced by other rows" });
+      return;
+    }
+    throw err;
+  }
+});
+
+// Sizes
+router.get("/taxonomy/sizes", async (_req, res) => {
+  const rows = await db.select().from(sizesTable).orderBy(asc(sizesTable.name));
+  res.json(rows);
+});
+router.post("/taxonomy/sizes", adminWriteRateLimiter, async (req, res) => {
+  const parsed = CreateTaxonomySizeBodyStrict.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid body", details: parsed.error.issues });
+    return;
+  }
+  const name = parsed.data.name.trim();
+  const slug = (parsed.data.slug ?? slugify(name)).trim();
+  try {
+    const [row] = await db
+      .insert(sizesTable)
+      .values({ name, slug, normalizedName: normalizeText(name) })
+      .returning();
+    res.status(201).json(row);
+  } catch (err) {
+    if (isUniqueViolation(err)) {
+      res.status(409).json({ error: "Size with that name or slug already exists" });
+      return;
+    }
+    throw err;
+  }
+});
+router.delete("/taxonomy/sizes/:id", adminWriteRateLimiter, async (req, res) => {
+  const parsed = IdParam.safeParse(req.params);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid id" });
+    return;
+  }
+  try {
+    const result = await db.delete(sizesTable).where(eq(sizesTable.id, parsed.data.id)).returning();
+    if (result.length === 0) {
+      res.status(404).json({ error: "Size not found" });
+      return;
+    }
+    res.status(204).end();
+  } catch (err) {
+    if (isFkViolation(err)) {
+      res.status(409).json({ error: "Size is still referenced by other rows" });
+      return;
+    }
+    throw err;
+  }
+});
+
+// Styles
+router.get("/taxonomy/styles", async (_req, res) => {
+  const rows = await db.select().from(bagStylesTable).orderBy(asc(bagStylesTable.name));
+  res.json(rows);
+});
+router.post("/taxonomy/styles", adminWriteRateLimiter, async (req, res) => {
+  const parsed = CreateTaxonomyStyleBodyStrict.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid body", details: parsed.error.issues });
+    return;
+  }
+  const name = parsed.data.name.trim();
+  const slug = (parsed.data.slug ?? slugify(name)).trim();
+  try {
+    const [row] = await db
+      .insert(bagStylesTable)
+      .values({ name, slug, normalizedName: normalizeText(name) })
+      .returning();
+    res.status(201).json(row);
+  } catch (err) {
+    if (isUniqueViolation(err)) {
+      res.status(409).json({ error: "Style with that name or slug already exists" });
+      return;
+    }
+    throw err;
+  }
+});
+router.delete("/taxonomy/styles/:id", adminWriteRateLimiter, async (req, res) => {
+  const parsed = IdParam.safeParse(req.params);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid id" });
+    return;
+  }
+  try {
+    const result = await db.delete(bagStylesTable).where(eq(bagStylesTable.id, parsed.data.id)).returning();
+    if (result.length === 0) {
+      res.status(404).json({ error: "Style not found" });
+      return;
+    }
+    res.status(204).end();
+  } catch (err) {
+    if (isFkViolation(err)) {
+      res.status(409).json({ error: "Style is still referenced by other rows" });
+      return;
+    }
+    throw err;
+  }
+});
+
+// Models (brand-scoped)
+const ListModelsQuery = z.object({
+  brandId: z.coerce.number().int().positive().optional(),
+}).strict();
+
+router.get("/taxonomy/models", async (req, res) => {
+  const parsedQuery = ListModelsQuery.safeParse(req.query);
+  if (!parsedQuery.success) {
+    res.status(400).json({ error: "Invalid query", details: parsedQuery.error.issues });
+    return;
+  }
+  const brandId = parsedQuery.data.brandId ?? null;
+  const rows = await db
+    .select({
+      id: bagModelsTable.id,
+      brandId: bagModelsTable.brandId,
+      brandName: brandsTable.name,
+      name: bagModelsTable.name,
+      normalizedName: bagModelsTable.normalizedName,
+    })
+    .from(bagModelsTable)
+    .innerJoin(brandsTable, eq(bagModelsTable.brandId, brandsTable.id))
+    .where(brandId != null ? eq(bagModelsTable.brandId, brandId) : undefined)
+    .orderBy(asc(brandsTable.name), asc(bagModelsTable.name));
+  res.json(rows);
+});
+router.post("/taxonomy/models", adminWriteRateLimiter, async (req, res) => {
+  const parsed = CreateTaxonomyModelBodyStrict.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid body", details: parsed.error.issues });
+    return;
+  }
+  const name = parsed.data.name.trim();
+  const [brand] = await db.select().from(brandsTable).where(eq(brandsTable.id, parsed.data.brandId));
+  if (!brand) {
+    res.status(404).json({ error: "Brand not found" });
+    return;
+  }
+  try {
+    const [row] = await db
+      .insert(bagModelsTable)
+      .values({
+        brandId: brand.id,
+        name,
+        normalizedName: normalizeText(name),
+      })
+      .returning();
+    res.status(201).json({
+      id: row.id,
+      brandId: row.brandId,
+      brandName: brand.name,
+      name: row.name,
+      normalizedName: row.normalizedName,
+    });
+  } catch (err) {
+    if (isUniqueViolation(err)) {
+      res.status(409).json({ error: "Model already exists for this brand" });
+      return;
+    }
+    throw err;
+  }
+});
+router.delete("/taxonomy/models/:id", adminWriteRateLimiter, async (req, res) => {
+  const parsed = IdParam.safeParse(req.params);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid id" });
+    return;
+  }
+  const result = await db.delete(bagModelsTable).where(eq(bagModelsTable.id, parsed.data.id)).returning();
+  if (result.length === 0) {
+    res.status(404).json({ error: "Model not found" });
+    return;
+  }
+  res.status(204).end();
 });
 
 export default router;

@@ -20,6 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import {
   useListSources,
@@ -34,8 +35,68 @@ import {
 import { Input } from "@/components/ui/input";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
+import { ListingExplorerSection } from "@/components/admin/listing-explorer-section";
+import { MatchDebuggerSection } from "@/components/admin/match-debugger-section";
+import { TaxonomySection } from "@/components/admin/taxonomy-section";
 
 export default function AdminPage() {
+  return (
+    <div className="space-y-6 pb-10 max-w-7xl mx-auto">
+      <div className="border-b border-border pb-6">
+        <h1 className="text-3xl font-serif font-medium mb-2">Admin Console</h1>
+        <p className="text-muted-foreground">
+          Operate the scouting pipeline, debug match decisions, and manage taxonomy.
+        </p>
+      </div>
+      <Tabs defaultValue="status" className="w-full">
+        <TabsList className="rounded-none border-b border-border w-full justify-start bg-transparent p-0 h-auto overflow-x-auto">
+          <TabsTrigger
+            value="status"
+            data-testid="admin-tab-status"
+            className="rounded-none uppercase tracking-widest text-[11px] data-[state=active]:border-b-2 data-[state=active]:border-foreground data-[state=active]:bg-transparent"
+          >
+            System Status
+          </TabsTrigger>
+          <TabsTrigger
+            value="listings"
+            data-testid="admin-tab-listings"
+            className="rounded-none uppercase tracking-widest text-[11px] data-[state=active]:border-b-2 data-[state=active]:border-foreground data-[state=active]:bg-transparent"
+          >
+            Listing Explorer
+          </TabsTrigger>
+          <TabsTrigger
+            value="match"
+            data-testid="admin-tab-match"
+            className="rounded-none uppercase tracking-widest text-[11px] data-[state=active]:border-b-2 data-[state=active]:border-foreground data-[state=active]:bg-transparent"
+          >
+            Match Debugger
+          </TabsTrigger>
+          <TabsTrigger
+            value="taxonomy"
+            data-testid="admin-tab-taxonomy"
+            className="rounded-none uppercase tracking-widest text-[11px] data-[state=active]:border-b-2 data-[state=active]:border-foreground data-[state=active]:bg-transparent"
+          >
+            Taxonomy
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="status" className="mt-6">
+          <SystemStatusSection />
+        </TabsContent>
+        <TabsContent value="listings" className="mt-6">
+          <ListingExplorerSection />
+        </TabsContent>
+        <TabsContent value="match" className="mt-6">
+          <MatchDebuggerSection />
+        </TabsContent>
+        <TabsContent value="taxonomy" className="mt-6">
+          <TaxonomySection />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+function SystemStatusSection() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 

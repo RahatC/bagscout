@@ -1187,3 +1187,326 @@ export const RunDigestsResponse = zod.object({
     }),
   ),
 });
+
+/**
+ * Admin listing explorer — same listings table as the public endpoint, but with extra filters (source slug, availability status, free-text search) and no implicit "available only" filter.
+ */
+export const listAdminListingsQueryLimitDefault = 50;
+export const listAdminListingsQueryLimitMax = 200;
+
+export const listAdminListingsQueryOffsetDefault = 0;
+export const listAdminListingsQueryOffsetMin = 0;
+
+export const listAdminListingsQueryMinPriceMin = 0;
+
+export const listAdminListingsQueryMaxPriceMin = 0;
+
+export const listAdminListingsQueryAvailabilityDefault = `all`;
+
+export const ListAdminListingsQueryParams = zod.object({
+  limit: zod.coerce
+    .number()
+    .min(1)
+    .max(listAdminListingsQueryLimitMax)
+    .default(listAdminListingsQueryLimitDefault),
+  offset: zod.coerce
+    .number()
+    .min(listAdminListingsQueryOffsetMin)
+    .default(listAdminListingsQueryOffsetDefault),
+  q: zod.coerce
+    .string()
+    .optional()
+    .describe("Free-text match against title, brand, model, or color."),
+  source: zod.coerce.string().optional().describe("Source slug."),
+  brand: zod.coerce.string().optional(),
+  model: zod.coerce.string().optional(),
+  style: zod.coerce.string().optional(),
+  color: zod.coerce.string().optional(),
+  condition: zod.coerce.string().optional(),
+  minPrice: zod.coerce
+    .number()
+    .min(listAdminListingsQueryMinPriceMin)
+    .optional(),
+  maxPrice: zod.coerce
+    .number()
+    .min(listAdminListingsQueryMaxPriceMin)
+    .optional(),
+  availability: zod
+    .enum(["all", "available", "sold", "reserved", "unknown"])
+    .default(listAdminListingsQueryAvailabilityDefault)
+    .describe('Availability status — defaults to \"all\".'),
+});
+
+export const ListAdminListingsResponse = zod.object({
+  items: zod.array(
+    zod.object({
+      id: zod.number(),
+      sourceId: zod.number(),
+      sourceName: zod.string(),
+      sourceSlug: zod.string(),
+      sourceUrl: zod.string(),
+      sourceListingId: zod.string().optional(),
+      title: zod.string(),
+      brand: zod.string(),
+      model: zod.string().nullish(),
+      style: zod.string().nullish(),
+      condition: zod.string().nullish(),
+      color: zod.string().nullish(),
+      size: zod.string().nullish(),
+      normalizedBrand: zod.string(),
+      normalizedModel: zod.string().nullish(),
+      normalizedStyle: zod.string().nullish(),
+      normalizedCondition: zod.string().nullish(),
+      normalizedColor: zod.string().nullish(),
+      price: zod.number(),
+      currency: zod.string(),
+      imageUrl: zod.string().nullish(),
+      availabilityStatus: zod.string(),
+      firstSeenAt: zod.coerce.date(),
+      lastSeenAt: zod.coerce.date(),
+    }),
+  ),
+  total: zod.number(),
+  limit: zod.number(),
+  offset: zod.number(),
+});
+
+/**
+ * Flat list of every user preference across all users — admin-only, used by the match debugger to pick a preference to test against a listing.
+ */
+export const ListAdminPreferencesResponseItem = zod.object({
+  id: zod.number(),
+  userId: zod.string(),
+  userEmail: zod.string().nullish(),
+  userFullName: zod.string().nullish(),
+  nickname: zod.string(),
+  active: zod.boolean(),
+  alertFrequency: zod.string(),
+});
+export const ListAdminPreferencesResponse = zod.array(
+  ListAdminPreferencesResponseItem,
+);
+
+/**
+ * Run the match engine against a chosen (preference, listing) pair and return the full result — score, reasons, disqualifiers, alert eligibility, and the resolved inputs (so the operator can see the normalized facts the engine actually saw).
+ */
+
+export const DebugMatchBody = zod.object({
+  preferenceId: zod.number().min(1),
+  listingId: zod.number().min(1),
+});
+
+export const DebugMatchResponse = zod.object({
+  matchScore: zod.number(),
+  matchType: zod.enum(["exact", "strong", "close", "weak", "rejected"]),
+  alertEligible: zod.boolean(),
+  explanation: zod.string(),
+  matchReasons: zod.array(
+    zod.object({
+      field: zod.string(),
+      value: zod.string(),
+      matched: zod.boolean(),
+      weight: zod.number(),
+      detail: zod.string().nullish(),
+    }),
+  ),
+  disqualifiers: zod.array(
+    zod.object({
+      field: zod.string(),
+      value: zod.string(),
+      reason: zod.string(),
+    }),
+  ),
+  preference: zod.object({
+    id: zod.number(),
+    userId: zod.string(),
+    nickname: zod.string(),
+    modelQuery: zod.string().nullish(),
+    minPrice: zod.number().nullish(),
+    maxPrice: zod.number().nullish(),
+    conditionMinName: zod.string().nullish(),
+    conditionMinRank: zod.number().nullish(),
+    onlyExactCriteria: zod.boolean(),
+    exactModelEnabled: zod.boolean(),
+    allowCloseMatches: zod.boolean(),
+    allowCloseColorMatch: zod.boolean(),
+    brands: zod.array(zod.string()),
+    styles: zod.array(zod.string()),
+    colors: zod.array(zod.string()),
+    sizes: zod.array(zod.string()),
+    colorFamilies: zod.array(zod.string()),
+  }),
+  listing: zod.object({
+    id: zod.number(),
+    title: zod.string(),
+    brand: zod.string(),
+    model: zod.string().nullish(),
+    style: zod.string().nullish(),
+    condition: zod.string().nullish(),
+    color: zod.string().nullish(),
+    size: zod.string().nullish(),
+    price: zod.number(),
+    currency: zod.string(),
+    normalizedBrand: zod.string(),
+    normalizedModel: zod.string().nullish(),
+    normalizedStyle: zod.string().nullish(),
+    normalizedCondition: zod.string().nullish(),
+    normalizedColor: zod.string().nullish(),
+    normalizedSize: zod.string().nullish(),
+    conditionRank: zod.number().nullish(),
+    colorFamily: zod.string().nullish(),
+  }),
+});
+
+export const ListTaxonomyBrandsResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  slug: zod.string(),
+  normalizedName: zod.string(),
+});
+export const ListTaxonomyBrandsResponse = zod.array(
+  ListTaxonomyBrandsResponseItem,
+);
+
+export const createTaxonomyBrandBodyNameMax = 100;
+
+export const createTaxonomyBrandBodySlugMax = 100;
+
+export const CreateTaxonomyBrandBody = zod.object({
+  name: zod.string().min(1).max(createTaxonomyBrandBodyNameMax),
+  slug: zod.string().min(1).max(createTaxonomyBrandBodySlugMax).optional(),
+});
+
+export const DeleteTaxonomyBrandParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const ListTaxonomyColorsResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  slug: zod.string(),
+  normalizedName: zod.string(),
+  family: zod.string(),
+  hex: zod.string().nullish(),
+});
+export const ListTaxonomyColorsResponse = zod.array(
+  ListTaxonomyColorsResponseItem,
+);
+
+export const createTaxonomyColorBodyNameMax = 100;
+
+export const createTaxonomyColorBodySlugMax = 100;
+
+export const createTaxonomyColorBodyFamilyMax = 50;
+
+export const createTaxonomyColorBodyHexMax = 9;
+
+export const CreateTaxonomyColorBody = zod.object({
+  name: zod.string().min(1).max(createTaxonomyColorBodyNameMax),
+  slug: zod.string().min(1).max(createTaxonomyColorBodySlugMax).optional(),
+  family: zod.string().min(1).max(createTaxonomyColorBodyFamilyMax),
+  hex: zod.string().max(createTaxonomyColorBodyHexMax).nullish(),
+});
+
+export const DeleteTaxonomyColorParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const ListTaxonomyConditionsResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  slug: zod.string(),
+  normalizedName: zod.string(),
+  rank: zod.number(),
+});
+export const ListTaxonomyConditionsResponse = zod.array(
+  ListTaxonomyConditionsResponseItem,
+);
+
+export const createTaxonomyConditionBodyNameMax = 100;
+
+export const createTaxonomyConditionBodySlugMax = 100;
+
+export const createTaxonomyConditionBodyRankMax = 99;
+
+export const CreateTaxonomyConditionBody = zod.object({
+  name: zod.string().min(1).max(createTaxonomyConditionBodyNameMax),
+  slug: zod.string().min(1).max(createTaxonomyConditionBodySlugMax).optional(),
+  rank: zod.number().min(1).max(createTaxonomyConditionBodyRankMax),
+});
+
+export const DeleteTaxonomyConditionParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const ListTaxonomySizesResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  slug: zod.string(),
+  normalizedName: zod.string(),
+});
+export const ListTaxonomySizesResponse = zod.array(
+  ListTaxonomySizesResponseItem,
+);
+
+export const createTaxonomySizeBodyNameMax = 100;
+
+export const createTaxonomySizeBodySlugMax = 100;
+
+export const CreateTaxonomySizeBody = zod.object({
+  name: zod.string().min(1).max(createTaxonomySizeBodyNameMax),
+  slug: zod.string().min(1).max(createTaxonomySizeBodySlugMax).optional(),
+});
+
+export const DeleteTaxonomySizeParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const ListTaxonomyStylesResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  slug: zod.string(),
+  normalizedName: zod.string(),
+});
+export const ListTaxonomyStylesResponse = zod.array(
+  ListTaxonomyStylesResponseItem,
+);
+
+export const createTaxonomyStyleBodyNameMax = 100;
+
+export const createTaxonomyStyleBodySlugMax = 100;
+
+export const CreateTaxonomyStyleBody = zod.object({
+  name: zod.string().min(1).max(createTaxonomyStyleBodyNameMax),
+  slug: zod.string().min(1).max(createTaxonomyStyleBodySlugMax).optional(),
+});
+
+export const DeleteTaxonomyStyleParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const ListTaxonomyModelsQueryParams = zod.object({
+  brandId: zod.coerce.number().optional(),
+});
+
+export const ListTaxonomyModelsResponseItem = zod.object({
+  id: zod.number(),
+  brandId: zod.number(),
+  brandName: zod.string(),
+  name: zod.string(),
+  normalizedName: zod.string(),
+});
+export const ListTaxonomyModelsResponse = zod.array(
+  ListTaxonomyModelsResponseItem,
+);
+
+export const createTaxonomyModelBodyNameMax = 100;
+
+export const CreateTaxonomyModelBody = zod.object({
+  brandId: zod.number().min(1),
+  name: zod.string().min(1).max(createTaxonomyModelBodyNameMax),
+});
+
+export const DeleteTaxonomyModelParams = zod.object({
+  id: zod.coerce.number(),
+});

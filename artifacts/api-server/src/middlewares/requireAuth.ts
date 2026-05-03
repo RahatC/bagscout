@@ -80,6 +80,20 @@ export async function requireAdmin(
     return;
   }
 
+  // DB-based admin flag (granted manually or via [DB] step in tests).
+  try {
+    const rows = await db
+      .select({ isAdmin: usersTable.isAdmin })
+      .from(usersTable)
+      .where(eq(usersTable.id, userId));
+    if (rows[0]?.isAdmin) {
+      next();
+      return;
+    }
+  } catch (err) {
+    req.log?.error({ err, userId }, "Failed to look up admin flag");
+  }
+
   // Fall back to Clerk publicMetadata.role
   try {
     const user = await clerkClient.users.getUser(userId);

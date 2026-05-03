@@ -17,6 +17,8 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  AdminListingPage,
+  AdminPreferenceSummary,
   Alert,
   AlertPreview,
   BagPreference,
@@ -26,18 +28,23 @@ import type {
   Condition,
   CreateBagPreferenceBody,
   DashboardSummary,
+  DebugMatch404,
   DigestRunResult,
   GetRecentMatchesParams,
   GetSimilarCheaperListingsParams,
   HealthStatus,
   IngestResult,
   IngestionLog,
+  ListAdminListingsParams,
   ListAlertsParams,
   ListIngestionLogsParams,
   ListListingsParams,
   ListMatchesParams,
+  ListTaxonomyModelsParams,
   Listing,
   ListingPage,
+  MatchDebugBody,
+  MatchDebugResult,
   MatchResult,
   PreferenceSuggestions,
   RunDigests503,
@@ -47,6 +54,13 @@ import type {
   Size,
   Source,
   SourceHealthReport,
+  TaxonomyBrandBody,
+  TaxonomyColorBody,
+  TaxonomyConditionBody,
+  TaxonomyError,
+  TaxonomyModel,
+  TaxonomyModelBody,
+  TaxonomySimpleBody,
   TriggerIngestBody,
   UpdateBagPreferenceBody,
   UpdateSource404,
@@ -2685,4 +2699,1631 @@ export const useRunDigests = <
   TContext
 > => {
   return useMutation(getRunDigestsMutationOptions(options));
+};
+
+/**
+ * Admin listing explorer — same listings table as the public endpoint, but with extra filters (source slug, availability status, free-text search) and no implicit "available only" filter.
+ */
+export const getListAdminListingsUrl = (params?: ListAdminListingsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/admin/listings?${stringifiedParams}`
+    : `/api/admin/listings`;
+};
+
+export const listAdminListings = async (
+  params?: ListAdminListingsParams,
+  options?: RequestInit,
+): Promise<AdminListingPage> => {
+  return customFetch<AdminListingPage>(getListAdminListingsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListAdminListingsQueryKey = (
+  params?: ListAdminListingsParams,
+) => {
+  return [`/api/admin/listings`, ...(params ? [params] : [])] as const;
+};
+
+export const getListAdminListingsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listAdminListings>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListAdminListingsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listAdminListings>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListAdminListingsQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listAdminListings>>
+  > = ({ signal }) => listAdminListings(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listAdminListings>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListAdminListingsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listAdminListings>>
+>;
+export type ListAdminListingsQueryError = ErrorType<unknown>;
+
+export function useListAdminListings<
+  TData = Awaited<ReturnType<typeof listAdminListings>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListAdminListingsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listAdminListings>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListAdminListingsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Flat list of every user preference across all users — admin-only, used by the match debugger to pick a preference to test against a listing.
+ */
+export const getListAdminPreferencesUrl = () => {
+  return `/api/admin/preferences`;
+};
+
+export const listAdminPreferences = async (
+  options?: RequestInit,
+): Promise<AdminPreferenceSummary[]> => {
+  return customFetch<AdminPreferenceSummary[]>(getListAdminPreferencesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListAdminPreferencesQueryKey = () => {
+  return [`/api/admin/preferences`] as const;
+};
+
+export const getListAdminPreferencesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listAdminPreferences>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listAdminPreferences>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListAdminPreferencesQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listAdminPreferences>>
+  > = ({ signal }) => listAdminPreferences({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listAdminPreferences>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListAdminPreferencesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listAdminPreferences>>
+>;
+export type ListAdminPreferencesQueryError = ErrorType<unknown>;
+
+export function useListAdminPreferences<
+  TData = Awaited<ReturnType<typeof listAdminPreferences>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listAdminPreferences>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListAdminPreferencesQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Run the match engine against a chosen (preference, listing) pair and return the full result — score, reasons, disqualifiers, alert eligibility, and the resolved inputs (so the operator can see the normalized facts the engine actually saw).
+ */
+export const getDebugMatchUrl = () => {
+  return `/api/admin/match-debug`;
+};
+
+export const debugMatch = async (
+  matchDebugBody: MatchDebugBody,
+  options?: RequestInit,
+): Promise<MatchDebugResult> => {
+  return customFetch<MatchDebugResult>(getDebugMatchUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(matchDebugBody),
+  });
+};
+
+export const getDebugMatchMutationOptions = <
+  TError = ErrorType<DebugMatch404>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof debugMatch>>,
+    TError,
+    { data: BodyType<MatchDebugBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof debugMatch>>,
+  TError,
+  { data: BodyType<MatchDebugBody> },
+  TContext
+> => {
+  const mutationKey = ["debugMatch"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof debugMatch>>,
+    { data: BodyType<MatchDebugBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return debugMatch(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DebugMatchMutationResult = NonNullable<
+  Awaited<ReturnType<typeof debugMatch>>
+>;
+export type DebugMatchMutationBody = BodyType<MatchDebugBody>;
+export type DebugMatchMutationError = ErrorType<DebugMatch404>;
+
+export const useDebugMatch = <
+  TError = ErrorType<DebugMatch404>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof debugMatch>>,
+    TError,
+    { data: BodyType<MatchDebugBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof debugMatch>>,
+  TError,
+  { data: BodyType<MatchDebugBody> },
+  TContext
+> => {
+  return useMutation(getDebugMatchMutationOptions(options));
+};
+
+export const getListTaxonomyBrandsUrl = () => {
+  return `/api/admin/taxonomy/brands`;
+};
+
+export const listTaxonomyBrands = async (
+  options?: RequestInit,
+): Promise<Brand[]> => {
+  return customFetch<Brand[]>(getListTaxonomyBrandsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListTaxonomyBrandsQueryKey = () => {
+  return [`/api/admin/taxonomy/brands`] as const;
+};
+
+export const getListTaxonomyBrandsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listTaxonomyBrands>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listTaxonomyBrands>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListTaxonomyBrandsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listTaxonomyBrands>>
+  > = ({ signal }) => listTaxonomyBrands({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listTaxonomyBrands>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListTaxonomyBrandsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listTaxonomyBrands>>
+>;
+export type ListTaxonomyBrandsQueryError = ErrorType<unknown>;
+
+export function useListTaxonomyBrands<
+  TData = Awaited<ReturnType<typeof listTaxonomyBrands>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listTaxonomyBrands>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListTaxonomyBrandsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export const getCreateTaxonomyBrandUrl = () => {
+  return `/api/admin/taxonomy/brands`;
+};
+
+export const createTaxonomyBrand = async (
+  taxonomyBrandBody: TaxonomyBrandBody,
+  options?: RequestInit,
+): Promise<Brand> => {
+  return customFetch<Brand>(getCreateTaxonomyBrandUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(taxonomyBrandBody),
+  });
+};
+
+export const getCreateTaxonomyBrandMutationOptions = <
+  TError = ErrorType<TaxonomyError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createTaxonomyBrand>>,
+    TError,
+    { data: BodyType<TaxonomyBrandBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createTaxonomyBrand>>,
+  TError,
+  { data: BodyType<TaxonomyBrandBody> },
+  TContext
+> => {
+  const mutationKey = ["createTaxonomyBrand"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createTaxonomyBrand>>,
+    { data: BodyType<TaxonomyBrandBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createTaxonomyBrand(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateTaxonomyBrandMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createTaxonomyBrand>>
+>;
+export type CreateTaxonomyBrandMutationBody = BodyType<TaxonomyBrandBody>;
+export type CreateTaxonomyBrandMutationError = ErrorType<TaxonomyError>;
+
+export const useCreateTaxonomyBrand = <
+  TError = ErrorType<TaxonomyError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createTaxonomyBrand>>,
+    TError,
+    { data: BodyType<TaxonomyBrandBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createTaxonomyBrand>>,
+  TError,
+  { data: BodyType<TaxonomyBrandBody> },
+  TContext
+> => {
+  return useMutation(getCreateTaxonomyBrandMutationOptions(options));
+};
+
+export const getDeleteTaxonomyBrandUrl = (id: number) => {
+  return `/api/admin/taxonomy/brands/${id}`;
+};
+
+export const deleteTaxonomyBrand = async (
+  id: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteTaxonomyBrandUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteTaxonomyBrandMutationOptions = <
+  TError = ErrorType<TaxonomyError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteTaxonomyBrand>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteTaxonomyBrand>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["deleteTaxonomyBrand"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteTaxonomyBrand>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteTaxonomyBrand(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteTaxonomyBrandMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteTaxonomyBrand>>
+>;
+
+export type DeleteTaxonomyBrandMutationError = ErrorType<TaxonomyError>;
+
+export const useDeleteTaxonomyBrand = <
+  TError = ErrorType<TaxonomyError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteTaxonomyBrand>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteTaxonomyBrand>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getDeleteTaxonomyBrandMutationOptions(options));
+};
+
+export const getListTaxonomyColorsUrl = () => {
+  return `/api/admin/taxonomy/colors`;
+};
+
+export const listTaxonomyColors = async (
+  options?: RequestInit,
+): Promise<Color[]> => {
+  return customFetch<Color[]>(getListTaxonomyColorsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListTaxonomyColorsQueryKey = () => {
+  return [`/api/admin/taxonomy/colors`] as const;
+};
+
+export const getListTaxonomyColorsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listTaxonomyColors>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listTaxonomyColors>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListTaxonomyColorsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listTaxonomyColors>>
+  > = ({ signal }) => listTaxonomyColors({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listTaxonomyColors>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListTaxonomyColorsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listTaxonomyColors>>
+>;
+export type ListTaxonomyColorsQueryError = ErrorType<unknown>;
+
+export function useListTaxonomyColors<
+  TData = Awaited<ReturnType<typeof listTaxonomyColors>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listTaxonomyColors>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListTaxonomyColorsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export const getCreateTaxonomyColorUrl = () => {
+  return `/api/admin/taxonomy/colors`;
+};
+
+export const createTaxonomyColor = async (
+  taxonomyColorBody: TaxonomyColorBody,
+  options?: RequestInit,
+): Promise<Color> => {
+  return customFetch<Color>(getCreateTaxonomyColorUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(taxonomyColorBody),
+  });
+};
+
+export const getCreateTaxonomyColorMutationOptions = <
+  TError = ErrorType<TaxonomyError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createTaxonomyColor>>,
+    TError,
+    { data: BodyType<TaxonomyColorBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createTaxonomyColor>>,
+  TError,
+  { data: BodyType<TaxonomyColorBody> },
+  TContext
+> => {
+  const mutationKey = ["createTaxonomyColor"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createTaxonomyColor>>,
+    { data: BodyType<TaxonomyColorBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createTaxonomyColor(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateTaxonomyColorMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createTaxonomyColor>>
+>;
+export type CreateTaxonomyColorMutationBody = BodyType<TaxonomyColorBody>;
+export type CreateTaxonomyColorMutationError = ErrorType<TaxonomyError>;
+
+export const useCreateTaxonomyColor = <
+  TError = ErrorType<TaxonomyError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createTaxonomyColor>>,
+    TError,
+    { data: BodyType<TaxonomyColorBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createTaxonomyColor>>,
+  TError,
+  { data: BodyType<TaxonomyColorBody> },
+  TContext
+> => {
+  return useMutation(getCreateTaxonomyColorMutationOptions(options));
+};
+
+export const getDeleteTaxonomyColorUrl = (id: number) => {
+  return `/api/admin/taxonomy/colors/${id}`;
+};
+
+export const deleteTaxonomyColor = async (
+  id: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteTaxonomyColorUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteTaxonomyColorMutationOptions = <
+  TError = ErrorType<TaxonomyError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteTaxonomyColor>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteTaxonomyColor>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["deleteTaxonomyColor"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteTaxonomyColor>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteTaxonomyColor(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteTaxonomyColorMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteTaxonomyColor>>
+>;
+
+export type DeleteTaxonomyColorMutationError = ErrorType<TaxonomyError>;
+
+export const useDeleteTaxonomyColor = <
+  TError = ErrorType<TaxonomyError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteTaxonomyColor>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteTaxonomyColor>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getDeleteTaxonomyColorMutationOptions(options));
+};
+
+export const getListTaxonomyConditionsUrl = () => {
+  return `/api/admin/taxonomy/conditions`;
+};
+
+export const listTaxonomyConditions = async (
+  options?: RequestInit,
+): Promise<Condition[]> => {
+  return customFetch<Condition[]>(getListTaxonomyConditionsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListTaxonomyConditionsQueryKey = () => {
+  return [`/api/admin/taxonomy/conditions`] as const;
+};
+
+export const getListTaxonomyConditionsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listTaxonomyConditions>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listTaxonomyConditions>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListTaxonomyConditionsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listTaxonomyConditions>>
+  > = ({ signal }) => listTaxonomyConditions({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listTaxonomyConditions>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListTaxonomyConditionsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listTaxonomyConditions>>
+>;
+export type ListTaxonomyConditionsQueryError = ErrorType<unknown>;
+
+export function useListTaxonomyConditions<
+  TData = Awaited<ReturnType<typeof listTaxonomyConditions>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listTaxonomyConditions>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListTaxonomyConditionsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export const getCreateTaxonomyConditionUrl = () => {
+  return `/api/admin/taxonomy/conditions`;
+};
+
+export const createTaxonomyCondition = async (
+  taxonomyConditionBody: TaxonomyConditionBody,
+  options?: RequestInit,
+): Promise<Condition> => {
+  return customFetch<Condition>(getCreateTaxonomyConditionUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(taxonomyConditionBody),
+  });
+};
+
+export const getCreateTaxonomyConditionMutationOptions = <
+  TError = ErrorType<TaxonomyError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createTaxonomyCondition>>,
+    TError,
+    { data: BodyType<TaxonomyConditionBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createTaxonomyCondition>>,
+  TError,
+  { data: BodyType<TaxonomyConditionBody> },
+  TContext
+> => {
+  const mutationKey = ["createTaxonomyCondition"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createTaxonomyCondition>>,
+    { data: BodyType<TaxonomyConditionBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createTaxonomyCondition(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateTaxonomyConditionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createTaxonomyCondition>>
+>;
+export type CreateTaxonomyConditionMutationBody =
+  BodyType<TaxonomyConditionBody>;
+export type CreateTaxonomyConditionMutationError = ErrorType<TaxonomyError>;
+
+export const useCreateTaxonomyCondition = <
+  TError = ErrorType<TaxonomyError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createTaxonomyCondition>>,
+    TError,
+    { data: BodyType<TaxonomyConditionBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createTaxonomyCondition>>,
+  TError,
+  { data: BodyType<TaxonomyConditionBody> },
+  TContext
+> => {
+  return useMutation(getCreateTaxonomyConditionMutationOptions(options));
+};
+
+export const getDeleteTaxonomyConditionUrl = (id: number) => {
+  return `/api/admin/taxonomy/conditions/${id}`;
+};
+
+export const deleteTaxonomyCondition = async (
+  id: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteTaxonomyConditionUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteTaxonomyConditionMutationOptions = <
+  TError = ErrorType<TaxonomyError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteTaxonomyCondition>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteTaxonomyCondition>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["deleteTaxonomyCondition"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteTaxonomyCondition>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteTaxonomyCondition(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteTaxonomyConditionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteTaxonomyCondition>>
+>;
+
+export type DeleteTaxonomyConditionMutationError = ErrorType<TaxonomyError>;
+
+export const useDeleteTaxonomyCondition = <
+  TError = ErrorType<TaxonomyError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteTaxonomyCondition>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteTaxonomyCondition>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getDeleteTaxonomyConditionMutationOptions(options));
+};
+
+export const getListTaxonomySizesUrl = () => {
+  return `/api/admin/taxonomy/sizes`;
+};
+
+export const listTaxonomySizes = async (
+  options?: RequestInit,
+): Promise<Size[]> => {
+  return customFetch<Size[]>(getListTaxonomySizesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListTaxonomySizesQueryKey = () => {
+  return [`/api/admin/taxonomy/sizes`] as const;
+};
+
+export const getListTaxonomySizesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listTaxonomySizes>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listTaxonomySizes>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListTaxonomySizesQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listTaxonomySizes>>
+  > = ({ signal }) => listTaxonomySizes({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listTaxonomySizes>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListTaxonomySizesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listTaxonomySizes>>
+>;
+export type ListTaxonomySizesQueryError = ErrorType<unknown>;
+
+export function useListTaxonomySizes<
+  TData = Awaited<ReturnType<typeof listTaxonomySizes>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listTaxonomySizes>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListTaxonomySizesQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export const getCreateTaxonomySizeUrl = () => {
+  return `/api/admin/taxonomy/sizes`;
+};
+
+export const createTaxonomySize = async (
+  taxonomySimpleBody: TaxonomySimpleBody,
+  options?: RequestInit,
+): Promise<Size> => {
+  return customFetch<Size>(getCreateTaxonomySizeUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(taxonomySimpleBody),
+  });
+};
+
+export const getCreateTaxonomySizeMutationOptions = <
+  TError = ErrorType<TaxonomyError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createTaxonomySize>>,
+    TError,
+    { data: BodyType<TaxonomySimpleBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createTaxonomySize>>,
+  TError,
+  { data: BodyType<TaxonomySimpleBody> },
+  TContext
+> => {
+  const mutationKey = ["createTaxonomySize"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createTaxonomySize>>,
+    { data: BodyType<TaxonomySimpleBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createTaxonomySize(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateTaxonomySizeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createTaxonomySize>>
+>;
+export type CreateTaxonomySizeMutationBody = BodyType<TaxonomySimpleBody>;
+export type CreateTaxonomySizeMutationError = ErrorType<TaxonomyError>;
+
+export const useCreateTaxonomySize = <
+  TError = ErrorType<TaxonomyError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createTaxonomySize>>,
+    TError,
+    { data: BodyType<TaxonomySimpleBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createTaxonomySize>>,
+  TError,
+  { data: BodyType<TaxonomySimpleBody> },
+  TContext
+> => {
+  return useMutation(getCreateTaxonomySizeMutationOptions(options));
+};
+
+export const getDeleteTaxonomySizeUrl = (id: number) => {
+  return `/api/admin/taxonomy/sizes/${id}`;
+};
+
+export const deleteTaxonomySize = async (
+  id: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteTaxonomySizeUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteTaxonomySizeMutationOptions = <
+  TError = ErrorType<TaxonomyError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteTaxonomySize>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteTaxonomySize>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["deleteTaxonomySize"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteTaxonomySize>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteTaxonomySize(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteTaxonomySizeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteTaxonomySize>>
+>;
+
+export type DeleteTaxonomySizeMutationError = ErrorType<TaxonomyError>;
+
+export const useDeleteTaxonomySize = <
+  TError = ErrorType<TaxonomyError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteTaxonomySize>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteTaxonomySize>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getDeleteTaxonomySizeMutationOptions(options));
+};
+
+export const getListTaxonomyStylesUrl = () => {
+  return `/api/admin/taxonomy/styles`;
+};
+
+export const listTaxonomyStyles = async (
+  options?: RequestInit,
+): Promise<BagStyle[]> => {
+  return customFetch<BagStyle[]>(getListTaxonomyStylesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListTaxonomyStylesQueryKey = () => {
+  return [`/api/admin/taxonomy/styles`] as const;
+};
+
+export const getListTaxonomyStylesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listTaxonomyStyles>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listTaxonomyStyles>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListTaxonomyStylesQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listTaxonomyStyles>>
+  > = ({ signal }) => listTaxonomyStyles({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listTaxonomyStyles>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListTaxonomyStylesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listTaxonomyStyles>>
+>;
+export type ListTaxonomyStylesQueryError = ErrorType<unknown>;
+
+export function useListTaxonomyStyles<
+  TData = Awaited<ReturnType<typeof listTaxonomyStyles>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listTaxonomyStyles>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListTaxonomyStylesQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export const getCreateTaxonomyStyleUrl = () => {
+  return `/api/admin/taxonomy/styles`;
+};
+
+export const createTaxonomyStyle = async (
+  taxonomySimpleBody: TaxonomySimpleBody,
+  options?: RequestInit,
+): Promise<BagStyle> => {
+  return customFetch<BagStyle>(getCreateTaxonomyStyleUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(taxonomySimpleBody),
+  });
+};
+
+export const getCreateTaxonomyStyleMutationOptions = <
+  TError = ErrorType<TaxonomyError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createTaxonomyStyle>>,
+    TError,
+    { data: BodyType<TaxonomySimpleBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createTaxonomyStyle>>,
+  TError,
+  { data: BodyType<TaxonomySimpleBody> },
+  TContext
+> => {
+  const mutationKey = ["createTaxonomyStyle"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createTaxonomyStyle>>,
+    { data: BodyType<TaxonomySimpleBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createTaxonomyStyle(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateTaxonomyStyleMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createTaxonomyStyle>>
+>;
+export type CreateTaxonomyStyleMutationBody = BodyType<TaxonomySimpleBody>;
+export type CreateTaxonomyStyleMutationError = ErrorType<TaxonomyError>;
+
+export const useCreateTaxonomyStyle = <
+  TError = ErrorType<TaxonomyError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createTaxonomyStyle>>,
+    TError,
+    { data: BodyType<TaxonomySimpleBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createTaxonomyStyle>>,
+  TError,
+  { data: BodyType<TaxonomySimpleBody> },
+  TContext
+> => {
+  return useMutation(getCreateTaxonomyStyleMutationOptions(options));
+};
+
+export const getDeleteTaxonomyStyleUrl = (id: number) => {
+  return `/api/admin/taxonomy/styles/${id}`;
+};
+
+export const deleteTaxonomyStyle = async (
+  id: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteTaxonomyStyleUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteTaxonomyStyleMutationOptions = <
+  TError = ErrorType<TaxonomyError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteTaxonomyStyle>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteTaxonomyStyle>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["deleteTaxonomyStyle"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteTaxonomyStyle>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteTaxonomyStyle(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteTaxonomyStyleMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteTaxonomyStyle>>
+>;
+
+export type DeleteTaxonomyStyleMutationError = ErrorType<TaxonomyError>;
+
+export const useDeleteTaxonomyStyle = <
+  TError = ErrorType<TaxonomyError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteTaxonomyStyle>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteTaxonomyStyle>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getDeleteTaxonomyStyleMutationOptions(options));
+};
+
+export const getListTaxonomyModelsUrl = (params?: ListTaxonomyModelsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/admin/taxonomy/models?${stringifiedParams}`
+    : `/api/admin/taxonomy/models`;
+};
+
+export const listTaxonomyModels = async (
+  params?: ListTaxonomyModelsParams,
+  options?: RequestInit,
+): Promise<TaxonomyModel[]> => {
+  return customFetch<TaxonomyModel[]>(getListTaxonomyModelsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListTaxonomyModelsQueryKey = (
+  params?: ListTaxonomyModelsParams,
+) => {
+  return [`/api/admin/taxonomy/models`, ...(params ? [params] : [])] as const;
+};
+
+export const getListTaxonomyModelsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listTaxonomyModels>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListTaxonomyModelsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listTaxonomyModels>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListTaxonomyModelsQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listTaxonomyModels>>
+  > = ({ signal }) => listTaxonomyModels(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listTaxonomyModels>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListTaxonomyModelsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listTaxonomyModels>>
+>;
+export type ListTaxonomyModelsQueryError = ErrorType<unknown>;
+
+export function useListTaxonomyModels<
+  TData = Awaited<ReturnType<typeof listTaxonomyModels>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListTaxonomyModelsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listTaxonomyModels>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListTaxonomyModelsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export const getCreateTaxonomyModelUrl = () => {
+  return `/api/admin/taxonomy/models`;
+};
+
+export const createTaxonomyModel = async (
+  taxonomyModelBody: TaxonomyModelBody,
+  options?: RequestInit,
+): Promise<TaxonomyModel> => {
+  return customFetch<TaxonomyModel>(getCreateTaxonomyModelUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(taxonomyModelBody),
+  });
+};
+
+export const getCreateTaxonomyModelMutationOptions = <
+  TError = ErrorType<TaxonomyError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createTaxonomyModel>>,
+    TError,
+    { data: BodyType<TaxonomyModelBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createTaxonomyModel>>,
+  TError,
+  { data: BodyType<TaxonomyModelBody> },
+  TContext
+> => {
+  const mutationKey = ["createTaxonomyModel"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createTaxonomyModel>>,
+    { data: BodyType<TaxonomyModelBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createTaxonomyModel(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateTaxonomyModelMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createTaxonomyModel>>
+>;
+export type CreateTaxonomyModelMutationBody = BodyType<TaxonomyModelBody>;
+export type CreateTaxonomyModelMutationError = ErrorType<TaxonomyError>;
+
+export const useCreateTaxonomyModel = <
+  TError = ErrorType<TaxonomyError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createTaxonomyModel>>,
+    TError,
+    { data: BodyType<TaxonomyModelBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createTaxonomyModel>>,
+  TError,
+  { data: BodyType<TaxonomyModelBody> },
+  TContext
+> => {
+  return useMutation(getCreateTaxonomyModelMutationOptions(options));
+};
+
+export const getDeleteTaxonomyModelUrl = (id: number) => {
+  return `/api/admin/taxonomy/models/${id}`;
+};
+
+export const deleteTaxonomyModel = async (
+  id: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteTaxonomyModelUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteTaxonomyModelMutationOptions = <
+  TError = ErrorType<TaxonomyError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteTaxonomyModel>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteTaxonomyModel>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["deleteTaxonomyModel"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteTaxonomyModel>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteTaxonomyModel(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteTaxonomyModelMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteTaxonomyModel>>
+>;
+
+export type DeleteTaxonomyModelMutationError = ErrorType<TaxonomyError>;
+
+export const useDeleteTaxonomyModel = <
+  TError = ErrorType<TaxonomyError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteTaxonomyModel>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteTaxonomyModel>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getDeleteTaxonomyModelMutationOptions(options));
 };

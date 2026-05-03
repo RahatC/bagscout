@@ -460,6 +460,220 @@ export interface IngestResult {
   errors?: string[];
 }
 
+export interface AdminListing {
+  id: number;
+  sourceId: number;
+  sourceName: string;
+  sourceSlug: string;
+  sourceUrl: string;
+  sourceListingId?: string;
+  title: string;
+  brand: string;
+  model?: string | null;
+  style?: string | null;
+  condition?: string | null;
+  color?: string | null;
+  size?: string | null;
+  normalizedBrand: string;
+  normalizedModel?: string | null;
+  normalizedStyle?: string | null;
+  normalizedCondition?: string | null;
+  normalizedColor?: string | null;
+  price: number;
+  currency: string;
+  imageUrl?: string | null;
+  availabilityStatus: string;
+  firstSeenAt: string;
+  lastSeenAt: string;
+}
+
+export interface AdminListingPage {
+  items: AdminListing[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface AdminPreferenceSummary {
+  id: number;
+  userId: string;
+  userEmail?: string | null;
+  userFullName?: string | null;
+  nickname: string;
+  active: boolean;
+  alertFrequency: string;
+}
+
+export interface MatchDebugBody {
+  /** @minimum 1 */
+  preferenceId: number;
+  /** @minimum 1 */
+  listingId: number;
+}
+
+export interface MatchReasonItem {
+  field: string;
+  value: string;
+  matched: boolean;
+  weight: number;
+  detail?: string | null;
+}
+
+export interface DisqualifierItem {
+  field: string;
+  value: string;
+  reason: string;
+}
+
+export interface MatchDebugResolvedPreference {
+  id: number;
+  userId: string;
+  nickname: string;
+  modelQuery?: string | null;
+  minPrice?: number | null;
+  maxPrice?: number | null;
+  conditionMinName?: string | null;
+  conditionMinRank?: number | null;
+  onlyExactCriteria: boolean;
+  exactModelEnabled: boolean;
+  allowCloseMatches: boolean;
+  allowCloseColorMatch: boolean;
+  brands: string[];
+  styles: string[];
+  colors: string[];
+  sizes: string[];
+  colorFamilies: string[];
+}
+
+export interface MatchDebugResolvedListing {
+  id: number;
+  title: string;
+  brand: string;
+  model?: string | null;
+  style?: string | null;
+  condition?: string | null;
+  color?: string | null;
+  size?: string | null;
+  price: number;
+  currency: string;
+  normalizedBrand: string;
+  normalizedModel?: string | null;
+  normalizedStyle?: string | null;
+  normalizedCondition?: string | null;
+  normalizedColor?: string | null;
+  normalizedSize?: string | null;
+  conditionRank?: number | null;
+  colorFamily?: string | null;
+}
+
+export type MatchDebugResultMatchType =
+  (typeof MatchDebugResultMatchType)[keyof typeof MatchDebugResultMatchType];
+
+export const MatchDebugResultMatchType = {
+  exact: "exact",
+  strong: "strong",
+  close: "close",
+  weak: "weak",
+  rejected: "rejected",
+} as const;
+
+export interface MatchDebugResult {
+  matchScore: number;
+  matchType: MatchDebugResultMatchType;
+  alertEligible: boolean;
+  explanation: string;
+  matchReasons: MatchReasonItem[];
+  disqualifiers: DisqualifierItem[];
+  preference: MatchDebugResolvedPreference;
+  listing: MatchDebugResolvedListing;
+}
+
+export interface TaxonomyError {
+  error: string;
+}
+
+export interface TaxonomyBrandBody {
+  /**
+   * @minLength 1
+   * @maxLength 100
+   */
+  name: string;
+  /**
+   * @minLength 1
+   * @maxLength 100
+   */
+  slug?: string;
+}
+
+export interface TaxonomyColorBody {
+  /**
+   * @minLength 1
+   * @maxLength 100
+   */
+  name: string;
+  /**
+   * @minLength 1
+   * @maxLength 100
+   */
+  slug?: string;
+  /**
+   * @minLength 1
+   * @maxLength 50
+   */
+  family: string;
+  /** @maxLength 9 */
+  hex?: string | null;
+}
+
+export interface TaxonomyConditionBody {
+  /**
+   * @minLength 1
+   * @maxLength 100
+   */
+  name: string;
+  /**
+   * @minLength 1
+   * @maxLength 100
+   */
+  slug?: string;
+  /**
+   * @minimum 1
+   * @maximum 99
+   */
+  rank: number;
+}
+
+export interface TaxonomySimpleBody {
+  /**
+   * @minLength 1
+   * @maxLength 100
+   */
+  name: string;
+  /**
+   * @minLength 1
+   * @maxLength 100
+   */
+  slug?: string;
+}
+
+export interface TaxonomyModel {
+  id: number;
+  brandId: number;
+  brandName: string;
+  name: string;
+  normalizedName: string;
+}
+
+export interface TaxonomyModelBody {
+  /** @minimum 1 */
+  brandId: number;
+  /**
+   * @minLength 1
+   * @maxLength 100
+   */
+  name: string;
+}
+
 export type ListListingsParams = {
   brand?: string;
   condition?: string;
@@ -502,4 +716,60 @@ export type ListIngestionLogsParams = {
 
 export type RunDigests503 = {
   error: string;
+};
+
+export type ListAdminListingsParams = {
+  /**
+   * @minimum 1
+   * @maximum 200
+   */
+  limit?: number;
+  /**
+   * @minimum 0
+   */
+  offset?: number;
+  /**
+   * Free-text match against title, brand, model, or color.
+   */
+  q?: string;
+  /**
+   * Source slug.
+   */
+  source?: string;
+  brand?: string;
+  model?: string;
+  style?: string;
+  color?: string;
+  condition?: string;
+  /**
+   * @minimum 0
+   */
+  minPrice?: number;
+  /**
+   * @minimum 0
+   */
+  maxPrice?: number;
+  /**
+   * Availability status — defaults to "all".
+   */
+  availability?: ListAdminListingsAvailability;
+};
+
+export type ListAdminListingsAvailability =
+  (typeof ListAdminListingsAvailability)[keyof typeof ListAdminListingsAvailability];
+
+export const ListAdminListingsAvailability = {
+  all: "all",
+  available: "available",
+  sold: "sold",
+  reserved: "reserved",
+  unknown: "unknown",
+} as const;
+
+export type DebugMatch404 = {
+  error: string;
+};
+
+export type ListTaxonomyModelsParams = {
+  brandId?: number;
 };
