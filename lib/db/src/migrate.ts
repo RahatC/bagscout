@@ -118,14 +118,3 @@ export async function runMigrations(
   }
 }
 
-const invokedDirectly =
-  process.argv[1] !== undefined &&
-  fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
-
-if (invokedDirectly) {
-  runMigrations().catch((err) => {
-    // eslint-disable-next-line no-console
-    console.error("[db:migrate] migration failed:", err);
-    process.exit(1);
-  });
-}
