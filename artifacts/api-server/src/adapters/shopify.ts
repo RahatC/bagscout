@@ -95,8 +95,20 @@ export function mapShopifyProduct(
   const originalPrice =
     Number.isFinite(compareAt) && compareAt > price ? compareAt : undefined;
 
-  const image = product.images[0]?.src;
-  if (!image) return null;
+  // Most luxury Shopify storefronts (Fashionphile, Rebag) merchandise
+  // bag-only product shots first and on-model / lifestyle shots later.
+  // We prefer that natural order but additionally bias product-only shots
+  // to the front when filenames hint at a model/lifestyle photo.
+  const allImages = product.images
+    .map((i) => i.src)
+    .filter((s): s is string => typeof s === "string" && s.length > 0);
+  if (allImages.length === 0) return null;
+
+  const lifestyleHint = /(model|worn|lifestyle|outfit|editorial|on-?body|in-?use)/i;
+  const productOnly = allImages.filter((u) => !lifestyleHint.test(u));
+  const lifestyle = allImages.filter((u) => lifestyleHint.test(u));
+  const orderedImages = productOnly.length > 0 ? [...productOnly, ...lifestyle] : allImages;
+  const image = orderedImages[0];
 
   // Some merchandisers stuff the model and color into the title; fall back
   // to keyword-extraction so we still get usable normalized fields. Vendor
@@ -143,6 +155,7 @@ export function mapShopifyProduct(
     originalPrice,
     currency: "USD",
     imageUrl: image,
+    imageUrls: orderedImages,
     description: stripHtml(product.body_html ?? "", 600) ?? undefined,
     sourceUrl,
   };

@@ -220,6 +220,7 @@ export async function runMockIngest(
               normalized.discountPercent != null ? String(normalized.discountPercent) : null,
             currency: normalized.currency,
             imageUrl: normalized.imageUrl,
+            imageUrls: normalized.imageUrls,
             description: normalized.description,
             availabilityStatus: normalized.availabilityStatus,
           })
@@ -234,6 +235,8 @@ export async function runMockIngest(
               availabilityStatus: normalized.availabilityStatus,
               condition: normalized.condition,
               normalizedCondition: normalized.normalizedCondition,
+              imageUrl: normalized.imageUrl,
+              imageUrls: normalized.imageUrls,
               lastSeenAt: new Date(),
             },
           })

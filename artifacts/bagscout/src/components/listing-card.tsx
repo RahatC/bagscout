@@ -3,6 +3,8 @@ import {
   ExternalLink,
   Bookmark,
   ShieldCheck,
+  ChevronLeft,
+  ChevronRight,
   Clock,
   EyeOff,
   Sparkles,
@@ -10,11 +12,113 @@ import {
   Flame,
   Gem,
 } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import type { Listing, MatchReason } from "@workspace/api-client-react";
 import { formatDistanceToNow } from "date-fns";
+
+/**
+ * Image gallery for a listing card. Shows a single image when only one
+ * is available; otherwise renders a fade-cross-faded carousel with chevron
+ * arrows on hover and a row of dot indicators along the bottom.
+ */
+function ListingGallery({
+  images,
+  alt,
+}: {
+  images: string[];
+  alt: string;
+}) {
+  const [idx, setIdx] = useState(0);
+
+  if (images.length === 0) {
+    return (
+      <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-secondary/20">
+        No Image
+      </div>
+    );
+  }
+
+  const safeIdx = Math.min(idx, images.length - 1);
+  const goTo = (next: number) => {
+    const len = images.length;
+    setIdx(((next % len) + len) % len);
+  };
+
+  return (
+    <>
+      {images.map((src, i) => (
+        <img
+          key={src + i}
+          src={src}
+          alt={alt}
+          loading={i === 0 ? "eager" : "lazy"}
+          aria-hidden={i !== safeIdx}
+          className={`absolute inset-0 object-cover w-full h-full transition-opacity duration-300 ${
+            i === safeIdx
+              ? "opacity-100 group-hover:scale-105 transition-transform duration-500 ease-out"
+              : "opacity-0"
+          }`}
+        />
+      ))}
+
+      {images.length > 1 && (
+        <>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              goTo(safeIdx - 1);
+            }}
+            aria-label="Previous image"
+            className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-background/80 backdrop-blur-sm text-foreground opacity-0 group-hover:opacity-100 transition-opacity shadow-sm border border-border hover:bg-background z-10"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              goTo(safeIdx + 1);
+            }}
+            aria-label="Next image"
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-background/80 backdrop-blur-sm text-foreground opacity-0 group-hover:opacity-100 transition-opacity shadow-sm border border-border hover:bg-background z-10"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+
+          <div
+            className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-2 py-1 rounded-full bg-background/70 backdrop-blur-sm z-10"
+            aria-label={`Image ${safeIdx + 1} of ${images.length}`}
+          >
+            {images.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  goTo(i);
+                }}
+                aria-label={`Show image ${i + 1}`}
+                aria-current={i === safeIdx}
+                className={`w-1.5 h-1.5 rounded-full transition-all ${
+                  i === safeIdx
+                    ? "bg-foreground w-3"
+                    : "bg-foreground/40 hover:bg-foreground/70"
+                }`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </>
+  );
+}
 
 interface ListingCardProps {
   listing: Listing;
@@ -95,6 +199,16 @@ export function ListingCard({
   const lastSeen = new Date(listing.lastSeenAt);
   const wasUpdated = lastSeen.getTime() - firstSeen.getTime() > 60_000;
 
+  // Prefer the multi-image array; fall back to the legacy single image_url
+  // for older rows that haven't been re-ingested yet.
+  const galleryImages = useMemo(() => {
+    const arr = (listing.imageUrls ?? []).filter(
+      (u): u is string => typeof u === "string" && u.length > 0,
+    );
+    if (arr.length > 0) return arr;
+    return listing.imageUrl ? [listing.imageUrl] : [];
+  }, [listing.imageUrls, listing.imageUrl]);
+
   // Intelligence badges (only shown when the back-end has computed values).
   const dealBadge =
     listing.dealScore != null && listing.dealScore >= 70 ? (
@@ -172,17 +286,10 @@ export function ListingCard({
     >
       <Card className="overflow-hidden rounded-none border border-border group hover:border-primary/50 transition-all duration-300 h-full flex flex-col bg-card">
         <div className="relative aspect-square overflow-hidden bg-secondary/30">
-          {listing.imageUrl ? (
-            <img
-              src={listing.imageUrl}
-              alt={`${listing.brand} ${listing.model || ""}`}
-              className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500 ease-out"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-secondary/20">
-              No Image
-            </div>
-          )}
+          <ListingGallery
+            images={galleryImages}
+            alt={`${listing.brand} ${listing.model || ""}`}
+          />
 
           <div className="absolute top-3 left-3 flex flex-col gap-2 items-start">
             <Badge

@@ -1201,6 +1201,7 @@ components:
         - price
         - currency
         - availabilityStatus
+        - imageUrls
         - firstSeenAt
         - lastSeenAt
         - createdAt
@@ -1227,6 +1228,13 @@ components:
         originalPrice: { type: number, nullable: true }
         discountPercent: { type: number, nullable: true }
         imageUrl: { type: string, nullable: true }
+        imageUrls:
+          type: array
+          items: { type: string }
+          description: |
+            Full image gallery for the listing, in display order. The first
+            entry is the primary product shot; subsequent entries are
+            additional angles / lifestyle shots. Always present (may be empty).
         description: { type: string, nullable: true }
         availabilityStatus: { type: string }
         # Computed intelligence fields (refreshed every ingest cycle)

@@ -179,6 +179,11 @@ export interface Listing {
   originalPrice?: number | null;
   discountPercent?: number | null;
   imageUrl?: string | null;
+  /** Full image gallery for the listing, in display order. The first
+entry is the primary product shot; subsequent entries are
+additional angles / lifestyle shots. Always present (may be empty).
+ */
+  imageUrls: string[];
   description?: string | null;
   availabilityStatus: string;
   dealScore?: number | null;

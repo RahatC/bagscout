@@ -88,6 +88,28 @@ is the runtime dispatcher. The scheduler ticks every `INGEST_INTERVAL_MINUTES`
 (default 5) and per-source cadence is enforced via `sources.cadence_minutes`
 (default 60).
 
+### Listing image gallery (multi-image)
+
+- DB: `listings.image_urls text[] NOT NULL DEFAULT ARRAY[]::text[]`
+  (migration `0006_listings_image_urls.sql`). Legacy `image_url` column is
+  kept and still set on insert/update; `image_urls[1]` mirrors it as the
+  primary product shot.
+- Adapters fill `RawListing.imageUrls?: string[]` when the source exposes
+  a gallery. Shopify (`shopify.ts`) captures every product image and
+  reorders product-only shots ahead of any URL whose filename matches
+  `/(model|worn|lifestyle|outfit|editorial|on-?body|in-?use)/i` so the
+  first image is bag-only. `defaultNormalize` (`base.ts`) dedupes and
+  drops empties, falling back to `[raw.imageUrl]` for adapters that only
+  expose one image (Yoogi's Closet HTML grid, eBay, TheRealReal mock).
+- `mapListing` (`mappers.ts`) always returns a non-empty `imageUrls`
+  array when the row has any image, so the OpenAPI contract
+  (`Listing.imageUrls` is required) is honored even for older rows.
+- UI: `ListingGallery` inside `artifacts/bagscout/src/components/listing-card.tsx`
+  cross-fades between images, shows ChevronLeft / ChevronRight buttons
+  on hover (single-image listings hide both), and renders a row of
+  dot indicators (active dot widens to `w-3`). Live ingest counts:
+  FASHIONPHILE ~10.9 imgs/listing avg (max 25), Rebag ~6.5, Yoogi's 1.
+
 ## External Dependencies
 
 - **Authentication**: Clerk

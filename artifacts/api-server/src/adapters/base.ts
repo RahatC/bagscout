@@ -67,6 +67,21 @@ export function defaultNormalize(
     discountPercent,
     currency: raw.currency ?? "USD",
     imageUrl: raw.imageUrl,
+    // Dedupe + drop empties; ensure primary image_url is at position 0.
+    imageUrls: (() => {
+      const all = (raw.imageUrls && raw.imageUrls.length > 0)
+        ? raw.imageUrls
+        : [raw.imageUrl];
+      const seen = new Set<string>();
+      const out: string[] = [];
+      for (const u of all) {
+        const trimmed = (u ?? "").trim();
+        if (!trimmed || seen.has(trimmed)) continue;
+        seen.add(trimmed);
+        out.push(trimmed);
+      }
+      return out;
+    })(),
     description: raw.description ?? null,
     availabilityStatus: "available",
   };

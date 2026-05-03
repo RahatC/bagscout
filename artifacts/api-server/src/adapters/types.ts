@@ -26,6 +26,12 @@ export interface RawListing {
   originalPrice?: number;
   currency?: string;
   imageUrl: string;
+  /**
+   * Full image gallery for the listing. Order matters — the first entry
+   * is treated as the primary product shot. Adapters that only have one
+   * image may omit this; the ingest layer will fall back to `[imageUrl]`.
+   */
+  imageUrls?: string[];
   description?: string;
   /**
    * Optional canonical URL captured during scraping. When set, the
@@ -56,6 +62,7 @@ export interface NormalizedListing {
   discountPercent: number | null;
   currency: string;
   imageUrl: string;
+  imageUrls: string[];
   description: string | null;
   availabilityStatus: string;
 }

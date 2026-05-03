@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   pgTable,
   text,
@@ -40,6 +41,10 @@ export const listingsTable = pgTable(
     originalPrice: numeric("original_price", { precision: 10, scale: 2 }),
     discountPercent: numeric("discount_percent", { precision: 5, scale: 2 }),
     imageUrl: text("image_url"),
+    imageUrls: text("image_urls")
+      .array()
+      .notNull()
+      .default(sql`ARRAY[]::text[]`),
     description: text("description"),
     availabilityStatus: text("availability_status").notNull().default("available"),
     // Computed intelligence fields, refreshed on every snapshot.

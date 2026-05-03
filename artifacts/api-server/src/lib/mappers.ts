@@ -35,6 +35,9 @@ export function mapListing(l: DbListing, source: DbSource) {
     originalPrice: num(l.originalPrice),
     discountPercent: num(l.discountPercent),
     imageUrl: l.imageUrl,
+    imageUrls: l.imageUrls && l.imageUrls.length > 0
+      ? l.imageUrls
+      : (l.imageUrl ? [l.imageUrl] : []),
     description: l.description,
     availabilityStatus: l.availabilityStatus,
     dealScore: num(l.dealScore),

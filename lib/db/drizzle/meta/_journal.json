@@ -43,6 +43,13 @@
       "when": 1777759900000,
       "tag": "0005_seed_ebay_source",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1777795000000,
+      "tag": "0006_listings_image_urls",
+      "breakpoints": true
     }
   ]
 }

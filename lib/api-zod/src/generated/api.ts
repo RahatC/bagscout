@@ -343,6 +343,11 @@ export const GetPreferenceMatchesResponseItem = zod.object({
     originalPrice: zod.number().nullish(),
     discountPercent: zod.number().nullish(),
     imageUrl: zod.string().nullish(),
+    imageUrls: zod
+      .array(zod.string())
+      .describe(
+        "Full image gallery for the listing, in display order. The first\nentry is the primary product shot; subsequent entries are\nadditional angles \/ lifestyle shots. Always present (may be empty).\n",
+      ),
     description: zod.string().nullish(),
     availabilityStatus: zod.string(),
     dealScore: zod.number().nullish(),
@@ -423,6 +428,11 @@ export const ListListingsResponse = zod.object({
       originalPrice: zod.number().nullish(),
       discountPercent: zod.number().nullish(),
       imageUrl: zod.string().nullish(),
+      imageUrls: zod
+        .array(zod.string())
+        .describe(
+          "Full image gallery for the listing, in display order. The first\nentry is the primary product shot; subsequent entries are\nadditional angles \/ lifestyle shots. Always present (may be empty).\n",
+        ),
       description: zod.string().nullish(),
       availabilityStatus: zod.string(),
       dealScore: zod.number().nullish(),
@@ -467,6 +477,11 @@ export const GetFeaturedListingsResponseItem = zod.object({
   originalPrice: zod.number().nullish(),
   discountPercent: zod.number().nullish(),
   imageUrl: zod.string().nullish(),
+  imageUrls: zod
+    .array(zod.string())
+    .describe(
+      "Full image gallery for the listing, in display order. The first\nentry is the primary product shot; subsequent entries are\nadditional angles \/ lifestyle shots. Always present (may be empty).\n",
+    ),
   description: zod.string().nullish(),
   availabilityStatus: zod.string(),
   dealScore: zod.number().nullish(),
@@ -511,6 +526,11 @@ export const GetListingResponse = zod.object({
   originalPrice: zod.number().nullish(),
   discountPercent: zod.number().nullish(),
   imageUrl: zod.string().nullish(),
+  imageUrls: zod
+    .array(zod.string())
+    .describe(
+      "Full image gallery for the listing, in display order. The first\nentry is the primary product shot; subsequent entries are\nadditional angles \/ lifestyle shots. Always present (may be empty).\n",
+    ),
   description: zod.string().nullish(),
   availabilityStatus: zod.string(),
   dealScore: zod.number().nullish(),
@@ -560,6 +580,11 @@ export const GetSimilarCheaperListingsResponseItem = zod.object({
   originalPrice: zod.number().nullish(),
   discountPercent: zod.number().nullish(),
   imageUrl: zod.string().nullish(),
+  imageUrls: zod
+    .array(zod.string())
+    .describe(
+      "Full image gallery for the listing, in display order. The first\nentry is the primary product shot; subsequent entries are\nadditional angles \/ lifestyle shots. Always present (may be empty).\n",
+    ),
   description: zod.string().nullish(),
   availabilityStatus: zod.string(),
   dealScore: zod.number().nullish(),
@@ -613,6 +638,11 @@ export const ListMatchesResponseItem = zod.object({
     originalPrice: zod.number().nullish(),
     discountPercent: zod.number().nullish(),
     imageUrl: zod.string().nullish(),
+    imageUrls: zod
+      .array(zod.string())
+      .describe(
+        "Full image gallery for the listing, in display order. The first\nentry is the primary product shot; subsequent entries are\nadditional angles \/ lifestyle shots. Always present (may be empty).\n",
+      ),
     description: zod.string().nullish(),
     availabilityStatus: zod.string(),
     dealScore: zod.number().nullish(),
@@ -685,6 +715,11 @@ export const ListAlertsResponseItem = zod.object({
       originalPrice: zod.number().nullish(),
       discountPercent: zod.number().nullish(),
       imageUrl: zod.string().nullish(),
+      imageUrls: zod
+        .array(zod.string())
+        .describe(
+          "Full image gallery for the listing, in display order. The first\nentry is the primary product shot; subsequent entries are\nadditional angles \/ lifestyle shots. Always present (may be empty).\n",
+        ),
       description: zod.string().nullish(),
       availabilityStatus: zod.string(),
       dealScore: zod.number().nullish(),
@@ -752,6 +787,11 @@ export const MarkAlertReadResponse = zod.object({
       originalPrice: zod.number().nullish(),
       discountPercent: zod.number().nullish(),
       imageUrl: zod.string().nullish(),
+      imageUrls: zod
+        .array(zod.string())
+        .describe(
+          "Full image gallery for the listing, in display order. The first\nentry is the primary product shot; subsequent entries are\nadditional angles \/ lifestyle shots. Always present (may be empty).\n",
+        ),
       description: zod.string().nullish(),
       availabilityStatus: zod.string(),
       dealScore: zod.number().nullish(),
@@ -822,6 +862,11 @@ export const GetAlertPreviewResponse = zod.object({
     originalPrice: zod.number().nullish(),
     discountPercent: zod.number().nullish(),
     imageUrl: zod.string().nullish(),
+    imageUrls: zod
+      .array(zod.string())
+      .describe(
+        "Full image gallery for the listing, in display order. The first\nentry is the primary product shot; subsequent entries are\nadditional angles \/ lifestyle shots. Always present (may be empty).\n",
+      ),
     description: zod.string().nullish(),
     availabilityStatus: zod.string(),
     dealScore: zod.number().nullish(),
@@ -869,6 +914,11 @@ export const ListSavedListingsResponseItem = zod.object({
     originalPrice: zod.number().nullish(),
     discountPercent: zod.number().nullish(),
     imageUrl: zod.string().nullish(),
+    imageUrls: zod
+      .array(zod.string())
+      .describe(
+        "Full image gallery for the listing, in display order. The first\nentry is the primary product shot; subsequent entries are\nadditional angles \/ lifestyle shots. Always present (may be empty).\n",
+      ),
     description: zod.string().nullish(),
     availabilityStatus: zod.string(),
     dealScore: zod.number().nullish(),
@@ -949,6 +999,11 @@ export const GetRecentMatchesResponseItem = zod.object({
     originalPrice: zod.number().nullish(),
     discountPercent: zod.number().nullish(),
     imageUrl: zod.string().nullish(),
+    imageUrls: zod
+      .array(zod.string())
+      .describe(
+        "Full image gallery for the listing, in display order. The first\nentry is the primary product shot; subsequent entries are\nadditional angles \/ lifestyle shots. Always present (may be empty).\n",
+      ),
     description: zod.string().nullish(),
     availabilityStatus: zod.string(),
     dealScore: zod.number().nullish(),
@@ -1011,6 +1066,11 @@ export const GetPriceDropsResponseItem = zod.object({
   originalPrice: zod.number().nullish(),
   discountPercent: zod.number().nullish(),
   imageUrl: zod.string().nullish(),
+  imageUrls: zod
+    .array(zod.string())
+    .describe(
+      "Full image gallery for the listing, in display order. The first\nentry is the primary product shot; subsequent entries are\nadditional angles \/ lifestyle shots. Always present (may be empty).\n",
+    ),
   description: zod.string().nullish(),
   availabilityStatus: zod.string(),
   dealScore: zod.number().nullish(),
