@@ -28,6 +28,10 @@ BagScout is built as a pnpm workspace monorepo utilizing TypeScript.
 - `lib/api-client-react`: Generated React Query hooks for API interaction.
 - `lib/db`: Drizzle ORM schemas and database client.
 
+**Production readiness:** see `PRODUCTION_READINESS_AUDIT.md` for the latest
+audit (2026-05-03). Adapters default to **mock-only** (no live scraping) — set
+`INGEST_USE_MOCK_ADAPTERS=false` to opt back into the live HTTP paths in dev.
+
 **Database Schema Highlights:**
 - **Reference Data**: `brands`, `bag_styles`, `colors`, `sizes`, `conditions`, `sources`.
 - **User Data**: `users` (Clerk ID mirrored), `user_profiles`, `notification_preferences`.

@@ -113,11 +113,19 @@ export function createMockAdapter(opts: {
 }
 
 /**
- * Returns true when the runtime should use the static mock adapters
- * (e.g. tests, offline dev). Set `INGEST_USE_MOCK_ADAPTERS=true` in the env.
+ * Returns true when the runtime should use the static mock adapters.
+ *
+ * Default is **true** (mock-only) — the BagScout product runs on a hand-curated
+ * mock dataset by design (no third-party scraping in production). To opt into
+ * the live HTTP adapter paths in development, set
+ * `INGEST_USE_MOCK_ADAPTERS=false` (or `0`) in the env.
  */
 export function shouldUseMockAdapters(): boolean {
-  const v = process.env["INGEST_USE_MOCK_ADAPTERS"];
-  if (!v) return false;
-  return v === "1" || v.toLowerCase() === "true";
+  const raw = process.env["INGEST_USE_MOCK_ADAPTERS"];
+  if (raw === undefined) return true;
+  const v = raw.trim().toLowerCase();
+  if (v === "" || v === "1" || v === "true") return true;
+  if (v === "0" || v === "false") return false;
+  // Unknown values: log via thrown error path? Default safe = mock.
+  return true;
 }
