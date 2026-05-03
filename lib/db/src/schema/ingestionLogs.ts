@@ -24,6 +24,9 @@ export const ingestionLogsTable = pgTable("ingestion_logs", {
   recordsCreated: integer("records_created").notNull().default(0),
   recordsUpdated: integer("records_updated").notNull().default(0),
   errorMessage: text("error_message"),
+  // Clerk user id of the admin who triggered this run, when applicable.
+  // Null for scheduler-driven runs.
+  actorUserId: text("actor_user_id"),
   startedAt: timestamp("started_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

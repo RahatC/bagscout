@@ -1043,9 +1043,14 @@ export const ListSourcesResponseItem = zod.object({
 export const ListSourcesResponse = zod.array(ListSourcesResponseItem);
 
 export const listIngestionLogsQueryLimitDefault = 50;
+export const listIngestionLogsQueryLimitMax = 200;
 
 export const ListIngestionLogsQueryParams = zod.object({
-  limit: zod.coerce.number().default(listIngestionLogsQueryLimitDefault),
+  limit: zod.coerce
+    .number()
+    .min(1)
+    .max(listIngestionLogsQueryLimitMax)
+    .default(listIngestionLogsQueryLimitDefault),
 });
 
 export const ListIngestionLogsResponseItem = zod.object({
@@ -1058,6 +1063,7 @@ export const ListIngestionLogsResponseItem = zod.object({
   recordsCreated: zod.number(),
   recordsUpdated: zod.number(),
   errorMessage: zod.string().nullish(),
+  actorUserId: zod.string().nullish(),
   startedAt: zod.coerce.date(),
   completedAt: zod.coerce.date().nullish(),
 });

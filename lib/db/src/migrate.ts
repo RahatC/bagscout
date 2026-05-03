@@ -49,7 +49,7 @@ async function bootstrapBaselineIfNeeded(
 
     const journalPath = path.join(migrationsFolder, "meta", "_journal.json");
     const journal = JSON.parse(await readFile(journalPath, "utf8")) as {
-      entries: Array<{ tag: string }>;
+      entries: Array<{ tag: string; when: number }>;
     };
     const baseline = journal.entries[0];
     if (!baseline || baseline.tag !== "0000_baseline") {
@@ -73,9 +73,14 @@ async function bootstrapBaselineIfNeeded(
          created_at bigint
        )`,
     );
+    // IMPORTANT: stamp `created_at` with the baseline's `folderMillis` from
+    // the journal (not `Date.now()`). drizzle's migrator only applies
+    // migrations whose folderMillis is greater than the latest stored
+    // `created_at`; using `Date.now()` here would permanently skip every
+    // subsequent migration on this database.
     await client.query(
       `INSERT INTO "drizzle"."__drizzle_migrations" (hash, created_at) VALUES ($1, $2)`,
-      [hash, Date.now()],
+      [hash, baseline.when],
     );
   } finally {
     client.release();

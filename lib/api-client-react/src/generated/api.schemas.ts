@@ -394,6 +394,7 @@ export interface IngestionLog {
   recordsCreated: number;
   recordsUpdated: number;
   errorMessage?: string | null;
+  actorUserId?: string | null;
   startedAt: string;
   completedAt?: string | null;
 }
@@ -440,6 +441,10 @@ export type GetRecentMatchesParams = {
 };
 
 export type ListIngestionLogsParams = {
+  /**
+   * @minimum 1
+   * @maximum 200
+   */
   limit?: number;
 };
 
