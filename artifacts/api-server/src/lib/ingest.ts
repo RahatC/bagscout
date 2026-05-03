@@ -22,7 +22,7 @@ import {
 import { eq, and, count, desc, inArray } from "drizzle-orm";
 import { logger } from "./logger";
 import { normalizeText, conditionRank } from "./normalize";
-import { adapters, getAdapter } from "../adapters";
+import { adapters, getAdapter, getAdapterForSource } from "../adapters";
 import type { NormalizedListing } from "../adapters";
 import {
   evaluateMatch,
@@ -74,19 +74,6 @@ export async function runMockIngest(
   const errors: string[] = [];
   const jobType = opts.jobType ?? "manual";
 
-  const adapter = getAdapter(sourceSlug);
-  if (!adapter) {
-    return {
-      sourceSlug,
-      listingsFound: 0,
-      listingsAdded: 0,
-      listingsUpdated: 0,
-      listingsRejected: 0,
-      durationMs: Date.now() - startTime,
-      errors: [`No adapter registered for sourceSlug "${sourceSlug}"`],
-    };
-  }
-
   const [source] = await db
     .select()
     .from(sourcesTable)
@@ -101,6 +88,21 @@ export async function runMockIngest(
       listingsRejected: 0,
       durationMs: Date.now() - startTime,
       errors: [`Source row not found in DB for slug "${sourceSlug}"`],
+    };
+  }
+
+  // Per-source live/mock dispatcher: respects `sources.ingestion_mode`.
+  // Falls back to the legacy default adapter if the dispatcher returns nothing.
+  const adapter = getAdapterForSource(sourceSlug, source.ingestionMode) ?? getAdapter(sourceSlug);
+  if (!adapter) {
+    return {
+      sourceSlug,
+      listingsFound: 0,
+      listingsAdded: 0,
+      listingsUpdated: 0,
+      listingsRejected: 0,
+      durationMs: Date.now() - startTime,
+      errors: [`No adapter registered for sourceSlug "${sourceSlug}"`],
     };
   }
 

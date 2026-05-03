@@ -32,6 +32,8 @@ vi.mock("../adapters", async () => {
   return {
     adapters: [adapter],
     getAdapter: (s: string) => (s === slug ? adapter : undefined),
+    getAdapterForSource: (s: string, _mode: string) =>
+      s === slug ? adapter : undefined,
   };
 });
 
