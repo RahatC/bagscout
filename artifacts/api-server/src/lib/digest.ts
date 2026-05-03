@@ -13,6 +13,39 @@ import { renderAlertEmail } from "./alertEmail";
 import { sendEmail, getResendSender } from "./mailClient";
 import { logger } from "./logger";
 
+/**
+ * Parse a "HH:MM-HH:MM" quiet-hours window and decide whether `now` falls
+ * inside it. Returns false on any malformed input so a bad row never blocks
+ * delivery. Windows that cross midnight (e.g. "22:00-07:00") are supported.
+ *
+ * Times are interpreted in UTC because we do not yet store a per-user
+ * timezone; once a user_profiles.timezone column lands, callers should
+ * convert `now` to that zone before invoking this helper.
+ */
+export function isWithinQuietHours(quietHours: string, now: Date): boolean {
+  const m = /^(\d{2}):(\d{2})-(\d{2}):(\d{2})$/.exec(quietHours.trim());
+  if (!m) return false;
+  const sH = Number(m[1]);
+  const sM = Number(m[2]);
+  const eH = Number(m[3]);
+  const eM = Number(m[4]);
+  if (
+    sH > 23 || sH < 0 || eH > 23 || eH < 0 ||
+    sM > 59 || sM < 0 || eM > 59 || eM < 0
+  ) {
+    return false;
+  }
+  const startMin = sH * 60 + sM;
+  const endMin = eH * 60 + eM;
+  if (startMin === endMin) return false; // empty window
+  const nowMin = now.getUTCHours() * 60 + now.getUTCMinutes();
+  if (startMin < endMin) {
+    return nowMin >= startMin && nowMin < endMin;
+  }
+  // Wraps midnight: e.g. 22:00-07:00 means [22:00, 24:00) ∪ [00:00, 07:00).
+  return nowMin >= startMin || nowMin < endMin;
+}
+
 export type DigestRunResult = {
   dryRun: boolean;
   sender: string | null;
@@ -41,9 +74,10 @@ export type DigestRunResult = {
  * alerts pending and a follow-up run picks them up where it left off.
  */
 export async function runDigest(
-  opts: { dryRun?: boolean } = {},
+  opts: { dryRun?: boolean; now?: Date } = {},
 ): Promise<DigestRunResult> {
   const dryRun = opts.dryRun === true;
+  const now = opts.now ?? new Date();
 
   // Fetch every pending alert with all the joins the email template needs in
   // one round-trip.
@@ -85,13 +119,21 @@ export async function runDigest(
           ),
         )
     : [];
-  const prefIndex = new Map<string, boolean>();
+  const prefIndex = new Map<string, { enabled: boolean; quietHours: string | null }>();
   for (const p of prefRows) {
-    prefIndex.set(`${p.userId}::${p.alertType}`, p.enabled);
+    prefIndex.set(`${p.userId}::${p.alertType}`, {
+      enabled: p.enabled,
+      quietHours: p.quietHours,
+    });
   }
   const isEmailEnabled = (userId: string, alertType: string): boolean => {
     const v = prefIndex.get(`${userId}::${alertType}`);
-    return v == null ? true : v;
+    return v == null ? true : v.enabled;
+  };
+  const inQuietHours = (userId: string, alertType: string): boolean => {
+    const v = prefIndex.get(`${userId}::${alertType}`);
+    if (!v || !v.quietHours) return false;
+    return isWithinQuietHours(v.quietHours, now);
   };
 
   const byFrequency: Record<"realtime" | "daily" | "weekly", number> = {
@@ -154,6 +196,16 @@ export async function runDigest(
         alertId: a.id,
         userId: a.userId,
         reason: "email_opted_out",
+      });
+      continue;
+    }
+    if (inQuietHours(a.userId, a.alertType)) {
+      // Stays "pending" so a later digest tick (outside the window) can
+      // still deliver it.
+      skipped.push({
+        alertId: a.id,
+        userId: a.userId,
+        reason: "quiet_hours",
       });
       continue;
     }

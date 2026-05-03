@@ -1,0 +1,60 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`renderAlertEmail — output shape > html body matches snapshot (deterministic — no Date.now or random ids) 1`] = `
+"<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>New match: Chanel Classic Flap</title>
+</head>
+<body style="margin:0;padding:0;background:#f6f5f2;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1a1a1a;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6f5f2;padding:24px 0;">
+    <tr><td align="center">
+      <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e7e3da;">
+        <tr><td style="padding:24px 28px 8px 28px;">
+          <p style="margin:0;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#8a8378;">BagScout alert</p>
+          <h1 style="margin:8px 0 0 0;font-size:22px;line-height:1.3;color:#1a1a1a;">We found a match for your watchlist</h1>
+        </td></tr>
+        <tr><td style="padding:16px 28px 0 28px;"><img src="https://test.local/img/snap.jpg" alt="Chanel Classic Flap" style="display:block;width:100%;max-width:504px;height:auto;border-radius:8px;border:1px solid #ece8de;"></td></tr>
+        <tr><td style="padding:16px 28px 0 28px;">
+          <p style="margin:0;font-size:18px;font-weight:600;">Chanel Classic Flap</p>
+          <p style="margin:6px 0 0 0;font-size:18px;color:#1a1a1a;">$4,800<span style="color:#8a8378;font-size:14px;font-weight:400;">  (was $5,500)</span></p>
+        </td></tr>
+        <tr><td style="padding:16px 28px 0 28px;">
+          <p style="margin:0;font-size:14px;line-height:1.5;color:#1a1a1a;">Matched on brand, color, and size; price under your cap.</p>
+          <p style="margin:8px 0 0 0;font-size:13px;color:#8a5a00;background:#fff7e6;border:1px solid #f3e3b8;padding:8px 10px;border-radius:6px;">Newly listed in the last hour</p>
+        </td></tr>
+        <tr><td style="padding:16px 28px 0 28px;"><ul style="margin:0;padding:0 0 0 18px;font-size:13px;color:#4a4a4a;"><li style="margin:0 0 4px 0;">Watchlist: My Chanel Watchlist</li><li style="margin:0 0 4px 0;">Condition: Excellent</li><li style="margin:0 0 4px 0;">Color: Black</li><li style="margin:0 0 4px 0;">Source: Test Source</li></ul></td></tr>
+        <tr><td style="padding:24px 28px 28px 28px;">
+          <a href="https://bagscout.example.com/listings/99" style="display:inline-block;background:#1a1a1a;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-size:14px;font-weight:600;">View on BagScout</a>
+          <a href="https://test.local/listing/snap-001" style="display:inline-block;margin-left:8px;color:#1a1a1a;text-decoration:underline;padding:12px 4px;font-size:14px;">View original listing</a>
+        </td></tr>
+        <tr><td style="padding:0 28px 24px 28px;border-top:1px solid #ece8de;">
+          <p style="margin:16px 0 0 0;font-size:11px;color:#8a8378;">You're receiving this because you have a BagScout watchlist for My Chanel Watchlist. Manage email preferences in your account settings.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>"
+`;
+
+exports[`renderAlertEmail — output shape > subject + heading + text body match the new_match snapshot 2`] = `
+"We found a match for your watchlist
+
+Chanel Classic Flap — $4,800 (was $5,500)
+
+Matched on brand, color, and size; price under your cap.
+
+Newly listed in the last hour
+
+Watchlist: My Chanel Watchlist
+Condition: Excellent
+Color: Black
+Source: Test Source
+
+View on BagScout: https://bagscout.example.com/listings/99
+View original listing: https://test.local/listing/snap-001
+Save: https://bagscout.example.com/listings/99?save=1"
+`;
