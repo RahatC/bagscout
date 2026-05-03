@@ -59,7 +59,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         {navigation.map((item) => {
           const isActive = location === item.href || location.startsWith(`${item.href}/`);
           return (
-            <Link key={item.name} href={item.href}>
+            <Link key={item.name} href={item.href} aria-current={isActive ? "page" : undefined}>
               <div
                 className={`flex items-center justify-between rounded-none px-3 py-2 text-sm font-medium transition-colors cursor-pointer ${
                   isActive
@@ -77,7 +77,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   {item.name}
                 </div>
                 {item.badge && item.badge > 0 ? (
-                  <span className="bg-primary text-primary-foreground px-2 py-0.5 rounded-full text-xs font-bold">
+                  <span
+                    className="bg-primary text-primary-foreground px-2 py-0.5 rounded-full text-xs font-bold"
+                    aria-label={`${item.badge} unread`}
+                  >
                     {item.badge}
                   </span>
                 ) : null}
@@ -94,7 +97,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         {adminNavigation.map((item) => {
           const isActive = location === item.href;
           return (
-            <Link key={item.name} href={item.href}>
+            <Link key={item.name} href={item.href} aria-current={isActive ? "page" : undefined}>
               <div
                 className={`flex items-center rounded-none px-3 py-2 text-sm font-medium transition-colors cursor-pointer ${
                   isActive

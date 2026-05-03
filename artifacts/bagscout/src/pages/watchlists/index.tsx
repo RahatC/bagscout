@@ -1,4 +1,4 @@
-import { useLocation } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Plus, List as ListIcon, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -48,9 +48,12 @@ export default function WatchlistsPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              onClick={() => setLocation(`/watchlists/${pref.id}`)}
-              className="cursor-pointer"
             >
+              <Link
+                href={`/watchlists/${pref.id}`}
+                className="block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label={`Open watchlist ${pref.nickname}`}
+              >
               <Card className="rounded-none border-border shadow-none hover:border-primary/50 transition-colors h-full">
                 <CardContent className="p-6 h-full flex flex-col">
                   <div className="flex justify-between items-start mb-4">
@@ -118,6 +121,7 @@ export default function WatchlistsPage() {
                   </div>
                 </CardContent>
               </Card>
+              </Link>
             </motion.div>
           ))}
         </div>

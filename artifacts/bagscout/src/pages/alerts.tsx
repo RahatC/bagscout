@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { Bell, Check, CheckCircle2, ShieldCheck, Clock, Eye } from "lucide-react";
+import { Bell, Check, CheckCircle2, ShieldCheck, Clock, Eye, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -53,9 +53,9 @@ export default function AlertsPage() {
       case "new_match":
         return <ShieldCheck className="h-5 w-5 text-primary" />;
       case "price_drop":
-        return <div className="h-5 w-5 text-green-500 font-bold">↓</div>;
+        return <ArrowDown className="h-5 w-5 text-emerald-700" aria-label="Price drop" />;
       case "back_in_stock":
-        return <Clock className="h-5 w-5 text-blue-500" />;
+        return <Clock className="h-5 w-5 text-blue-700" aria-label="Back in stock" />;
       default:
         return <Bell className="h-5 w-5 text-muted-foreground" />;
     }
@@ -165,7 +165,7 @@ export default function AlertsPage() {
                               href={`/watchlists/${alert.preferenceId}`}
                               className="text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors flex items-center"
                             >
-                              Watchlist: {alert.preferenceNickname ?? "View"}
+                              Watchlist: {alert.preferenceNickname ?? "Open watchlist"}
                             </Link>
                           )}
                           <Link

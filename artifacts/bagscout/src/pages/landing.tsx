@@ -215,7 +215,7 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
               <span className="font-serif text-3xl font-bold tracking-tight mb-4 block">BagScout</span>
-              <p className="text-background/70 max-w-md mx-auto md:mx-0">
+              <p className="text-background/90 max-w-md mx-auto md:mx-0">
                 The premium platform for finding desired luxury handbags across trusted resale marketplaces.
               </p>
             </div>
@@ -228,7 +228,7 @@ export default function LandingPage() {
               </Link>
             </div>
           </div>
-          <div className="mt-16 pt-8 border-t border-background/20 text-sm text-background/50 flex flex-col md:flex-row justify-between items-center">
+          <div className="mt-16 pt-8 border-t border-background/30 text-sm text-background/80 flex flex-col md:flex-row justify-between items-center">
             <p>© {new Date().getFullYear()} BagScout. All rights reserved.</p>
             <p className="mt-2 md:mt-0">Not affiliated with any mentioned brands.</p>
           </div>

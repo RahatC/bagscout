@@ -83,7 +83,9 @@ export function SimilarCheaper({ listingId, basePrice, currency }: SimilarCheape
                 </div>
               </div>
               <span className="border-t border-border px-3 py-2 text-[10px] uppercase tracking-widest text-muted-foreground flex items-center justify-end gap-1">
-                View <ExternalLink className="w-3 h-3" />
+                View listing
+                <span className="sr-only">: {l.brand} {l.model ?? l.title}</span>
+                <ExternalLink className="w-3 h-3" />
               </span>
             </Link>
           );
