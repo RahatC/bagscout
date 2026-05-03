@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   ShieldCheck,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -27,6 +28,8 @@ import {
   useUpdateSource,
   useListIngestionLogs,
   getListIngestionLogsQueryKey,
+  useGetSourceHealth,
+  getGetSourceHealthQueryKey,
 } from "@workspace/api-client-react";
 import { Input } from "@/components/ui/input";
 import { useQueryClient } from "@tanstack/react-query";
@@ -44,6 +47,15 @@ export default function AdminPage() {
     { limit: 20 },
     { query: { queryKey: getListIngestionLogsQueryKey({ limit: 20 }) } },
   );
+
+  const { data: health, isLoading: isHealthLoading } = useGetSourceHealth({
+    query: {
+      queryKey: getGetSourceHealthQueryKey(),
+      // Refresh every minute so the dashboard surfaces silent breakage
+      // without requiring a manual reload.
+      refetchInterval: 60_000,
+    },
+  });
 
   const triggerIngest = useTriggerIngest();
   const updateSource = useUpdateSource();
@@ -108,6 +120,7 @@ export default function AdminPage() {
         onSuccess: (result) => {
           queryClient.invalidateQueries({ queryKey: getListSourcesQueryKey() });
           queryClient.invalidateQueries({ queryKey: getListIngestionLogsQueryKey({ limit: 20 }) });
+          queryClient.invalidateQueries({ queryKey: getGetSourceHealthQueryKey() });
           toast({
             title: "Ingestion Complete",
             description: `Synced ${result.listingsAdded} new + ${result.listingsUpdated} updated from ${name} in ${Math.round(result.durationMs / 1000)}s.`,
@@ -180,6 +193,27 @@ export default function AdminPage() {
           Monitor marketplace integrations and data ingestion health.
         </p>
       </div>
+
+      {health && !health.anySuccessIn24h && (
+        <div
+          role="alert"
+          className="border border-destructive/40 bg-destructive/10 text-destructive p-4 flex items-start gap-3"
+          data-testid="source-health-banner"
+        >
+          <AlertCircle className="w-5 h-5 mt-0.5 shrink-0" />
+          <div className="space-y-1">
+            <p className="font-semibold uppercase tracking-widest text-xs">
+              Ingestion Stalled
+            </p>
+            <p className="text-sm">
+              No active source has reported a successful run in the last 24
+              hours. The scouting feed is no longer fresh — review the source
+              freshness table below, then run a Force Sync or check the
+              ingestion logs.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="grid md:grid-cols-3 gap-6">
         <Card className="rounded-none shadow-none border-border">
@@ -329,6 +363,135 @@ export default function AdminPage() {
                         />
                         {ingestingSource === source.slug ? "Syncing..." : "Force Sync"}
                       </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-none shadow-none border-border overflow-hidden">
+        <CardHeader className="bg-secondary/30 border-b border-border pb-4">
+          <CardTitle className="font-serif text-xl">Source Freshness</CardTitle>
+          <CardDescription>
+            Last successful run, latest error, and listings ingested in the
+            last 24 hours per source.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          {isHealthLoading ? (
+            <div className="p-6 space-y-4">
+              {[1, 2, 3, 4].map((i) => (
+                <Skeleton key={i} className="h-12 w-full rounded-none" />
+              ))}
+            </div>
+          ) : !health || health.sources.length === 0 ? (
+            <p className="p-6 text-sm text-muted-foreground">
+              No source health data yet.
+            </p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow className="border-border hover:bg-transparent">
+                  <TableHead className="uppercase tracking-widest text-[10px] font-semibold">
+                    Source
+                  </TableHead>
+                  <TableHead className="uppercase tracking-widest text-[10px] font-semibold">
+                    Health
+                  </TableHead>
+                  <TableHead className="uppercase tracking-widest text-[10px] font-semibold">
+                    Last Run
+                  </TableHead>
+                  <TableHead className="uppercase tracking-widest text-[10px] font-semibold">
+                    Last Success
+                  </TableHead>
+                  <TableHead className="uppercase tracking-widest text-[10px] font-semibold">
+                    Listings (24h)
+                  </TableHead>
+                  <TableHead className="uppercase tracking-widest text-[10px] font-semibold">
+                    Runs / Failures (24h)
+                  </TableHead>
+                  <TableHead className="uppercase tracking-widest text-[10px] font-semibold">
+                    Latest Error
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {health.sources.map((entry) => (
+                  <TableRow
+                    key={entry.sourceId}
+                    className="border-border hover:bg-secondary/20 align-top"
+                  >
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        {entry.name}
+                        {!entry.active && (
+                          <Badge
+                            variant="secondary"
+                            className="text-[10px] uppercase rounded-none"
+                          >
+                            Disabled
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>{getStatusBadge(entry.status)}</TableCell>
+                    <TableCell className="text-muted-foreground text-sm">
+                      {entry.lastRunAt ? (
+                        <div className="space-y-1">
+                          <span>
+                            {formatDistanceToNow(new Date(entry.lastRunAt), {
+                              addSuffix: true,
+                            })}
+                          </span>
+                          {entry.lastRunStatus && (
+                            <div>{getStatusBadge(entry.lastRunStatus)}</div>
+                          )}
+                        </div>
+                      ) : (
+                        "Never"
+                      )}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-sm">
+                      {entry.lastSuccessAt
+                        ? formatDistanceToNow(new Date(entry.lastSuccessAt), {
+                            addSuffix: true,
+                          })
+                        : "Never"}
+                    </TableCell>
+                    <TableCell className="text-sm tabular-nums">
+                      {entry.listingsAdded24h.toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-sm tabular-nums">
+                      {entry.runs24h}
+                      {entry.failures24h > 0 && (
+                        <span className="text-destructive ml-1">
+                          / {entry.failures24h}
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground max-w-[280px]">
+                      {entry.lastErrorMessage ? (
+                        <div className="space-y-1">
+                          <p
+                            className="text-destructive line-clamp-2"
+                            title={entry.lastErrorMessage}
+                          >
+                            {entry.lastErrorMessage}
+                          </p>
+                          {entry.lastErrorAt && (
+                            <p className="text-[11px]">
+                              {formatDistanceToNow(new Date(entry.lastErrorAt), {
+                                addSuffix: true,
+                              })}
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground/60">—</span>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

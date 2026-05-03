@@ -46,6 +46,7 @@ import type {
   SavedListing,
   Size,
   Source,
+  SourceHealthReport,
   TriggerIngestBody,
   UpdateBagPreferenceBody,
   UpdateSource404,
@@ -2361,6 +2362,77 @@ export const useUpdateSource = <
 > => {
   return useMutation(getUpdateSourceMutationOptions(options));
 };
+
+/**
+ * Per-source freshness summary: last successful run, latest error, and listings ingested in the last 24 hours. Powers the admin dashboard widget so operators can spot silently broken scrapers without paging through raw ingestion logs.
+ */
+export const getGetSourceHealthUrl = () => {
+  return `/api/admin/source-health`;
+};
+
+export const getSourceHealth = async (
+  options?: RequestInit,
+): Promise<SourceHealthReport> => {
+  return customFetch<SourceHealthReport>(getGetSourceHealthUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetSourceHealthQueryKey = () => {
+  return [`/api/admin/source-health`] as const;
+};
+
+export const getGetSourceHealthQueryOptions = <
+  TData = Awaited<ReturnType<typeof getSourceHealth>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getSourceHealth>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetSourceHealthQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getSourceHealth>>> = ({
+    signal,
+  }) => getSourceHealth({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getSourceHealth>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetSourceHealthQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getSourceHealth>>
+>;
+export type GetSourceHealthQueryError = ErrorType<unknown>;
+
+export function useGetSourceHealth<
+  TData = Awaited<ReturnType<typeof getSourceHealth>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getSourceHealth>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetSourceHealthQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 export const getListIngestionLogsUrl = (params?: ListIngestionLogsParams) => {
   const normalizedParams = new URLSearchParams();

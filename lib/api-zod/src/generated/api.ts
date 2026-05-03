@@ -1075,6 +1075,39 @@ export const UpdateSourceResponse = zod.object({
   createdAt: zod.coerce.date(),
 });
 
+/**
+ * Per-source freshness summary: last successful run, latest error, and listings ingested in the last 24 hours. Powers the admin dashboard widget so operators can spot silently broken scrapers without paging through raw ingestion logs.
+ */
+export const GetSourceHealthResponse = zod.object({
+  generatedAt: zod.coerce.date(),
+  anySuccessIn24h: zod
+    .boolean()
+    .describe(
+      "False when zero active sources have completed a successful run in the last 24 hours — used to surface a top-level red banner.",
+    ),
+  sources: zod.array(
+    zod.object({
+      sourceId: zod.number(),
+      slug: zod.string(),
+      name: zod.string(),
+      active: zod.boolean(),
+      status: zod
+        .enum(["healthy", "degraded", "failed", "idle"])
+        .describe(
+          "healthy = last run succeeded within cadence; degraded = last run partial OR succeeded but stale; failed = last run failed OR no success in 24h; idle = source never ran (and is inactive).",
+        ),
+      lastSuccessAt: zod.coerce.date().nullish(),
+      lastRunAt: zod.coerce.date().nullish(),
+      lastRunStatus: zod.string().nullish(),
+      lastErrorAt: zod.coerce.date().nullish(),
+      lastErrorMessage: zod.string().nullish(),
+      listingsAdded24h: zod.number(),
+      runs24h: zod.number(),
+      failures24h: zod.number(),
+    }),
+  ),
+});
+
 export const listIngestionLogsQueryLimitDefault = 50;
 export const listIngestionLogsQueryLimitMax = 200;
 

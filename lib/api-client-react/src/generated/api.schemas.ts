@@ -400,6 +400,43 @@ export interface IngestionLog {
   completedAt?: string | null;
 }
 
+/**
+ * healthy = last run succeeded within cadence; degraded = last run partial OR succeeded but stale; failed = last run failed OR no success in 24h; idle = source never ran (and is inactive).
+ */
+export type SourceHealthEntryStatus =
+  (typeof SourceHealthEntryStatus)[keyof typeof SourceHealthEntryStatus];
+
+export const SourceHealthEntryStatus = {
+  healthy: "healthy",
+  degraded: "degraded",
+  failed: "failed",
+  idle: "idle",
+} as const;
+
+export interface SourceHealthEntry {
+  sourceId: number;
+  slug: string;
+  name: string;
+  active: boolean;
+  /** healthy = last run succeeded within cadence; degraded = last run partial OR succeeded but stale; failed = last run failed OR no success in 24h; idle = source never ran (and is inactive). */
+  status: SourceHealthEntryStatus;
+  lastSuccessAt?: string | null;
+  lastRunAt?: string | null;
+  lastRunStatus?: string | null;
+  lastErrorAt?: string | null;
+  lastErrorMessage?: string | null;
+  listingsAdded24h: number;
+  runs24h: number;
+  failures24h: number;
+}
+
+export interface SourceHealthReport {
+  generatedAt: string;
+  /** False when zero active sources have completed a successful run in the last 24 hours — used to surface a top-level red banner. */
+  anySuccessIn24h: boolean;
+  sources: SourceHealthEntry[];
+}
+
 export interface UpdateSourceBody {
   /**
    * Per-source polling cadence in minutes (1–1440).

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { eq, desc, count } from "drizzle-orm";
+import { eq, desc, count, and, gte, isNotNull, sql } from "drizzle-orm";
 import {
   db,
   sourcesTable,
@@ -112,6 +112,214 @@ router.get("/ingestion-logs", async (req, res) => {
       sourceName: r.sourceName,
     })),
   );
+});
+
+// GET /api/admin/source-health
+// Per-source freshness rollup powering the admin dashboard widget. For each
+// source we compute the last successful run, latest error, and 24h activity
+// counts so operators can spot silently broken scrapers without paging
+// through the raw ingestion log feed.
+router.get("/source-health", async (_req, res) => {
+  const now = new Date();
+  const since24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+  const sources = await db.select().from(sourcesTable).orderBy(sourcesTable.name);
+
+  // Per-source last successful run timestamp.
+  const lastSuccessRows = await db
+    .select({
+      sourceId: ingestionLogsTable.sourceId,
+      lastSuccessAt: sql<Date>`max(${ingestionLogsTable.completedAt})`.as(
+        "last_success_at",
+      ),
+    })
+    .from(ingestionLogsTable)
+    .where(
+      and(
+        isNotNull(ingestionLogsTable.sourceId),
+        eq(ingestionLogsTable.status, "success"),
+      ),
+    )
+    .groupBy(ingestionLogsTable.sourceId);
+  const lastSuccessBySource = new Map<number, Date>(
+    lastSuccessRows
+      .filter((r) => r.sourceId != null && r.lastSuccessAt != null)
+      .map((r) => [r.sourceId as number, new Date(r.lastSuccessAt as Date)]),
+  );
+
+  // Per-source most recent run (any status).
+  const lastRunRows = await db
+    .select({
+      sourceId: ingestionLogsTable.sourceId,
+      startedAt: sql<Date>`max(${ingestionLogsTable.startedAt})`.as("last_run_at"),
+    })
+    .from(ingestionLogsTable)
+    .where(isNotNull(ingestionLogsTable.sourceId))
+    .groupBy(ingestionLogsTable.sourceId);
+  const lastRunStartBySource = new Map<number, Date>(
+    lastRunRows
+      .filter((r) => r.sourceId != null && r.startedAt != null)
+      .map((r) => [r.sourceId as number, new Date(r.startedAt as Date)]),
+  );
+
+  // Resolve the actual last-run row to expose its status.
+  const lastRunStatusBySource = new Map<
+    number,
+    { status: string; startedAt: Date }
+  >();
+  for (const [sourceId, startedAt] of lastRunStartBySource) {
+    const [row] = await db
+      .select({
+        status: ingestionLogsTable.status,
+        startedAt: ingestionLogsTable.startedAt,
+      })
+      .from(ingestionLogsTable)
+      .where(
+        and(
+          eq(ingestionLogsTable.sourceId, sourceId),
+          eq(ingestionLogsTable.startedAt, startedAt),
+        ),
+      )
+      .limit(1);
+    if (row) lastRunStatusBySource.set(sourceId, row);
+  }
+
+  // Per-source latest error (failed/partial with a non-null message).
+  const lastErrorRows = await db
+    .select({
+      sourceId: ingestionLogsTable.sourceId,
+      errorMessage: ingestionLogsTable.errorMessage,
+      startedAt: ingestionLogsTable.startedAt,
+    })
+    .from(ingestionLogsTable)
+    .where(
+      and(
+        isNotNull(ingestionLogsTable.sourceId),
+        isNotNull(ingestionLogsTable.errorMessage),
+      ),
+    )
+    .orderBy(desc(ingestionLogsTable.startedAt));
+  const lastErrorBySource = new Map<
+    number,
+    { errorMessage: string; startedAt: Date }
+  >();
+  for (const r of lastErrorRows) {
+    if (r.sourceId == null || r.errorMessage == null) continue;
+    if (!lastErrorBySource.has(r.sourceId)) {
+      lastErrorBySource.set(r.sourceId, {
+        errorMessage: r.errorMessage,
+        startedAt: r.startedAt,
+      });
+    }
+  }
+
+  // 24h aggregates: total runs, failed runs, listings created.
+  const aggRows = await db
+    .select({
+      sourceId: ingestionLogsTable.sourceId,
+      runs: count(ingestionLogsTable.id),
+      failures: sql<number>`count(*) filter (where ${ingestionLogsTable.status} = 'failed')`.as(
+        "failures",
+      ),
+      listingsAdded: sql<number>`coalesce(sum(${ingestionLogsTable.recordsCreated}), 0)`.as(
+        "listings_added",
+      ),
+    })
+    .from(ingestionLogsTable)
+    .where(
+      and(
+        isNotNull(ingestionLogsTable.sourceId),
+        gte(ingestionLogsTable.startedAt, since24h),
+      ),
+    )
+    .groupBy(ingestionLogsTable.sourceId);
+  const aggBySource = new Map<
+    number,
+    { runs: number; failures: number; listingsAdded: number }
+  >(
+    aggRows
+      .filter((r) => r.sourceId != null)
+      .map((r) => [
+        r.sourceId as number,
+        {
+          runs: Number(r.runs ?? 0),
+          failures: Number(r.failures ?? 0),
+          listingsAdded: Number(r.listingsAdded ?? 0),
+        },
+      ]),
+  );
+
+  const entries = sources.map((s) => {
+    const lastSuccessAt = lastSuccessBySource.get(s.id) ?? null;
+    const lastRun = lastRunStatusBySource.get(s.id) ?? null;
+    const lastErr = lastErrorBySource.get(s.id) ?? null;
+    const agg = aggBySource.get(s.id) ?? {
+      runs: 0,
+      failures: 0,
+      listingsAdded: 0,
+    };
+
+    // Cadence-aware staleness threshold: if a source is supposed to run every
+    // N minutes, anything older than 3*N (and at least 1h) without a fresh
+    // success counts as stale/degraded.
+    const staleAfterMs = Math.max(
+      60 * 60 * 1000,
+      s.cadenceMinutes * 60 * 1000 * 3,
+    );
+    const successWithin24h =
+      lastSuccessAt != null && lastSuccessAt >= since24h;
+    const successFresh =
+      lastSuccessAt != null &&
+      now.getTime() - lastSuccessAt.getTime() <= staleAfterMs;
+
+    let status: "healthy" | "degraded" | "failed" | "idle";
+    if (lastRun == null) {
+      status = s.active ? "failed" : "idle";
+    } else if (lastRun.status === "failed" && !successFresh) {
+      status = "failed";
+    } else if (!successWithin24h && s.active) {
+      status = "failed";
+    } else if (
+      lastRun.status === "partial" ||
+      lastRun.status === "failed" ||
+      !successFresh
+    ) {
+      status = "degraded";
+    } else {
+      status = "healthy";
+    }
+
+    return {
+      sourceId: s.id,
+      slug: s.slug,
+      name: s.name,
+      active: s.active,
+      status,
+      lastSuccessAt: lastSuccessAt ? lastSuccessAt.toISOString() : null,
+      lastRunAt: lastRun ? lastRun.startedAt.toISOString() : null,
+      lastRunStatus: lastRun ? lastRun.status : null,
+      lastErrorAt: lastErr ? lastErr.startedAt.toISOString() : null,
+      lastErrorMessage: lastErr ? lastErr.errorMessage : null,
+      listingsAdded24h: agg.listingsAdded,
+      runs24h: agg.runs,
+      failures24h: agg.failures,
+    };
+  });
+
+  // Banner trigger: no active source has succeeded in the last 24h. If there
+  // are no active sources at all, treat as success (nothing to alarm about).
+  const activeSources = entries.filter((e) => e.active);
+  const anySuccessIn24h =
+    activeSources.length === 0 ||
+    activeSources.some(
+      (e) => e.lastSuccessAt != null && new Date(e.lastSuccessAt) >= since24h,
+    );
+
+  res.json({
+    generatedAt: now.toISOString(),
+    anySuccessIn24h,
+    sources: entries,
+  });
 });
 
 router.post("/ingest", adminWriteRateLimiter, async (req, res) => {

@@ -504,6 +504,22 @@ paths:
                 properties:
                   error: { type: string }
 
+  /admin/source-health:
+    get:
+      operationId: getSourceHealth
+      tags: [admin]
+      description: >-
+        Per-source freshness summary: last successful run, latest error, and
+        listings ingested in the last 24 hours. Powers the admin dashboard
+        widget so operators can spot silently broken scrapers without paging
+        through raw ingestion logs.
+      responses:
+        "200":
+          description: Source freshness rollup
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SourceHealthReport" }
+
   /admin/ingestion-logs:
     get:
       operationId: listIngestionLogs
@@ -1117,6 +1133,52 @@ components:
         actorUserId: { type: string, nullable: true }
         startedAt: { type: string, format: date-time }
         completedAt: { type: string, format: date-time, nullable: true }
+
+    SourceHealthEntry:
+      type: object
+      required:
+        - sourceId
+        - slug
+        - name
+        - active
+        - status
+        - listingsAdded24h
+        - runs24h
+        - failures24h
+      properties:
+        sourceId: { type: integer }
+        slug: { type: string }
+        name: { type: string }
+        active: { type: boolean }
+        status:
+          type: string
+          enum: [healthy, degraded, failed, idle]
+          description: >-
+            healthy = last run succeeded within cadence; degraded = last run
+            partial OR succeeded but stale; failed = last run failed OR no
+            success in 24h; idle = source never ran (and is inactive).
+        lastSuccessAt: { type: string, format: date-time, nullable: true }
+        lastRunAt: { type: string, format: date-time, nullable: true }
+        lastRunStatus: { type: string, nullable: true }
+        lastErrorAt: { type: string, format: date-time, nullable: true }
+        lastErrorMessage: { type: string, nullable: true }
+        listingsAdded24h: { type: integer }
+        runs24h: { type: integer }
+        failures24h: { type: integer }
+
+    SourceHealthReport:
+      type: object
+      required: [generatedAt, anySuccessIn24h, sources]
+      properties:
+        generatedAt: { type: string, format: date-time }
+        anySuccessIn24h:
+          type: boolean
+          description: >-
+            False when zero active sources have completed a successful run in
+            the last 24 hours — used to surface a top-level red banner.
+        sources:
+          type: array
+          items: { $ref: "#/components/schemas/SourceHealthEntry" }
 
     UpdateSourceBody:
       type: object
