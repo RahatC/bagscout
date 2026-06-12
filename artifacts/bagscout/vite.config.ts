@@ -17,7 +17,21 @@ if (
   process.env.VITE_CLERK_PUBLISHABLE_KEY = process.env.CLERK_PUBLISHABLE_KEY;
 }
 
-export default defineConfig(async ({ command }) => {
+const replitDevPlugins =
+  process.env.NODE_ENV !== "production" && process.env.REPL_ID !== undefined
+    ? [
+        await import("@replit/vite-plugin-cartographer").then((m) =>
+          m.cartographer({
+            root: path.resolve(import.meta.dirname, ".."),
+          }),
+        ),
+        await import("@replit/vite-plugin-dev-banner").then((m) =>
+          m.devBanner(),
+        ),
+      ]
+    : [];
+
+export default defineConfig(({ command }) => {
   const isBuild = command === "build";
   const rawPort = process.env.PORT;
 
@@ -47,19 +61,7 @@ export default defineConfig(async ({ command }) => {
     react(),
     tailwindcss({ optimize: false }),
     runtimeErrorOverlay(),
-    ...(process.env.NODE_ENV !== "production" &&
-    process.env.REPL_ID !== undefined
-      ? [
-          await import("@replit/vite-plugin-cartographer").then((m) =>
-            m.cartographer({
-              root: path.resolve(import.meta.dirname, ".."),
-            }),
-          ),
-          await import("@replit/vite-plugin-dev-banner").then((m) =>
-            m.devBanner(),
-          ),
-        ]
-      : []),
+    ...replitDevPlugins,
   ],
   resolve: {
     alias: {
