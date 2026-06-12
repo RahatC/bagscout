@@ -1,4 +1,4 @@
-import { eq, and, inArray, sql } from "drizzle-orm";
+import { eq, and, inArray, sql, gte, isNotNull } from "drizzle-orm";
 import {
   db,
   alertsTable,
@@ -60,6 +60,69 @@ export type DigestRunResult = {
   /** Set when the run aborted before sending (e.g. Resend creds missing). */
   aborted?: { reason: string };
 };
+
+type AlertFrequency = "realtime" | "daily" | "weekly";
+
+const DAILY_DIGEST_HOUR_UTC = 14;
+const WEEKLY_DIGEST_DAY_UTC = 5; // Friday
+
+function resolveAlertFrequency(raw: string | null): AlertFrequency {
+  return raw === "daily" || raw === "weekly" || raw === "realtime"
+    ? raw
+    : "realtime";
+}
+
+function startOfUtcDay(now: Date): Date {
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+}
+
+function startOfUtcWeek(now: Date): Date {
+  const day = now.getUTCDay();
+  const daysSinceMonday = (day + 6) % 7;
+  const start = startOfUtcDay(now);
+  start.setUTCDate(start.getUTCDate() - daysSinceMonday);
+  return start;
+}
+
+function cadencePeriodStart(frequency: AlertFrequency, now: Date): Date | null {
+  if (frequency === "daily") return startOfUtcDay(now);
+  if (frequency === "weekly") return startOfUtcWeek(now);
+  return null;
+}
+
+function cadenceWindowOpen(frequency: AlertFrequency, now: Date): boolean {
+  if (frequency === "realtime") return true;
+  if (frequency === "daily") return now.getUTCHours() >= DAILY_DIGEST_HOUR_UTC;
+  return (
+    now.getUTCDay() === WEEKLY_DIGEST_DAY_UTC &&
+    now.getUTCHours() >= DAILY_DIGEST_HOUR_UTC
+  );
+}
+
+async function alreadySentThisCadence(
+  userId: string,
+  preferenceId: number,
+  frequency: AlertFrequency,
+  now: Date,
+): Promise<boolean> {
+  const periodStart = cadencePeriodStart(frequency, now);
+  if (!periodStart) return false;
+
+  const rows = await db
+    .select({ id: alertsTable.id })
+    .from(alertsTable)
+    .where(
+      and(
+        eq(alertsTable.userId, userId),
+        eq(alertsTable.preferenceId, preferenceId),
+        isNotNull(alertsTable.digestSentAt),
+        gte(alertsTable.digestSentAt, periodStart),
+      ),
+    )
+    .limit(1);
+
+  return rows.length > 0;
+}
 
 /**
  * Send pending alerts via Resend, grouped per (user, alert).
@@ -176,12 +239,7 @@ export async function runDigest(
 
   for (const row of pending) {
     const a = row.alert;
-    const f =
-      row.preference.alertFrequency === "realtime" ||
-      row.preference.alertFrequency === "daily" ||
-      row.preference.alertFrequency === "weekly"
-        ? row.preference.alertFrequency
-        : "realtime";
+    const f = resolveAlertFrequency(row.preference.alertFrequency);
 
     if (!row.user.email) {
       skipped.push({
@@ -206,6 +264,22 @@ export async function runDigest(
         alertId: a.id,
         userId: a.userId,
         reason: "quiet_hours",
+      });
+      continue;
+    }
+    if (!cadenceWindowOpen(f, now)) {
+      skipped.push({
+        alertId: a.id,
+        userId: a.userId,
+        reason: `${f}_digest_not_due`,
+      });
+      continue;
+    }
+    if (await alreadySentThisCadence(a.userId, a.preferenceId, f, now)) {
+      skipped.push({
+        alertId: a.id,
+        userId: a.userId,
+        reason: `${f}_digest_already_sent`,
       });
       continue;
     }

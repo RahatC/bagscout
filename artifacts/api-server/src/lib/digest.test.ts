@@ -60,6 +60,8 @@ import {
 } from "../test-utils/db";
 
 const TEST_SOURCE_SLUG = "test_digest_source";
+const DAILY_DIGEST_DUE_AT = new Date(Date.UTC(2026, 0, 15, 14, 0, 0));
+const WEEKLY_DIGEST_DUE_AT = new Date(Date.UTC(2026, 0, 16, 14, 0, 0)); // Friday
 
 let ref: Awaited<ReturnType<typeof refLookups>>;
 let sourceId: number;
@@ -425,7 +427,7 @@ describe("digest grouping — byFrequency buckets", () => {
     await seedPendingAlert(userB, { alertFrequency: "daily", externalId: "f-dy-1" });
     await seedPendingAlert(userC, { alertFrequency: "weekly", externalId: "f-wk-1" });
 
-    const result = await runDigest({ dryRun: false });
+    const result = await runDigest({ dryRun: false, now: WEEKLY_DIGEST_DUE_AT });
 
     expect(result.alertsSent).toBe(4);
     expect(result.usersNotified).toBe(3);
@@ -438,7 +440,7 @@ describe("digest grouping — byFrequency buckets", () => {
     await ensureTestUser(userId);
     const { alertId } = await seedPendingAlert(userId, { alertFrequency: "daily" });
 
-    const result = await runDigest({ dryRun: true });
+    const result = await runDigest({ dryRun: true, now: DAILY_DIGEST_DUE_AT });
 
     expect(result.dryRun).toBe(true);
     expect(result.alertsSent).toBe(1);
@@ -520,5 +522,66 @@ describe("digest grouping — byFrequency buckets", () => {
     const pending = rows.filter((r) => r.status === "pending");
     expect(sent).toHaveLength(1);
     expect(pending).toHaveLength(1);
+  });
+});
+
+describe("digest delivery — alertFrequency cadence", () => {
+  it("keeps daily alerts pending before the daily digest window", async () => {
+    const userId = makeTestUserId();
+    await ensureTestUser(userId);
+    const { alertId } = await seedPendingAlert(userId, { alertFrequency: "daily" });
+
+    const result = await runDigest({
+      dryRun: false,
+      now: new Date(Date.UTC(2026, 0, 15, 13, 59, 0)),
+    });
+
+    expect(result.alertsSent).toBe(0);
+    expect(result.alertsSkipped).toBe(1);
+    expect(result.skipped[0]).toMatchObject({
+      alertId,
+      reason: "daily_digest_not_due",
+    });
+    expect(mailMock.sends).toHaveLength(0);
+
+    const [a] = await db.select().from(alertsTable).where(eq(alertsTable.id, alertId));
+    expect(a.status).toBe("pending");
+  });
+
+  it("delivers daily alerts once the daily digest window opens", async () => {
+    const userId = makeTestUserId();
+    await ensureTestUser(userId);
+    const { alertId } = await seedPendingAlert(userId, { alertFrequency: "daily" });
+
+    const result = await runDigest({ dryRun: false, now: DAILY_DIGEST_DUE_AT });
+
+    expect(result.alertsSent).toBe(1);
+    expect(result.byFrequency.daily).toBe(1);
+    expect(mailMock.sends).toHaveLength(1);
+
+    const [a] = await db.select().from(alertsTable).where(eq(alertsTable.id, alertId));
+    expect(a.status).toBe("sent");
+  });
+
+  it("keeps weekly alerts pending until the Friday digest window", async () => {
+    const userId = makeTestUserId();
+    await ensureTestUser(userId);
+    const { alertId } = await seedPendingAlert(userId, { alertFrequency: "weekly" });
+
+    const result = await runDigest({
+      dryRun: false,
+      now: new Date(Date.UTC(2026, 0, 15, 14, 0, 0)), // Thursday
+    });
+
+    expect(result.alertsSent).toBe(0);
+    expect(result.alertsSkipped).toBe(1);
+    expect(result.skipped[0]).toMatchObject({
+      alertId,
+      reason: "weekly_digest_not_due",
+    });
+    expect(mailMock.sends).toHaveLength(0);
+
+    const [a] = await db.select().from(alertsTable).where(eq(alertsTable.id, alertId));
+    expect(a.status).toBe("pending");
   });
 });
