@@ -3,7 +3,6 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import * as cheerio from "cheerio";
-import type { AnyNode } from "domhandler";
 
 import { logger } from "../lib/logger";
 import {
@@ -19,6 +18,8 @@ import type { RawListing, SourceAdapter } from "./types";
 const SOURCE_NAME = "The RealReal";
 const SOURCE_SLUG = "therealreal";
 const BASE_URL = "https://www.therealreal.com";
+
+type CheerioSelection = ReturnType<cheerio.CheerioAPI>;
 
 /**
  * The RealReal aggressively blocks server-side HTML / sitemap crawls with
@@ -160,7 +161,7 @@ function pickCondition(
  */
 function readItemFields(
   $: cheerio.CheerioAPI,
-  $item: cheerio.Cheerio<AnyNode>,
+  $item: CheerioSelection,
 ): Record<string, string> {
   const fields: Record<string, string> = {};
   $item.children().each((_, child) => {
