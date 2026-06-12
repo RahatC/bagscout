@@ -175,7 +175,7 @@ export function WatchlistSummaryCard({
               size="sm"
               className="rounded-none h-8 text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground"
             >
-              <Link href={`/watchlists/${preference.id}`}>
+              <Link href={`/watchlists/${preference.id}/edit`}>
                 <Pencil className="w-3 h-3 mr-1.5" /> Edit
               </Link>
             </Button>

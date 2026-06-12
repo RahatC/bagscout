@@ -1,5 +1,5 @@
 import { useRoute, Link } from "wouter";
-import { ArrowLeft, Play, Pause, Trash2 } from "lucide-react";
+import { ArrowLeft, Play, Pause, Trash2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -128,6 +128,15 @@ export default function WatchlistDetailPage() {
         </div>
 
         <div className="flex items-center gap-2 w-full md:w-auto">
+          <Button
+            asChild
+            variant="outline"
+            className="rounded-none uppercase tracking-widest text-xs font-semibold flex-1 md:flex-none"
+          >
+            <Link href={`/watchlists/${id}/edit`}>
+              <Pencil className="mr-2 h-4 w-4" /> Edit Criteria
+            </Link>
+          </Button>
           <Button
             variant="outline"
             onClick={handleToggleStatus}

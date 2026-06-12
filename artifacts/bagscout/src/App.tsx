@@ -15,6 +15,7 @@ import LandingPage from "@/pages/landing";
 import DashboardPage from "@/pages/dashboard";
 import WatchlistsPage from "@/pages/watchlists/index";
 import WatchlistsNewPage from "@/pages/watchlists/new";
+import WatchlistEditPage from "@/pages/watchlists/edit";
 import WatchlistDetailPage from "@/pages/watchlists/detail";
 import ListingsPage from "@/pages/listings/index";
 import ListingDetailPage from "@/pages/listings/detail";
@@ -254,6 +255,7 @@ function ClerkProviderWithRoutes() {
           <Route path="/dashboard" component={() => <ProtectedRoute component={DashboardPage} />} />
           <Route path="/watchlists" component={() => <ProtectedRoute component={WatchlistsPage} />} />
           <Route path="/watchlists/new" component={() => <ProtectedRoute component={WatchlistsNewPage} />} />
+          <Route path="/watchlists/:id/edit" component={() => <ProtectedRoute component={WatchlistEditPage} />} />
           <Route path="/watchlists/:id" component={() => <ProtectedRoute component={WatchlistDetailPage} />} />
           <Route path="/listings" component={() => <ProtectedRoute component={ListingsPage} />} />
           <Route path="/listings/:id" component={() => <ProtectedRoute component={ListingDetailPage} />} />
