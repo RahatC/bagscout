@@ -49,6 +49,7 @@ import {
   bagPreferenceBrandsTable,
   bagPreferenceColorsTable,
   bagPreferenceSizesTable,
+  sourcesTable,
 } from "@workspace/db";
 import { runMockIngest } from "./ingest";
 import {
@@ -202,6 +203,37 @@ describe("ingest pipeline — initial run", () => {
       .from(matchResultsTable)
       .where(eq(matchResultsTable.userId, userId));
     expect(matches).toHaveLength(0);
+  });
+
+  it("refuses live ingestion for a source that is not compliance-approved", async () => {
+    const sourceId = await ensureTestSource(TEST_SOURCE_SLUG, "Test Ingest Source");
+    await db
+      .update(sourcesTable)
+      .set({ ingestionMode: "live", complianceStatus: "pending_review" })
+      .where(eq(sourcesTable.id, sourceId));
+    fixtureState.listings = [fixtureListing()];
+
+    const result = await runMockIngest(TEST_SOURCE_SLUG);
+
+    expect(result.listingsFound).toBe(0);
+    expect(result.listingsAdded).toBe(0);
+    expect(result.errors[0]).toContain("live ingestion requires compliance_status='approved'");
+
+    const listings = await db
+      .select()
+      .from(listingsTable)
+      .where(eq(listingsTable.sourceId, sourceId));
+    expect(listings).toHaveLength(0);
+
+    const [log] = await db
+      .select()
+      .from(ingestionLogsTable)
+      .where(eq(ingestionLogsTable.sourceId, sourceId));
+    expect(log.status).toBe("failed");
+    expect(log.errorMessage).toContain("pending_review");
+
+    const [source] = await db.select().from(sourcesTable).where(eq(sourcesTable.id, sourceId));
+    expect(source.status).toBe("degraded");
   });
 });
 

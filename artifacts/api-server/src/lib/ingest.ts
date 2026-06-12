@@ -91,6 +91,41 @@ export async function runMockIngest(
     };
   }
 
+  if (source.ingestionMode === "live" && source.complianceStatus !== "approved") {
+    const msg = `Source "${sourceSlug}" is ${source.complianceStatus}; live ingestion requires compliance_status='approved'.`;
+    logger.warn(
+      {
+        sourceSlug,
+        ingestionMode: source.ingestionMode,
+        complianceStatus: source.complianceStatus,
+      },
+      "Refusing live ingest for non-approved source",
+    );
+    await db.insert(ingestionLogsTable).values({
+      sourceId: source.id,
+      jobType,
+      status: "failed",
+      recordsSeen: 0,
+      recordsCreated: 0,
+      recordsUpdated: 0,
+      errorMessage: msg,
+      completedAt: new Date(),
+    });
+    await db
+      .update(sourcesTable)
+      .set({ status: "degraded" })
+      .where(eq(sourcesTable.id, source.id));
+    return {
+      sourceSlug,
+      listingsFound: 0,
+      listingsAdded: 0,
+      listingsUpdated: 0,
+      listingsRejected: 0,
+      durationMs: Date.now() - startTime,
+      errors: [msg],
+    };
+  }
+
   // Per-source live/mock dispatcher: respects `sources.ingestion_mode`.
   // Falls back to the legacy default adapter if the dispatcher returns nothing.
   const adapter = getAdapterForSource(sourceSlug, source.ingestionMode) ?? getAdapter(sourceSlug);
