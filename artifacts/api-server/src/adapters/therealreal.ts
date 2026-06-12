@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import * as cheerio from "cheerio";
+import type { AnyNode } from "domhandler";
 
 import { logger } from "../lib/logger";
 import {
@@ -159,7 +160,7 @@ function pickCondition(
  */
 function readItemFields(
   $: cheerio.CheerioAPI,
-  $item: cheerio.Cheerio<unknown>,
+  $item: cheerio.Cheerio<AnyNode>,
 ): Record<string, string> {
   const fields: Record<string, string> = {};
   $item.children().each((_, child) => {
@@ -169,7 +170,7 @@ function readItemFields(
     if (!name) return;
     // First occurrence wins (matches Google Merchant single-value semantics).
     if (fields[name] !== undefined) return;
-    fields[name] = $(child as never).text().trim();
+    fields[name] = $(child).text().trim();
   });
   return fields;
 }
@@ -190,7 +191,7 @@ export function parseTrrFeedXml(xml: string): RawListing[] {
   const seen = new Set<string>();
 
   $("item").each((_, el) => {
-    const f = readItemFields($, $(el as never));
+    const f = readItemFields($, $(el));
 
     const externalId = f["g:id"] ?? f["id"] ?? "";
     if (!externalId || seen.has(externalId)) return;
