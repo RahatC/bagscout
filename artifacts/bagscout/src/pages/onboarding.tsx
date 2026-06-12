@@ -33,6 +33,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
 type AlertFrequency = "instant" | "daily" | "weekly" | "later";
+type ApiAlertFrequency = "realtime" | "daily" | "weekly";
 
 interface FormState {
   brandIds: number[];
@@ -67,6 +68,18 @@ const initialState: FormState = {
   onlyExactCriteria: false,
   alertFrequency: null,
 };
+
+function toApiAlertFrequency(frequency: AlertFrequency | null): ApiAlertFrequency {
+  switch (frequency) {
+    case "daily":
+    case "weekly":
+      return frequency;
+    case "instant":
+    case "later":
+    default:
+      return "realtime";
+  }
+}
 
 const COLOR_SWATCHES: Record<string, string> = {
   Black: "#1a1a1a",
@@ -268,6 +281,7 @@ export default function OnboardingPage() {
           maxPrice: form.maxPrice ? Number(form.maxPrice) : null,
           onlyExactCriteria: form.onlyExactCriteria,
           allowCloseMatches: form.matchMode === "smart",
+          alertFrequency: toApiAlertFrequency(form.alertFrequency),
           active: true,
         },
       },
@@ -1185,7 +1199,7 @@ function AlertsStep({
     {
       value: "later",
       title: "Push & SMS",
-      desc: "Coming soon — choose this to be first in line.",
+      desc: "Coming soon — we'll use instant email while you wait.",
       icon: <Bell className="h-5 w-5" />,
       soon: true,
     },
@@ -1269,7 +1283,7 @@ function ConfirmationStep({
       case "weekly":
         return "Weekly digest";
       case "later":
-        return "Push & SMS (coming soon)";
+        return "Push & SMS waitlist; instant email for now";
       default:
         return "—";
     }
