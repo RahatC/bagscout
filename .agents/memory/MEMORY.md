@@ -1,0 +1,1 @@
+- [code_execution env access](code-execution-env-access.md) — sandbox has no process.env; read env/secrets via a printenv subprocess, never log the value.
