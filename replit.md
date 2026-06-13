@@ -121,7 +121,8 @@ is the runtime dispatcher. The scheduler ticks every `INGEST_INTERVAL_MINUTES`
   cross-fades between images, shows ChevronLeft / ChevronRight buttons
   on hover (single-image listings hide both), and renders a row of
   dot indicators (active dot widens to `w-3`). Live ingest counts:
-  FASHIONPHILE ~10.9 imgs/listing avg (max 25), Rebag ~6.5, Yoogi's 1.
+  FASHIONPHILE ~10.9 imgs/listing avg (max 25), Rebag ~6.5, Yoogi's
+  ~12 (multi-image gallery from per-product pages; max 24).
 
 ## External Dependencies
 
