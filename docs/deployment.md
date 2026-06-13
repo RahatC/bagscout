@@ -60,9 +60,9 @@ these to override.
 | Name                       | Default | Notes                                                                                            |
 | -------------------------- | ------- | ------------------------------------------------------------------------------------------------ |
 | `SCHEDULER_ENABLED`        | `true`  | Set to `false` if you move ingestion to a separate Replit Scheduled Deployment.                  |
-| `INGEST_INTERVAL_MINUTES`  | `60`    | How often live-source ingest runs.                                                                |
+| `INGEST_INTERVAL_MINUTES`  | `5`     | Scheduler *tick* interval. Each source then runs only if its own `cadence_minutes` has elapsed.   |
 | `DIGEST_INTERVAL_MINUTES`  | `30`    | How often the digest worker checks for due daily/weekly alerts.                                   |
-| `INGEST_USE_MOCK_ADAPTERS` | unset   | Force every adapter to its mock variant. **Do not set in production.**                            |
+| `INGEST_USE_MOCK_ADAPTERS` | unset (= mock) | **Mock-only is the default.** When unset/`true`, every source uses its mock adapter regardless of the source's DB `ingestion_mode` — no live HTTP requests to third-party retailers. Set to `false` to allow live ingestion for sources whose DB row is `ingestion_mode = 'live'` (eBay/FASHIONPHILE/Rebag). Leave unset in production unless live ingestion has been explicitly reviewed for compliance. |
 | `LOG_LEVEL`                | `info`  | `pino` log level for the API server.                                                              |
 | `PUBLIC_APP_ORIGIN`        | unset   | Optional override used by the email digest to build absolute links.                               |
 

@@ -6,7 +6,7 @@ import fashionphile, {
 import rebag, { rebagLiveAdapter, rebagMockAdapter } from "./rebag";
 import therealreal from "./therealreal";
 import yoogiscloset from "./yoogiscloset";
-import { createMockAdapter } from "./base";
+import { createMockAdapter, shouldUseMockAdapters } from "./base";
 import type { SourceAdapter } from "./types";
 
 /**
@@ -52,13 +52,30 @@ const bySlug = new Map(PAIRS.map((p) => [p.slug, p]));
 export const adapters: SourceAdapter[] = [ebay, fashionphile, rebag, therealreal, yoogiscloset];
 
 export function getAdapter(slug: string): SourceAdapter | undefined {
-  return bySlug.get(slug)?.live;
+  const pair = bySlug.get(slug);
+  if (!pair) return undefined;
+  // Honor the same mock-only default as getAdapterForSource so this legacy
+  // entry point can't silently bypass the compliance gate.
+  return shouldUseMockAdapters() ? pair.mock : pair.live;
 }
 
 /**
- * Per-source dispatcher: returns the live adapter when `mode === 'live'`,
- * otherwise the mock adapter. The eBay live adapter additionally falls back
- * to mock when its credentials are missing.
+ * Per-source dispatcher.
+ *
+ * A source only ingests live when BOTH conditions hold:
+ *   1. its DB row sets `ingestion_mode = 'live'`, AND
+ *   2. live adapters are explicitly enabled via `INGEST_USE_MOCK_ADAPTERS=false`.
+ *
+ * The global mock-only default (`shouldUseMockAdapters()` returns `true` when
+ * the env is unset) is authoritative: it wins over the per-source DB mode.
+ * This makes production mock-only by default — matching the documented
+ * compliance policy — so a freshly-migrated database (which seeds
+ * fashionphile/rebag to `live`) does NOT start issuing live HTTP requests to
+ * third-party retailers unless an operator has deliberately opted in. Live
+ * ingestion remains fully available behind that explicit flag.
+ *
+ * The eBay live adapter additionally falls back to mock when its credentials
+ * are missing.
  */
 export function getAdapterForSource(
   slug: string,
@@ -66,7 +83,8 @@ export function getAdapterForSource(
 ): SourceAdapter | undefined {
   const pair = bySlug.get(slug);
   if (!pair) return undefined;
-  return mode === "live" ? pair.live : pair.mock;
+  const liveAllowed = mode === "live" && !shouldUseMockAdapters();
+  return liveAllowed ? pair.live : pair.mock;
 }
 
 export type { SourceAdapter, RawListing, NormalizedListing, ValidationResult } from "./types";
