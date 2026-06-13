@@ -40,5 +40,8 @@ externalPort = 3001
 
 [userenv.shared]
 
+[userenv.development]
+TEST_DATABASE_URL = "postgresql://postgres:password@helium/heliumdb?sslmode=disable"
+
 [nix]
 channel = "stable-25_05"
