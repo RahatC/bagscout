@@ -105,6 +105,15 @@ is the runtime dispatcher. The scheduler ticks every `INGEST_INTERVAL_MINUTES`
   `_02.jpg`); `toPrimaryProductImage()` in `yoogiscloset.ts` rewrites any
   numbered variant to the `_01.jpg` product-only catalog shot (the source
   product page's hero) so the stored primary image is the bag itself.
+  Yoogi's grid cards only expose one image, so the full carousel is built
+  from each product page: `parseYoogisGalleryHtml()` decodes the page's
+  JSON-escaped (`\u002F`) gallery array, keeps only the dominant product
+  id's catalog images, and returns them ordered by numeric suffix (`_01`
+  first, then `_02.._NN`). The live `fetchListings` enriches each parsed
+  listing by fetching its product page (rate-limited, graceful fallback to
+  the single thumbnail). Existing stored rows were backfilled the same way
+  (avg ~12 images/listing). All gallery URLs reuse the grid thumbnail's
+  size query (`?quality=80&...&width=312`) for consistent rendering.
 - `mapListing` (`mappers.ts`) always returns a non-empty `imageUrls`
   array when the row has any image, so the OpenAPI contract
   (`Listing.imageUrls` is required) is honored even for older rows.

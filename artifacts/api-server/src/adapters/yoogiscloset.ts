@@ -50,6 +50,61 @@ export function toPrimaryProductImage(url: string): string {
   return url.replace(/_\d+(\.jpg)/i, "_01$1");
 }
 
+const GALLERY_IMAGE_RE =
+  /https:\/\/backend\.yoogiscloset\.com\/media\/catalog\/product\/[a-z0-9]\/[a-z0-9]\/(\d+)_(\d+)\.jpg/gi;
+
+/**
+ * Parse the full ordered image gallery out of a Yoogi's product page.
+ *
+ * The product page embeds its gallery as a JSON array of `\u002F`-escaped URLs
+ * (`<id>_01.jpg`, `<id>_02.jpg`, ...). We decode the escaping, collect every
+ * distinct catalog image for the page's dominant product id, and return them
+ * ordered by their numeric suffix so the `_01` product-only shot is first and
+ * the remaining angles / detail / styled shots follow.
+ *
+ * `sizeQuery` (e.g. `?quality=80&...&width=312`) is appended to each URL so the
+ * gallery renders at the same dimensions as the grid thumbnail.
+ *
+ * Pure function: takes raw HTML so the test suite can run on a fixture without
+ * any network calls. Returns `[]` when no gallery is found.
+ */
+export function parseYoogisGalleryHtml(html: string, sizeQuery = ""): string[] {
+  const decoded = html.split("\\u002F").join("/");
+  const byUrl = new Map<string, { url: string; id: string; n: number }>();
+  for (const m of decoded.matchAll(GALLERY_IMAGE_RE)) {
+    const url = m[0];
+    if (!byUrl.has(url)) {
+      byUrl.set(url, { url, id: m[1], n: Number.parseInt(m[2], 10) });
+    }
+  }
+  const all = [...byUrl.values()];
+  if (all.length === 0) return [];
+
+  // A product page can reference unrelated ids (cross-sells, recently viewed).
+  // Keep only images for the id with the most images — the listing's own set.
+  const counts = new Map<string, number>();
+  for (const x of all) counts.set(x.id, (counts.get(x.id) ?? 0) + 1);
+  let mainId = all[0].id;
+  let best = 0;
+  for (const [id, c] of counts) {
+    if (c > best) {
+      best = c;
+      mainId = id;
+    }
+  }
+
+  return all
+    .filter((x) => x.id === mainId)
+    .sort((a, b) => a.n - b.n)
+    .map((x) => x.url + sizeQuery);
+}
+
+/** Extract the `?...` size/transform query from a Yoogi's image URL, if any. */
+function imageSizeQuery(url: string): string {
+  const i = url.indexOf("?");
+  return i === -1 ? "" : url.slice(i);
+}
+
 /**
  * Parse one HTML listing page (e.g. `/handbags/chanel`) into RawListings.
  * Pulled into its own pure function so the parser test suite can run on a
@@ -162,6 +217,35 @@ async function fetchListings(): Promise<RawListing[]> {
       all.push(l);
     }
   }
+
+  // Enrich each listing with its full image gallery. The grid card only exposes
+  // a single thumbnail; the per-product page carries the ordered `_01.._NN`
+  // gallery. Fetch each product page (rate-limited) and populate `imageUrls`.
+  for (const l of all) {
+    if (!l.sourceUrl) continue;
+    await limiter.acquire();
+    try {
+      const productHtml = await httpFetch<string>(l.sourceUrl, "html", {
+        asBrowser: true,
+        timeoutMs: 20_000,
+        retries: 2,
+        backoffMs: 1000,
+        context: { source: SOURCE_SLUG, productId: l.externalId },
+      });
+      if (!productHtml) continue;
+      const gallery = parseYoogisGalleryHtml(productHtml, imageSizeQuery(l.imageUrl));
+      if (gallery.length > 1) {
+        l.imageUrls = gallery;
+        l.imageUrl = gallery[0];
+      }
+    } catch (err) {
+      logger.warn(
+        { err, source: SOURCE_SLUG, productId: l.externalId },
+        "yoogiscloset: product gallery fetch failed, keeping single image",
+      );
+    }
+  }
+
   logger.info({ source: SOURCE_SLUG, count: all.length }, "yoogiscloset: fetch complete");
   return all;
 }

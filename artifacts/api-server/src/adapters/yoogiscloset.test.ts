@@ -2,7 +2,11 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { defaultNormalize, defaultValidate } from "./base";
-import { parseYoogisListingHtml, toPrimaryProductImage } from "./yoogiscloset";
+import {
+  parseYoogisGalleryHtml,
+  parseYoogisListingHtml,
+  toPrimaryProductImage,
+} from "./yoogiscloset";
 
 const FIXTURE_DIR = join(__dirname, "__fixtures__");
 
@@ -69,6 +73,31 @@ describe("parseYoogisListingHtml", () => {
     expect(toPrimaryProductImage("https://example.com/photo.png")).toBe(
       "https://example.com/photo.png",
     );
+  });
+
+  it("extracts the full ordered product gallery from a product page", () => {
+    // Mirrors Yoogi's product-page markup: gallery URLs are JSON-escaped
+    // (\u002F for /) and listed out of order; cross-sell images for an
+    // unrelated id appear too and must be excluded.
+    const esc = (n: string) =>
+      `"https:\\u002F\\u002Fbackend.yoogiscloset.com\\u002Fmedia\\u002Fcatalog\\u002Fproduct\\u002F6\\u002F9\\u002F698124_${n}.jpg"`;
+    const productHtml = `<script>{"images":[${esc("03")},${esc("01")},${esc("02")},${esc("05")},${esc("04")}],` +
+      `"related":["https:\\u002F\\u002Fbackend.yoogiscloset.com\\u002Fmedia\\u002Fcatalog\\u002Fproduct\\u002F1\\u002F2\\u002F123456_01.jpg"]}</script>`;
+    const gallery = parseYoogisGalleryHtml(
+      productHtml,
+      "?quality=80&height=416&width=312",
+    );
+    expect(gallery).toEqual([
+      "https://backend.yoogiscloset.com/media/catalog/product/6/9/698124_01.jpg?quality=80&height=416&width=312",
+      "https://backend.yoogiscloset.com/media/catalog/product/6/9/698124_02.jpg?quality=80&height=416&width=312",
+      "https://backend.yoogiscloset.com/media/catalog/product/6/9/698124_03.jpg?quality=80&height=416&width=312",
+      "https://backend.yoogiscloset.com/media/catalog/product/6/9/698124_04.jpg?quality=80&height=416&width=312",
+      "https://backend.yoogiscloset.com/media/catalog/product/6/9/698124_05.jpg?quality=80&height=416&width=312",
+    ]);
+  });
+
+  it("returns an empty gallery when no catalog images are present", () => {
+    expect(parseYoogisGalleryHtml("<html><body>nothing</body></html>")).toEqual([]);
   });
 
   it("normalises and validates a sample mapped product", () => {
