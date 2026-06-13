@@ -61,7 +61,7 @@ router.get("/", async (req, res) => {
     .from(listingsTable)
     .innerJoin(sourcesTable, eq(listingsTable.sourceId, sourcesTable.id))
     .where(whereClause)
-    .orderBy(listingsTable.lastSeenAt)
+    .orderBy(desc(listingsTable.lastSeenAt))
     .limit(limit)
     .offset(offset);
 

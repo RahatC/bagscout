@@ -38,7 +38,7 @@ audit (2026-05-03). Adapters default to **mock-only** (no live scraping) — set
 - **Core Features**: `bag_preferences` (user watchlists), `bag_preference_brands`, `bag_preference_styles`, `bag_preference_colors`, `bag_preference_sizes` (junction tables for preferences), `listings`, `listing_snapshots` (price/availability history), `match_results`, `alerts`, `saved_listings`, `ingestion_logs`.
 
 **API Routes:**
-- **Public**: `reference` (brands, styles, etc.), `listings` (browse, featured).
+- **Public**: `reference` (brands, styles, etc.), `listings` (browse — newest-first by `last_seen_at`, featured).
 - **Authenticated**: `preferences` (CRUD, matches), `matches` (user's results), `alerts` (list, mark read), `saved` (save/unsave/list), `dashboard` (summary, recent matches).
 - **Admin**: `admin` (sources health, ingestion logs, trigger ingest, listing explorer with filters, match-engine debugger, taxonomy CRUD for brands/colors/conditions/sizes/styles/models).
 
@@ -101,6 +101,10 @@ is the runtime dispatcher. The scheduler ticks every `INGEST_INTERVAL_MINUTES`
   first image is bag-only. `defaultNormalize` (`base.ts`) dedupes and
   drops empties, falling back to `[raw.imageUrl]` for adapters that only
   expose one image (Yoogi's Closet HTML grid, eBay, TheRealReal mock).
+  Yoogi's grid thumbnails point at a styled/on-model variant (commonly
+  `_02.jpg`); `toPrimaryProductImage()` in `yoogiscloset.ts` rewrites any
+  numbered variant to the `_01.jpg` product-only catalog shot (the source
+  product page's hero) so the stored primary image is the bag itself.
 - `mapListing` (`mappers.ts`) always returns a non-empty `imageUrls`
   array when the row has any image, so the OpenAPI contract
   (`Listing.imageUrls` is required) is honored even for older rows.

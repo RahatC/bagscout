@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { defaultNormalize, defaultValidate } from "./base";
-import { parseYoogisListingHtml } from "./yoogiscloset";
+import { parseYoogisListingHtml, toPrimaryProductImage } from "./yoogiscloset";
 
 const FIXTURE_DIR = join(__dirname, "__fixtures__");
 
@@ -47,6 +47,27 @@ describe("parseYoogisListingHtml", () => {
   it("returns an empty array for HTML with no product cards", () => {
     expect(parseYoogisListingHtml("<html><body>no listings</body></html>")).toEqual(
       [],
+    );
+  });
+
+  it("rewrites styled grid-thumbnail variants to the product-only _01 shot", () => {
+    const styled =
+      "https://backend.yoogiscloset.com/media/catalog/product/6/9/698124_02.jpg?quality=80&bg-color=255,255,255&fit=bounds&height=416&width=312";
+    expect(toPrimaryProductImage(styled)).toBe(
+      "https://backend.yoogiscloset.com/media/catalog/product/6/9/698124_01.jpg?quality=80&bg-color=255,255,255&fit=bounds&height=416&width=312",
+    );
+    // Multi-digit variants collapse to _01 as well.
+    expect(
+      toPrimaryProductImage(
+        "https://backend.yoogiscloset.com/media/catalog/product/5/7/577996_12.jpg",
+      ),
+    ).toBe("https://backend.yoogiscloset.com/media/catalog/product/5/7/577996_12.jpg".replace("_12", "_01"));
+    // Already-primary and non-matching URLs are left untouched.
+    const primary =
+      "https://backend.yoogiscloset.com/media/catalog/product/6/9/698124_01.jpg";
+    expect(toPrimaryProductImage(primary)).toBe(primary);
+    expect(toPrimaryProductImage("https://example.com/photo.png")).toBe(
+      "https://example.com/photo.png",
     );
   });
 

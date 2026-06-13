@@ -39,6 +39,18 @@ const BRAND_LISTING_PATHS = [
 const PRODUCT_HREF_RE = /^\/(\d{4,})-([a-z0-9-]+)\.html$/i;
 
 /**
+ * Yoogi's product images follow a numbered convention
+ * (`<id>_01.jpg`, `<id>_02.jpg`, ...). `_01` is the standardized product-only
+ * catalog shot (bag on a white background); the listing-grid thumbnail instead
+ * points at an alternate variant (commonly `_02`, a styled / on-model shot).
+ * Rewrite any numbered variant to `_01` so the stored primary image is the
+ * product itself — matching the first image shown on the source product page.
+ */
+export function toPrimaryProductImage(url: string): string {
+  return url.replace(/_\d+(\.jpg)/i, "_01$1");
+}
+
+/**
  * Parse one HTML listing page (e.g. `/handbags/chanel`) into RawListings.
  * Pulled into its own pure function so the parser test suite can run on a
  * captured fixture without making any network calls.
@@ -81,10 +93,12 @@ export function parseYoogisListingHtml(html: string, brandHint?: string): RawLis
     const usableOriginalPrice =
       originalPrice && originalPrice > price ? originalPrice : undefined;
 
-    // Image URL — primary src is in `data-src` (lazy load).
+    // Image URL — primary src is in `data-src` (lazy load). The grid thumb
+    // points at a styled alternate; normalize to the `_01` product-only shot.
     const $img = $card.find("img").first();
-    const imageUrl = ($img.attr("data-src") ?? $img.attr("src") ?? "").trim();
-    if (!imageUrl) return;
+    const rawImageUrl = ($img.attr("data-src") ?? $img.attr("src") ?? "").trim();
+    if (!rawImageUrl) return;
+    const imageUrl = toPrimaryProductImage(rawImageUrl);
 
     const conditionText = $card.find('[itemprop="itemCondition"]').first().text().trim();
     const condition = extractCondition(conditionText, "Very Good");
