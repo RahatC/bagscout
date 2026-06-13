@@ -4,7 +4,7 @@ import { initSentry } from "./lib/sentry";
 
 initSentry();
 
-import { runMigrations } from "@workspace/db";
+import { runMigrations, seedReferenceData, db } from "@workspace/db";
 import app from "./app";
 import { logger } from "./lib/logger";
 import { autoSeedIfEmpty } from "./lib/ingest";
@@ -47,6 +47,18 @@ async function start(): Promise<void> {
       );
       process.exit(1);
     }
+  }
+
+  // Seed canonical reference data (brands/styles/colors/conditions/sizes).
+  // Idempotent (ON CONFLICT DO NOTHING) so it is safe on every boot. Without
+  // this a fresh database has empty reference tables and onboarding can never
+  // be completed. Failing here is fatal because the app is unusable without it.
+  try {
+    const summary = await seedReferenceData(db);
+    logger.info({ summary }, "Reference data ensured");
+  } catch (err) {
+    logger.error({ err }, "Failed to seed reference data on startup");
+    process.exit(1);
   }
 
   app.listen(port, (err) => {

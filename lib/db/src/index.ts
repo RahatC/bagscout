@@ -16,3 +16,12 @@ export const db = drizzle(pool, { schema });
 export * from "./schema";
 export { runMigrations } from "./migrate";
 export type { RunMigrationsOptions } from "./migrate";
+export {
+  seedReferenceData,
+  REFERENCE_BRANDS,
+  REFERENCE_COLORS,
+  REFERENCE_CONDITIONS,
+  REFERENCE_SIZES,
+  REFERENCE_STYLES,
+} from "./referenceData";
+export type { ReferenceSeedSummary } from "./referenceData";
