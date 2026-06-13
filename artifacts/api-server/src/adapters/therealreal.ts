@@ -159,7 +159,11 @@ function pickCondition(
  */
 function readItemFields(
   $: cheerio.CheerioAPI,
-  $item: cheerio.Cheerio<unknown>,
+  // The node-generic for Cheerio's element type (`AnyNode`) is not re-exported
+  // by the `cheerio` package, so we derive the wrapped-collection type from
+  // what `$(...)` itself returns. This is exactly what the caller passes and
+  // it satisfies the `this: Cheerio<AnyNode>` constraint on `.children()`.
+  $item: ReturnType<cheerio.CheerioAPI>,
 ): Record<string, string> {
   const fields: Record<string, string> = {};
   $item.children().each((_, child) => {
