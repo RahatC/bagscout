@@ -22,7 +22,15 @@ async function buildAll() {
   await cp(migrationsSrc, migrationsDest, { recursive: true });
 
   await esbuild({
-    entryPoints: [path.resolve(artifactDir, "src/index.ts")],
+    entryPoints: [
+      { in: path.resolve(artifactDir, "src/index.ts"), out: "index" },
+      // One-shot entry-point for external cron / Replit Scheduled Deployments
+      // (decoupled ingest + digest). Emitted as dist/run-scheduled.mjs.
+      {
+        in: path.resolve(artifactDir, "src/scripts/run-scheduled.ts"),
+        out: "run-scheduled",
+      },
+    ],
     platform: "node",
     bundle: true,
     format: "esm",

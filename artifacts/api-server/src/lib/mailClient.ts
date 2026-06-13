@@ -1,11 +1,31 @@
-// Resend integration via Replit Connectors (connector_name=resend).
-// Credentials are fetched fresh on every send because access tokens expire.
+// Resend integration. Credentials are resolved from one of two sources, in
+// priority order:
+//   1. Plain environment variables (`RESEND_API_KEY` + `RESEND_FROM_EMAIL`),
+//      so BagScout can send email on ANY host (Docker, generic VPS, CI), not
+//      just Replit.
+//   2. Replit Connectors (connector_name=resend) as a fallback for the
+//      Replit-managed deployment.
 import { Resend } from "resend";
 import { logger } from "./logger";
 
 type ResendCredentials = { apiKey: string; fromEmail: string };
 
-async function fetchResendCredentials(): Promise<ResendCredentials> {
+/**
+ * Read Resend credentials from plain env vars. Returns null when not fully
+ * configured so the caller can fall back to the Replit connector.
+ * Accepts `RESEND_FROM_EMAIL` or the shorter `RESEND_FROM` alias.
+ */
+function credentialsFromEnv(): ResendCredentials | null {
+  const apiKey = process.env.RESEND_API_KEY?.trim();
+  const fromEmail =
+    process.env.RESEND_FROM_EMAIL?.trim() || process.env.RESEND_FROM?.trim();
+  if (apiKey && fromEmail) {
+    return { apiKey, fromEmail };
+  }
+  return null;
+}
+
+async function fetchResendCredentialsFromConnector(): Promise<ResendCredentials> {
   const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
   const xReplitToken = process.env.REPL_IDENTITY
     ? "repl " + process.env.REPL_IDENTITY
@@ -41,6 +61,16 @@ async function fetchResendCredentials(): Promise<ResendCredentials> {
     throw new Error("Resend connection is not configured (missing api_key or from_email)");
   }
   return { apiKey, fromEmail };
+}
+
+/**
+ * Resolve Resend credentials: prefer plain env vars (host-agnostic), then
+ * fall back to the Replit connector. Throws when neither is configured.
+ */
+async function fetchResendCredentials(): Promise<ResendCredentials> {
+  const fromEnv = credentialsFromEnv();
+  if (fromEnv) return fromEnv;
+  return fetchResendCredentialsFromConnector();
 }
 
 export type SendEmailInput = {

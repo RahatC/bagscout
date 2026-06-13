@@ -46,11 +46,20 @@ You can confirm the live key after publishing under
 | ---------------- | ------------------- | -------------------------------------------------------------------------------------------------------------- |
 | `ADMIN_USER_IDS` | env, **production** | Comma-separated Clerk user ids that get access to `/admin` and `POST /api/admin/ingest`. Sign in to the published app once, copy your prod-tenant Clerk user id from the Auth pane, and set this. Alternative: set `publicMetadata.role = "admin"` on the Clerk user (also via the Auth pane). |
 
-### Email (optional, only when the email task ships)
+### Email (required for digest/alert delivery)
 
-| Name             | Where  | Notes                                                                                |
-| ---------------- | ------ | ------------------------------------------------------------------------------------ |
-| `RESEND_API_KEY` | Secret | Provided by the Resend integration. Required only for digest/alert email delivery.   |
+Credentials are resolved in priority order: **(1) plain env vars**, then
+**(2) the Replit Resend connector**. Use the env vars for any non-Replit host
+(Docker, VPS, CI); the connector is the zero-config path on Replit.
+
+| Name                | Where  | Notes                                                                                                          |
+| ------------------- | ------ | -------------------------------------------------------------------------------------------------------------- |
+| `RESEND_API_KEY`    | Secret | Resend API key. When set together with `RESEND_FROM_EMAIL`, used directly (host-agnostic).                     |
+| `RESEND_FROM_EMAIL` | Secret | Verified Resend sender (alias: `RESEND_FROM`). Required alongside `RESEND_API_KEY`.                            |
+| Replit Resend connector | Integration | Fallback when the two env vars above are absent. Requires `REPLIT_CONNECTORS_HOSTNAME` + `REPL_IDENTITY`. |
+
+If neither source is configured, the digest run aborts cleanly (alerts stay
+`pending` and are retried on the next run) — it never crashes the server.
 
 ### Scheduler tuning (optional)
 
@@ -122,6 +131,36 @@ The Clerk Frontend API is reverse-proxied through `/api/__clerk` by
 `artifacts/api-server/src/middlewares/clerkProxyMiddleware.ts`, which only
 activates when `NODE_ENV=production`. This is what lets Clerk work on the
 `*.replit.app` domain without any DNS / CNAME work.
+
+## 3a. Background jobs in production (IMPORTANT)
+
+The API server runs an **in-process scheduler** (`setInterval`, `.unref()`'d)
+for ingest + digest. On **Autoscale**, instances are spun up per-request and
+suspended when idle, so the in-process timers are **not a reliable trigger** —
+ticks may not fire when there is no live traffic. Treat the in-process
+scheduler as a best-effort convenience for always-warm deployments only.
+
+**Recommended production setup (decoupled jobs):**
+
+1. Set `SCHEDULER_ENABLED=false` on the API server (stops the unreliable
+   in-process timers).
+2. Create a **Replit Scheduled Deployment** (or any external cron) that runs
+   the one-shot entry-point on a fixed cadence (every 30–60 min):
+
+   ```bash
+   pnpm --filter @workspace/api-server run build
+   node artifacts/api-server/dist/run-scheduled.mjs
+   ```
+
+   `src/scripts/run-scheduled.ts` applies migrations, then runs one ingest
+   cycle and one digest cycle and exits. It shares the same Postgres advisory
+   locks as the in-process scheduler, so it is safe to run even if a warm API
+   server is also ticking — neither double-fires.
+
+Until a scheduled/cron trigger is configured, alerts will only be generated
+and emailed while the API server happens to be warm. This is a deployment
+configuration step (it cannot be guaranteed from application code on
+Autoscale).
 
 ## 4. Publish (user action)
 
