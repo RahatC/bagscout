@@ -6,6 +6,7 @@ import {
   conditionsTable,
   sizesTable,
   bagStylesTable,
+  sourcesTable,
 } from "./schema";
 
 /**
@@ -100,12 +101,56 @@ export const REFERENCE_STYLES = [
   { name: "Belt Bag", slug: "belt-bag", normalizedName: "belt bag" },
 ] as const;
 
+/**
+ * Marketplace sources. `ingestionMode` reflects the documented intent
+ * (eBay/FASHIONPHILE/Rebag are live-capable; The RealReal & Yoogi's Closet
+ * stay mock until a partner/affiliate program is wired in). NOTE: live mode is
+ * only honored at runtime when `INGEST_USE_MOCK_ADAPTERS=false` is explicitly
+ * set (see `adapters/index.ts`); the default is mock-only, so seeding these as
+ * 'live' does NOT cause any scraping on a fresh deploy. Without these rows a
+ * fresh database has no sources, so no listings ingest and `/listings` is
+ * empty.
+ */
+export const REFERENCE_SOURCES = [
+  {
+    name: "eBay",
+    slug: "ebay",
+    baseUrl: "https://www.ebay.com",
+    ingestionMode: "live",
+  },
+  {
+    name: "FASHIONPHILE",
+    slug: "fashionphile",
+    baseUrl: "https://www.fashionphile.com",
+    ingestionMode: "live",
+  },
+  {
+    name: "Rebag",
+    slug: "rebag",
+    baseUrl: "https://www.rebag.com",
+    ingestionMode: "live",
+  },
+  {
+    name: "The RealReal",
+    slug: "therealreal",
+    baseUrl: "https://www.therealreal.com",
+    ingestionMode: "mock",
+  },
+  {
+    name: "Yoogi's Closet",
+    slug: "yoogiscloset",
+    baseUrl: "https://www.yoogiscloset.com",
+    ingestionMode: "mock",
+  },
+] as const;
+
 export type ReferenceSeedSummary = {
   brands: number;
   colors: number;
   conditions: number;
   sizes: number;
   styles: number;
+  sources: number;
 };
 
 /**
@@ -125,6 +170,7 @@ export async function seedReferenceData(
     .onConflictDoNothing();
   await database.insert(sizesTable).values([...REFERENCE_SIZES]).onConflictDoNothing();
   await database.insert(bagStylesTable).values([...REFERENCE_STYLES]).onConflictDoNothing();
+  await database.insert(sourcesTable).values([...REFERENCE_SOURCES]).onConflictDoNothing();
 
   return {
     brands: REFERENCE_BRANDS.length,
@@ -132,5 +178,6 @@ export async function seedReferenceData(
     conditions: REFERENCE_CONDITIONS.length,
     sizes: REFERENCE_SIZES.length,
     styles: REFERENCE_STYLES.length,
+    sources: REFERENCE_SOURCES.length,
   };
 }

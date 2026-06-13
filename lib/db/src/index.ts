@@ -23,5 +23,6 @@ export {
   REFERENCE_CONDITIONS,
   REFERENCE_SIZES,
   REFERENCE_STYLES,
+  REFERENCE_SOURCES,
 } from "./referenceData";
 export type { ReferenceSeedSummary } from "./referenceData";
